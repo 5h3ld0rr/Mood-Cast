@@ -60,7 +60,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
       _controller = CameraController(
         camera,
-        ResolutionPreset.medium,
+        ResolutionPreset.veryHigh,
         enableAudio: false,
       );
 
