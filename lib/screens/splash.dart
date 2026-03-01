@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme.dart';
 import 'login.dart';
+import 'main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -32,13 +34,18 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward().then((_) {
-      // Navigate to login after a short delay
+      // Navigate to next screen after a short delay
       Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted) {
+          final User? user = FirebaseAuth.instance.currentUser;
+          final Widget nextScreen = user != null
+              ? const MainScreen()
+              : const LoginScreen();
+
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
               transitionDuration: const Duration(milliseconds: 800),
-              pageBuilder: (_, _, _) => const LoginScreen(),
+              pageBuilder: (_, _, _) => nextScreen,
               transitionsBuilder: (_, animation, _, child) {
                 return FadeTransition(opacity: animation, child: child);
               },
