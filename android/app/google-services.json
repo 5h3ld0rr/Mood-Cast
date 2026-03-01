@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "138700460734",
+    "project_id": "mood-cast-23dff",
+    "storage_bucket": "mood-cast-23dff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:138700460734:android:a435decc6f6528c95244ef",
+        "android_client_info": {
+          "package_name": "com.example.mood_cast_2_0"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcJxo2ed0eJJtMM9ojFlCoSX9O5iPrjJY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

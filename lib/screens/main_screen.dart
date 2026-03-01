@@ -15,10 +15,13 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  bool _isAnalysisActivated = false;
 
   List<Widget> get _screens => [
     const HomeScreen(),
-    AnalysisScreen(isActive: _currentIndex == 1),
+    _isAnalysisActivated
+        ? AnalysisScreen(isActive: _currentIndex == 1)
+        : const SizedBox.shrink(),
     const PlayerScreen(),
     const InsightsScreen(),
     const ProfileScreen(),
@@ -46,6 +49,9 @@ class _MainScreenState extends State<MainScreen> {
             onTap: (index) {
               setState(() {
                 _currentIndex = index;
+                if (index == 1) {
+                  _isAnalysisActivated = true;
+                }
               });
             },
             backgroundColor: Colors.transparent,

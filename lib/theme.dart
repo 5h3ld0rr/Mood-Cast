@@ -28,10 +28,7 @@ class AppTheme {
             bodyLarge: const TextStyle(color: textLight),
             bodyMedium: const TextStyle(color: textMuted),
           ),
-      colorScheme: const ColorScheme.dark(
-        primary: primary,
-        surface: cardBg,
-      ),
+      colorScheme: const ColorScheme.dark(primary: primary, surface: cardBg),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,

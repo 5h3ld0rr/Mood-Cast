@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../services/auth_service.dart';
 import 'main_screen.dart';
 import 'signup.dart';
 
@@ -8,6 +9,8 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AuthService _authService = AuthService();
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundDeep, // from tailwind HTML #020617
       body: Stack(
@@ -230,7 +233,17 @@ class LoginScreen extends StatelessWidget {
                             width: double.infinity,
                             height: 56,
                             child: OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () async {
+                                final userCredential = await _authService
+                                    .signInWithGoogle();
+                                if (userCredential != null && context.mounted) {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => const MainScreen(),
+                                    ),
+                                  );
+                                }
+                              },
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: Colors.white.withOpacity(0.03),
                                 side: BorderSide(

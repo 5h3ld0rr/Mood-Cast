@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../services/auth_service.dart';
 import 'analysis.dart';
 import 'player.dart';
 
@@ -96,14 +97,31 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Greeting
-                        const Text(
-                          'Good Afternoon, User',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        StreamBuilder(
+                          stream: AuthService().authStateChanges,
+                          builder: (context, snapshot) {
+                            final user = AuthService().currentUser;
+                            final name =
+                                user?.displayName?.split(' ').first ?? 'User';
+
+                            // Determine time-based greeting
+                            final hour = DateTime.now().hour;
+                            String timeGreeting = 'Good Morning';
+                            if (hour >= 12 && hour < 17) {
+                              timeGreeting = 'Good Afternoon';
+                            } else if (hour >= 17) {
+                              timeGreeting = 'Good Evening';
+                            }
+
+                            return Text(
+                              '$timeGreeting, $name',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 4),
                         const Text(

@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../services/auth_service.dart';
 import 'login.dart';
+import 'edit_profile.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final AuthService _authService = AuthService();
+
+  void _refreshProfile() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  actions: [],
+                  actions: const [],
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
@@ -65,47 +78,66 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Profile Avatar
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppTheme.primary.withOpacity(0.5),
-                              width: 4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primary.withOpacity(0.2),
-                                blurRadius: 24,
-                                spreadRadius: 4,
-                              ),
-                            ],
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop',
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Alex Johnson',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          '@alexj_music',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 16,
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final user = _authService.currentUser;
+                            final photoUrl = user?.photoURL;
+                            final displayName = user?.displayName ?? 'User';
+                            final email = user?.email ?? 'No email';
+
+                            return Column(
+                              children: [
+                                // Profile Avatar
+                                Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppTheme.primary.withOpacity(0.5),
+                                      width: 4,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.primary.withOpacity(
+                                          0.2,
+                                        ),
+                                        blurRadius: 24,
+                                        spreadRadius: 4,
+                                      ),
+                                    ],
+                                    image: DecorationImage(
+                                      image:
+                                          photoUrl != null &&
+                                              photoUrl.isNotEmpty
+                                          ? NetworkImage(photoUrl)
+                                          : const NetworkImage(
+                                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop',
+                                            ),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  displayName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  email,
+                                  style: const TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 32),
 
@@ -144,7 +176,18 @@ class ProfileScreen extends StatelessWidget {
                               _buildMenuItem(
                                 icon: Icons.person_outline,
                                 title: 'Edit Profile',
-                                onTap: () {},
+                                onTap: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EditProfileScreen(),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    _refreshProfile();
+                                  }
+                                },
                               ),
                               _buildDivider(),
                               _buildMenuItem(
@@ -181,13 +224,16 @@ class ProfileScreen extends StatelessWidget {
                           width: double.infinity,
                           height: 56,
                           child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                                (r) => false,
-                              );
+                            onPressed: () async {
+                              await _authService.signOut();
+                              if (context.mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
+                                  ),
+                                  (r) => false,
+                                );
+                              }
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.redAccent,
