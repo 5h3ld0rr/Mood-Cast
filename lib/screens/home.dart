@@ -3,6 +3,7 @@ import '../theme.dart';
 import '../services/auth_service.dart';
 import 'analysis.dart';
 import 'player.dart';
+import '../services/notification_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -253,6 +254,43 @@ class HomeScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Test Notification Button
+                        Center(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary.withOpacity(
+                                0.1,
+                              ),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                side: BorderSide(
+                                  color: AppTheme.primary.withOpacity(0.5),
+                                ),
+                              ),
+                            ),
+                            onPressed: () {
+                              NotificationService().showSimpleNotification(
+                                title: 'MoodCast AI 🎵',
+                                body:
+                                    'This is a test notification with a custom style and color!',
+                                payload:
+                                    '{"title": "MoodCast AI 🎵", "body": "This is a test notification with a custom style and color!", "data": "test_home_payload"}',
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.notifications_active,
+                              color: AppTheme.primary,
+                            ),
+                            label: const Text('Send Test Notification'),
                           ),
                         ),
                         const SizedBox(height: 32),
