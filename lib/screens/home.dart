@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../services/auth_service.dart';
-import 'analysis.dart';
 import 'player.dart';
-import '../services/notification_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -169,130 +167,67 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Current Mood Card
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const AnalysisScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppTheme.primary.withOpacity(0.2),
-                                  AppTheme.primary.withOpacity(0.05),
-                                ],
-                              ),
-                              border: Border.all(
-                                color: AppTheme.primary.withOpacity(0.2),
-                              ),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppTheme.primary.withOpacity(0.2),
+                                AppTheme.primary.withOpacity(0.05),
+                              ],
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'CURRENT MOOD',
-                                    style: TextStyle(
-                                      color: AppTheme.primary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.5,
+                            border: Border.all(
+                              color: AppTheme.primary.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'CURRENT MOOD',
+                                  style: TextStyle(
+                                    color: AppTheme.primary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Happy',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'Happy',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 36,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primary,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: AppTheme.primary
-                                                  .withOpacity(0.3),
-                                              blurRadius: 10,
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(
-                                          Icons.edit,
-                                          color: Colors.white,
-                                          size: 24,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      _buildTag('Upbeat'),
-                                      const SizedBox(width: 8),
-                                      _buildTag('Energetic'),
-                                      const SizedBox(width: 8),
-                                      _buildTag('Sunny Vibes'),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    _buildTag('Upbeat'),
+                                    const SizedBox(width: 8),
+                                    _buildTag('Energetic'),
+                                    const SizedBox(width: 8),
+                                    _buildTag('Sunny Vibes'),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ),
                         const SizedBox(height: 32),
 
-                        // Test Notification Button
-                        Center(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary.withOpacity(
-                                0.1,
-                              ),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                side: BorderSide(
-                                  color: AppTheme.primary.withOpacity(0.5),
-                                ),
-                              ),
-                            ),
-                            onPressed: () {
-                              NotificationService().showSimpleNotification(
-                                title: 'MoodCast AI 🎵',
-                                body:
-                                    'This is a test notification with a custom style and color!',
-                                payload:
-                                    '{"title": "MoodCast AI 🎵", "body": "This is a test notification with a custom style and color!", "data": "test_home_payload"}',
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.notifications_active,
-                              color: AppTheme.primary,
-                            ),
-                            label: const Text('Send Test Notification'),
-                          ),
-                        ),
                         const SizedBox(height: 32),
 
                         // Recommended Section

@@ -5,6 +5,7 @@ import 'login.dart';
 import 'edit_profile.dart';
 import 'notification_list.dart';
 import 'privacy_security.dart';
+import 'subscription.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -224,7 +225,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: Icons.subscriptions_outlined,
                                 title: 'Subscription',
                                 subtitle: 'Pro Plan Active',
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SubscriptionScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                               _buildDivider(),
                               _buildMenuItem(
