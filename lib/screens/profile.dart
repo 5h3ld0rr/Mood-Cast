@@ -6,6 +6,7 @@ import 'edit_profile.dart';
 import 'notification_list.dart';
 import 'privacy_security.dart';
 import 'subscription.dart';
+import 'help_support.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -239,7 +240,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _buildMenuItem(
                                 icon: Icons.help_outline,
                                 title: 'Help & Support',
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const HelpSupportScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
