@@ -3,8 +3,8 @@ import '../theme.dart';
 import '../services/auth_service.dart';
 import 'login.dart';
 import 'edit_profile.dart';
-import '../services/notification_service.dart';
 import 'notification_list.dart';
+import 'privacy_security.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -209,7 +209,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _buildMenuItem(
                                 icon: Icons.security,
                                 title: 'Privacy & Security',
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PrivacySecurityScreen(),
+                                    ),
+                                  );
+                                },
                               ),
                               _buildDivider(),
                               _buildMenuItem(
