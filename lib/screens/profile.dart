@@ -57,12 +57,7 @@ class ProfileScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.settings, color: Colors.white),
-                      onPressed: () {},
-                    ),
-                  ],
+                  actions: [],
                 ),
                 SliverToBoxAdapter(
                   child: Padding(

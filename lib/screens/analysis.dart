@@ -129,10 +129,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.settings, color: Colors.white),
-                        onPressed: () {},
-                      ),
+                      const SizedBox(width: 48),
                     ],
                   ),
                 ),

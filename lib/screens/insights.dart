@@ -88,13 +88,6 @@ class InsightsScreen extends StatelessWidget {
                             ),
                             onPressed: () {},
                           ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.settings,
-                              color: AppTheme.textMuted,
-                            ),
-                            onPressed: () {},
-                          ),
                         ],
                       ),
                     ],
