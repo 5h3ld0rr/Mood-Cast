@@ -3,7 +3,8 @@ import 'package:camera/camera.dart';
 import '../theme.dart';
 
 class AnalysisScreen extends StatefulWidget {
-  const AnalysisScreen({super.key});
+  final bool isActive;
+  const AnalysisScreen({super.key, this.isActive = true});
 
   @override
   State<AnalysisScreen> createState() => _AnalysisScreenState();
@@ -16,7 +17,31 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    if (widget.isActive) {
+      _initializeCamera();
+    }
+  }
+
+  @override
+  void didUpdateWidget(AnalysisScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _initializeCamera();
+    } else if (!widget.isActive && oldWidget.isActive) {
+      _disposeCamera();
+    }
+  }
+
+  Future<void> _disposeCamera() async {
+    if (_controller != null) {
+      await _controller!.dispose();
+      _controller = null;
+    }
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = false;
+      });
+    }
   }
 
   Future<void> _initializeCamera() async {
@@ -35,7 +60,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
       _controller = CameraController(
         camera,
-        ResolutionPreset.medium,
+        ResolutionPreset.veryHigh,
         enableAudio: false,
       );
 
@@ -52,7 +77,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _disposeCamera();
     super.dispose();
   }
 
