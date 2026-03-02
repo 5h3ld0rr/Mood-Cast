@@ -172,216 +172,234 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
                 // Scrollable Content
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Mood Breakdown
-                        const Text(
-                          'Mood Breakdown',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
+                  child: GestureDetector(
+                    onHorizontalDragEnd: (details) {
+                      if (details.primaryVelocity! > 0) {
+                        if (_selectedTab == 'Month') {
+                          setState(() => _selectedTab = 'Week');
+                        } else if (_selectedTab == 'Week') {
+                          setState(() => _selectedTab = 'Day');
+                        }
+                      } else if (details.primaryVelocity! < 0) {
+                        if (_selectedTab == 'Day') {
+                          setState(() => _selectedTab = 'Week');
+                        } else if (_selectedTab == 'Week') {
+                          setState(() => _selectedTab = 'Month');
+                        }
+                      }
+                    },
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Mood Breakdown
+                          const Text(
+                            'Mood Breakdown',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          child: Column(
-                            children: [
-                              // Chart Placeholder
-                              Container(
-                                width: 160,
-                                height: 160,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppTheme.primary,
-                                    width: 14,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        tabData['positive'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const Text(
-                                        'POSITIVE',
-                                        style: TextStyle(
-                                          color: AppTheme.textMuted,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cardBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
                               ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
+                            ),
+                            child: Column(
+                              children: [
+                                // Chart Placeholder
+                                Container(
+                                  width: 160,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppTheme.primary,
+                                      width: 14,
+                                    ),
+                                  ),
+                                  child: Center(
                                     child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        _buildLegendItem(
-                                          'Calm',
-                                          tabData['calm'],
-                                          AppTheme.primary,
+                                        Text(
+                                          tabData['positive'],
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                        const SizedBox(height: 12),
-                                        _buildLegendItem(
-                                          'Joy',
-                                          tabData['joy'],
-                                          Colors.tealAccent,
+                                        const Text(
+                                          'POSITIVE',
+                                          style: TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.5,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        _buildLegendItem(
-                                          'Focus',
-                                          tabData['focus'],
-                                          Colors.amberAccent,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        _buildLegendItem(
-                                          'Other',
-                                          tabData['other'],
-                                          Colors.grey,
-                                        ),
-                                      ],
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          _buildLegendItem(
+                                            'Calm',
+                                            tabData['calm'],
+                                            AppTheme.primary,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _buildLegendItem(
+                                            'Joy',
+                                            tabData['joy'],
+                                            Colors.tealAccent,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          _buildLegendItem(
+                                            'Focus',
+                                            tabData['focus'],
+                                            Colors.amberAccent,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _buildLegendItem(
+                                            'Other',
+                                            tabData['other'],
+                                            Colors.grey,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        // Emotional Intensity
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text(
-                              'Emotional Intensity',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Avg: ${tabData['avg']}',
-                              style: const TextStyle(
-                                color: AppTheme.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          height: 150,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          // Emotional Intensity
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: (tabData['bars'] as List<double>)
-                                .map((bar) => _buildBar(bar))
-                                .toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Recent Sessions
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Recent Sessions',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RecentSessionsScreen(),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'See all',
+                            children: [
+                              const Text(
+                                'Emotional Intensity',
                                 style: TextStyle(
-                                  color: AppTheme.primary,
+                                  color: Colors.white,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              Text(
+                                'Avg: ${tabData['avg']}',
+                                style: const TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            height: 150,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cardBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
+                              ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: (tabData['bars'] as List<double>)
+                                  .map((bar) => _buildBar(bar))
+                                  .toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
 
-                        _buildSessionTile(
-                          'Deep Relaxation',
-                          'Today • 10:30 AM',
-                          '15m',
-                          Icons.sentiment_very_satisfied,
-                          Colors.tealAccent,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildSessionTile(
-                          'Morning Flow',
-                          'Yesterday • 08:15 AM',
-                          '20m',
-                          Icons.self_improvement,
-                          AppTheme.primary,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildSessionTile(
-                          'Work Sprint',
-                          '24 Oct • 02:45 PM',
-                          '45m',
-                          Icons.bolt,
-                          Colors.amberAccent,
-                        ),
-                        const SizedBox(height: 100),
-                      ],
+                          // Recent Sessions
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Recent Sessions',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const RecentSessionsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  'See all',
+                                  style: TextStyle(
+                                    color: AppTheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          _buildSessionTile(
+                            'Deep Relaxation',
+                            'Today • 10:30 AM',
+                            '15m',
+                            Icons.sentiment_very_satisfied,
+                            Colors.tealAccent,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSessionTile(
+                            'Morning Flow',
+                            'Yesterday • 08:15 AM',
+                            '20m',
+                            Icons.self_improvement,
+                            AppTheme.primary,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSessionTile(
+                            'Work Sprint',
+                            '24 Oct • 02:45 PM',
+                            '45m',
+                            Icons.bolt,
+                            Colors.amberAccent,
+                          ),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
                     ),
                   ),
                 ),
