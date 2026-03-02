@@ -157,88 +157,87 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
 
-                        ValueListenableBuilder<WeatherData?>(
-                          valueListenable: WeatherService().currentWeather,
-                          builder: (context, weather, _) {
-                            if (weather == null) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final condition = weather.condition;
-                            final temp = weather.temperature.toInt();
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildWeatherPill(
-                                  _getWeatherIcon(condition),
-                                  '$condition $temp°C',
-                                ),
-                                const SizedBox(height: 24),
-                              ],
-                            );
-                          },
-                        ),
-
                         // Current Mood Card
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppTheme.primary.withOpacity(0.2),
-                                AppTheme.primary.withOpacity(0.05),
-                              ],
-                            ),
-                            border: Border.all(
-                              color: AppTheme.primary.withOpacity(0.2),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'CURRENT MOOD',
-                                  style: TextStyle(
-                                    color: AppTheme.primary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
-                                  ),
+                        Stack(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    AppTheme.primary.withOpacity(0.2),
+                                    AppTheme.primary.withOpacity(0.05),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                border: Border.all(
+                                  color: AppTheme.primary.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
-                                      'Happy',
+                                      'CURRENT MOOD',
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 36,
+                                        color: AppTheme.primary,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5,
                                       ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Happy',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 36,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        _buildTag('Upbeat'),
+                                        const SizedBox(width: 8),
+                                        _buildTag('Energetic'),
+                                        const SizedBox(width: 8),
+                                        _buildTag('Sunny Vibes'),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    _buildTag('Upbeat'),
-                                    const SizedBox(width: 8),
-                                    _buildTag('Energetic'),
-                                    const SizedBox(width: 8),
-                                    _buildTag('Sunny Vibes'),
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                            Positioned(
+                              top: 24,
+                              right: 24,
+                              child: ValueListenableBuilder<WeatherData?>(
+                                valueListenable:
+                                    WeatherService().currentWeather,
+                                builder: (context, weather, _) {
+                                  if (weather == null) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Icon(
+                                    _getWeatherIcon(weather.condition),
+                                    color: AppTheme.primary.withOpacity(0.8),
+                                    size: 32,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 32),
 
@@ -320,32 +319,6 @@ class HomeScreen extends StatelessWidget {
       default:
         return Icons.cloud;
     }
-  }
-
-  Widget _buildWeatherPill(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xff1e293b).withOpacity(0.3), // card background
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: const Color(0xff2b6cf0), size: 24),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildTag(String text) {
