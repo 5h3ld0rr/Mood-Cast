@@ -5,6 +5,8 @@ import 'scan/analysis.dart';
 import 'profile/profile.dart';
 import 'search/search.dart';
 import 'library/library.dart';
+import '../widgets/tab_navigator.dart';
+import '../widgets/mini_player.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -17,14 +19,37 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   bool _isAnalysisActivated = false;
 
+  final Map<int, GlobalKey<NavigatorState>> _navigatorKeys = {
+    0: GlobalKey<NavigatorState>(),
+    1: GlobalKey<NavigatorState>(),
+    2: GlobalKey<NavigatorState>(),
+    3: GlobalKey<NavigatorState>(),
+    4: GlobalKey<NavigatorState>(),
+  };
+
   List<Widget> get _screens => [
-    const HomeScreen(),
-    const SearchScreen(),
-    const LibraryScreen(),
+    TabNavigator(
+      navigatorKey: _navigatorKeys[0]!,
+      rootScreen: const HomeScreen(),
+    ),
+    TabNavigator(
+      navigatorKey: _navigatorKeys[1]!,
+      rootScreen: const SearchScreen(),
+    ),
     _isAnalysisActivated
-        ? AnalysisScreen(isActive: _currentIndex == 3)
+        ? TabNavigator(
+            navigatorKey: _navigatorKeys[2]!,
+            rootScreen: AnalysisScreen(isActive: _currentIndex == 2),
+          )
         : const SizedBox.shrink(),
-    const ProfileScreen(),
+    TabNavigator(
+      navigatorKey: _navigatorKeys[3]!,
+      rootScreen: const LibraryScreen(),
+    ),
+    TabNavigator(
+      navigatorKey: _navigatorKeys[4]!,
+      rootScreen: const ProfileScreen(),
+    ),
   ];
 
   @override
@@ -37,70 +62,80 @@ class _MainScreenState extends State<MainScreen> {
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF080C14).withOpacity(0.9),
-            border: Border(
-              top: BorderSide(color: Colors.white.withOpacity(0.1)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const MiniPlayer(),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF080C14).withOpacity(0.9),
+                border: Border(
+                  top: BorderSide(color: Colors.white.withOpacity(0.1)),
+                ),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: _currentIndex,
+                onTap: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                    if (index == 2) {
+                      _isAnalysisActivated = true;
+                    }
+                  });
+                },
+                backgroundColor: Colors.transparent,
+                type: BottomNavigationBarType.fixed,
+                elevation: 0,
+                selectedItemColor: AppTheme.primary,
+                unselectedItemColor: AppTheme.textMuted,
+                selectedFontSize: 12,
+                unselectedFontSize: 12,
+                selectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Padding(
+                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
+                      child: Icon(Icons.home, size: 28),
+                    ),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Padding(
+                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
+                      child: Icon(Icons.search, size: 28),
+                    ),
+                    label: 'Search',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Padding(
+                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
+                      child: Icon(Icons.document_scanner, size: 28),
+                    ),
+                    label: 'Scan',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Padding(
+                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
+                      child: Icon(Icons.library_music, size: 28),
+                    ),
+                    label: 'Library',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Padding(
+                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
+                      child: Icon(Icons.person, size: 28),
+                    ),
+                    label: 'Profile',
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-                if (index == 3) {
-                  _isAnalysisActivated = true;
-                }
-              });
-            },
-            backgroundColor: Colors.transparent,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            selectedItemColor: AppTheme.primary,
-            unselectedItemColor: AppTheme.textMuted,
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.home, size: 28),
-                ),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.search, size: 28),
-                ),
-                label: 'Search',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.library_music, size: 28),
-                ),
-                label: 'Library',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.document_scanner, size: 28),
-                ),
-                label: 'Scan',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.person, size: 28),
-                ),
-                label: 'Profile',
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );

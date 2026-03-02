@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/weather_service.dart';
-import '../player.dart';
+import '../../services/player_service.dart';
 import '../profile/notifications/notification_list.dart';
 import 'recommendations.dart';
 
@@ -385,9 +385,7 @@ class HomeScreen extends StatelessWidget {
   ) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const PlayerScreen()));
+        PlayerService().play(SongInfo(title: title, artist: artist));
       },
       child: Container(
         padding: const EdgeInsets.all(12),

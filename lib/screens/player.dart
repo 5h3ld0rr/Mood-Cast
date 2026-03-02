@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../theme.dart';
 import '../utils/ui_utils.dart';
+import '../services/player_service.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -30,6 +31,12 @@ class _PlayerScreenState extends State<PlayerScreen>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  String _formatDuration(double seconds) {
+    final int minutes = seconds ~/ 60;
+    final int remainingSeconds = seconds.toInt() % 60;
+    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -60,19 +67,40 @@ class _PlayerScreenState extends State<PlayerScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const SizedBox(width: 48),
-                          const Text(
-                            'Wellness Player',
-                            style: TextStyle(
+                          IconButton(
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down,
                               color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              size: 32,
                             ),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const Column(
+                            children: [
+                              Text(
+                                'PLAYING FROM',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 10,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Wellness Player',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                           PopupMenuButton<String>(
                             icon: const Icon(
-                              Icons.more_vert,
+                              Icons.more_horiz,
                               color: Colors.white,
+                              size: 28,
                             ),
                             color: const Color(0xFF1E293B),
                             shape: RoundedRectangleBorder(
@@ -346,91 +374,109 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: const [
-                                      Text(
-                                        'RECOMMENDED TO CALM NERVES',
-                                        style: TextStyle(
-                                          color: AppTheme.primary,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: -0.5,
-                                        ),
-                                      ),
-                                      SizedBox(height: 2),
-                                      Text(
-                                        'Midnight Solitude',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      Text(
-                                        'MoodCast • 432Hz Ambient',
-                                        style: TextStyle(
-                                          color: AppTheme.textMuted,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
+                                  child: ValueListenableBuilder<SongInfo?>(
+                                    valueListenable:
+                                        PlayerService().currentSong,
+                                    builder: (context, song, _) {
+                                      return Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            song?.title ?? 'Midnight Solitude',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            song?.artist ??
+                                                'MoodCast • 432Hz Ambient',
+                                            style: const TextStyle(
+                                              color: AppTheme.textMuted,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.favorite_border,
-                                    color: AppTheme.textMuted,
-                                  ),
-                                  onPressed: () {},
+                                ValueListenableBuilder<bool>(
+                                  valueListenable: PlayerService().isLiked,
+                                  builder: (context, liked, _) {
+                                    return IconButton(
+                                      icon: Icon(
+                                        liked
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: liked
+                                            ? AppTheme.primary
+                                            : AppTheme.textMuted,
+                                      ),
+                                      onPressed: () {
+                                        PlayerService().toggleLiked();
+                                      },
+                                    );
+                                  },
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(height: 32),
-                          Column(
-                            children: [
-                              Container(
-                                height: 6,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[900],
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                                child: FractionallySizedBox(
-                                  alignment: Alignment.centerLeft,
-                                  widthFactor: 0.33,
-                                  child: Container(
+                          ValueListenableBuilder<double>(
+                            valueListenable: PlayerService().progress,
+                            builder: (context, progress, _) {
+                              return Column(
+                                children: [
+                                  Container(
+                                    height: 6,
+                                    width: double.infinity,
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primary,
+                                      color: Colors.grey[900],
                                       borderRadius: BorderRadius.circular(3),
                                     ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: const [
-                                  Text(
-                                    '1:24',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 10,
+                                    child: FractionallySizedBox(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: progress,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.primary,
+                                          borderRadius: BorderRadius.circular(
+                                            3,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  Text(
-                                    '4:10',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 10,
-                                    ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        _formatDuration(progress * 180),
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                      const Text(
+                                        '3:00',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
-                              ),
-                            ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 24),
                           Row(
@@ -454,25 +500,38 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     onPressed: () {},
                                   ),
                                   const SizedBox(width: 16),
-                                  Container(
-                                    width: 64,
-                                    height: 64,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primary,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.primary.withOpacity(
-                                            0.3,
+                                  GestureDetector(
+                                    onTap: () {
+                                      PlayerService().togglePlay();
+                                    },
+                                    child: Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primary,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppTheme.primary.withOpacity(
+                                              0.3,
+                                            ),
+                                            blurRadius: 15,
                                           ),
-                                          blurRadius: 15,
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.play_arrow,
-                                      color: Colors.white,
-                                      size: 40,
+                                        ],
+                                      ),
+                                      child: ValueListenableBuilder<bool>(
+                                        valueListenable:
+                                            PlayerService().isPlaying,
+                                        builder: (context, playing, _) {
+                                          return Icon(
+                                            playing
+                                                ? Icons.pause
+                                                : Icons.play_arrow,
+                                            color: Colors.white,
+                                            size: 40,
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 16),

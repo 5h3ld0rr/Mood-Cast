@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
-import '../player.dart';
+import '../../services/player_service.dart';
 
 class RecommendationsScreen extends StatelessWidget {
   const RecommendationsScreen({super.key});
@@ -96,9 +96,7 @@ class RecommendationsScreen extends StatelessWidget {
   ) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const PlayerScreen()));
+        PlayerService().play(SongInfo(title: title, artist: artist));
       },
       child: Container(
         padding: const EdgeInsets.all(12),

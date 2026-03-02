@@ -184,13 +184,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: Icons.person_outline,
                                 title: 'Edit Profile',
                                 onTap: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const EditProfileScreen(),
-                                    ),
-                                  );
+                                  final result =
+                                      await Navigator.of(
+                                        context,
+                                        rootNavigator: true,
+                                      ).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const EditProfileScreen(),
+                                        ),
+                                      );
                                   if (result == true) {
                                     _refreshProfile();
                                   }
@@ -201,8 +204,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: Icons.insights,
                                 title: 'Trends & Insights',
                                 onTap: () {
-                                  Navigator.push(
+                                  Navigator.of(
                                     context,
+                                    rootNavigator: true,
+                                  ).push(
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           const InsightsScreen(),
@@ -215,8 +220,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: Icons.security,
                                 title: 'Privacy & Security',
                                 onTap: () {
-                                  Navigator.push(
+                                  Navigator.of(
                                     context,
+                                    rootNavigator: true,
+                                  ).push(
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           const PrivacySecurityScreen(),
@@ -230,8 +237,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 title: 'Subscription',
                                 subtitle: 'Pro Plan Active',
                                 onTap: () {
-                                  Navigator.push(
+                                  Navigator.of(
                                     context,
+                                    rootNavigator: true,
+                                  ).push(
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           const SubscriptionScreen(),
@@ -244,8 +253,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: Icons.help_outline,
                                 title: 'Help & Support',
                                 onTap: () {
-                                  Navigator.push(
+                                  Navigator.of(
                                     context,
+                                    rootNavigator: true,
+                                  ).push(
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           const HelpSupportScreen(),
