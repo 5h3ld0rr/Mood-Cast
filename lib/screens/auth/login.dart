@@ -1,122 +1,64 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
-import 'main_screen.dart';
+import '../../theme.dart';
+import '../../services/auth_service.dart';
+import '../../utils/ui_utils.dart';
+import '../main_screen.dart';
+import 'signup.dart';
 
-import '../services/auth_service.dart';
-
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isLoading = false;
   final AuthService _authService = AuthService();
+  bool _obscurePassword = true;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-  bool _isLoading = false;
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.redAccent.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    UIUtils.showSnackBar(context, message, isError: true);
   }
 
-  Future<void> _signUp() async {
+  void _showSuccess(String message) {
+    UIUtils.showSnackBar(context, message);
+  }
+
+  Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    final confirmPassword = _confirmPasswordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       _showError('Please fill in all fields');
       return;
     }
 
-    // Password validation
-    final passwordRegExp = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$',
-    );
-    if (!passwordRegExp.hasMatch(password)) {
-      _showError(
-        'Password must be at least 8 characters long, include uppercase, lowercase, and a symbol.',
-      );
-      return;
-    }
-
-    if (password != confirmPassword) {
-      _showError('Passwords do not match');
-      return;
-    }
-
     setState(() => _isLoading = true);
     try {
-      final userCredential = await _authService.signUpWithEmail(
+      final userCredential = await _authService.signInWithEmail(
         email,
         password,
       );
       if (userCredential != null && mounted) {
-        // Show success message/dialog
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppTheme.backgroundDark,
-            title: const Text(
-              'Verify your email',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: Text(
-              'A verification email has been sent to $email. Please check your inbox and verify your account before logging in.',
-              style: const TextStyle(color: AppTheme.textMuted),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(color: AppTheme.primary),
-                ),
-              ),
-            ],
-          ),
-        );
-
-        // Sign out NOW, after they've seen the message
-        await _authService.signOut();
-
-        if (mounted) {
-          // Send them back to login screen
-          Navigator.of(context).pop();
+        final user = userCredential.user;
+        if (user != null && !user.emailVerified) {
+          await _authService.signOut(); // Sign out if not verified
+          _showError('Please verify your email before logging in.');
+          return;
         }
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
       }
     } catch (e) {
       _showError(e.toString().split(']').last.trim());
@@ -125,17 +67,19 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future<void> _googleSignIn() async {
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _showError('Please enter your email to reset password');
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      final userCredential = await _authService.signInWithGoogle();
-      if (userCredential != null && mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
-      }
+      await _authService.sendPasswordResetEmail(email);
+      _showSuccess('Password reset email sent!');
     } catch (e) {
-      _showError(e.toString());
+      _showError(e.toString().split(']').last.trim());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -144,7 +88,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDeep,
+      backgroundColor: AppTheme.backgroundDeep, // from tailwind HTML #020617
       body: Stack(
         children: [
           // Background Glows
@@ -166,20 +110,60 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
           ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppTheme.primary.withOpacity(0.1),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.7],
+                ),
+              ),
+            ),
+          ),
           // Content
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24.0,
-                  vertical: 24.0,
+                  vertical: 48.0,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Logo
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primary.withOpacity(0.4),
+                            blurRadius: 20,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.music_note,
+                        color: AppTheme.primary,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     Text(
-                      'Create Account',
+                      'MoodCast',
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -189,15 +173,16 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Join us to unlock the full experience.',
+                      'Music for every mood',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 16,
+                        fontSize: 18,
                         color: AppTheme.textMuted,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
 
+                    // Login Form
                     Container(
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: Column(
@@ -221,21 +206,40 @@ class _SignupScreenState extends State<SignupScreen> {
                             decoration: InputDecoration(
                               hintText: 'Enter your email',
                               prefixIcon: const Icon(
-                                Icons.email,
+                                Icons.person,
                                 color: Colors.white54,
                               ),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Padding(
-                            padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
-                            child: Text(
-                              'Password',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 4.0,
+                              bottom: 8.0,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Password',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: _isLoading ? null : _resetPassword,
+                                  child: const Text(
+                                    'Forgot?',
+                                    style: TextStyle(
+                                      color: AppTheme.primary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           TextField(
@@ -263,50 +267,12 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          const Padding(
-                            padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
-                            child: Text(
-                              'Confirm Password',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          TextField(
-                            controller: _confirmPasswordController,
-                            obscureText: _obscureConfirmPassword,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: 'Rewrite password',
-                              prefixIcon: const Icon(
-                                Icons.lock,
-                                color: Colors.white54,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscureConfirmPassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: Colors.white54,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureConfirmPassword =
-                                        !_obscureConfirmPassword;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
                           SizedBox(
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _signUp,
+                              onPressed: _isLoading ? null : _login,
                               child: _isLoading
                                   ? const SizedBox(
                                       height: 24,
@@ -317,7 +283,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                       ),
                                     )
                                   : const Text(
-                                      'SIGN UP',
+                                      'LOG IN',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -358,7 +324,35 @@ class _SignupScreenState extends State<SignupScreen> {
                             width: double.infinity,
                             height: 56,
                             child: OutlinedButton(
-                              onPressed: _isLoading ? null : _googleSignIn,
+                              onPressed: _isLoading
+                                  ? null
+                                  : () async {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+                                      try {
+                                        final userCredential =
+                                            await _authService
+                                                .signInWithGoogle();
+                                        if (userCredential != null &&
+                                            context.mounted) {
+                                          Navigator.of(context).pushReplacement(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const MainScreen(),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        _showError(e.toString());
+                                      } finally {
+                                        if (context.mounted) {
+                                          setState(() {
+                                            _isLoading = false;
+                                          });
+                                        }
+                                      }
+                                    },
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: Colors.white.withOpacity(0.03),
                                 side: BorderSide(
@@ -409,7 +403,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Already have an account? ',
+                          'Don\'t have an account? ',
                           style: TextStyle(
                             color: AppTheme.textMuted,
                             fontSize: 14,
@@ -417,10 +411,14 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.of(context).pop();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const SignupScreen(),
+                              ),
+                            );
                           },
                           child: const Text(
-                            'Log In',
+                            'Sign up',
                             style: TextStyle(
                               color: AppTheme.primary,
                               fontSize: 14,

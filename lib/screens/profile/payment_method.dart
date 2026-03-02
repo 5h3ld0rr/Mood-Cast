@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme.dart';
+import '../../theme.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final String planTitle;

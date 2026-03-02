@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../theme.dart';
-import '../services/auth_service.dart';
-import 'login.dart';
+import '../../theme.dart';
+import '../../services/auth_service.dart';
+import '../auth/login.dart';
 import 'edit_profile.dart';
-import 'notification_list.dart';
+import 'notifications/notification_list.dart';
 import 'privacy_security.dart';
 import 'subscription.dart';
 import 'help_support.dart';

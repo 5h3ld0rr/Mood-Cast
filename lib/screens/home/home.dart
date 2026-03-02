@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../theme.dart';
-import '../services/auth_service.dart';
-import '../services/weather_service.dart';
-import 'player.dart';
+import '../../theme.dart';
+import '../../services/auth_service.dart';
+import '../../services/weather_service.dart';
+import '../player/player.dart';
 import 'recommendations.dart';
 
 class HomeScreen extends StatelessWidget {

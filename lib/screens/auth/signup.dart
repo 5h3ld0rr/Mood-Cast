@@ -1,99 +1,104 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
-import '../services/auth_service.dart';
-import 'main_screen.dart';
-import 'signup.dart';
+import '../../theme.dart';
+import '../main_screen.dart';
+import '../../services/auth_service.dart';
+import '../../utils/ui_utils.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  bool _isLoading = false;
+class _SignupScreenState extends State<SignupScreen> {
   final AuthService _authService = AuthService();
-  bool _obscurePassword = true;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.redAccent.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    UIUtils.showSnackBar(context, message, isError: true);
   }
 
-  void _showSuccess(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 4),
-      ),
-    );
-  }
-
-  Future<void> _login() async {
+  Future<void> _signUp() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
       _showError('Please fill in all fields');
       return;
     }
 
+    // Password validation
+    final passwordRegExp = RegExp(
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$',
+    );
+    if (!passwordRegExp.hasMatch(password)) {
+      _showError(
+        'Password must be at least 8 characters long, include uppercase, lowercase, and a symbol.',
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showError('Passwords do not match');
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      final userCredential = await _authService.signInWithEmail(
+      final userCredential = await _authService.signUpWithEmail(
         email,
         password,
       );
       if (userCredential != null && mounted) {
-        final user = userCredential.user;
-        if (user != null && !user.emailVerified) {
-          await _authService.signOut(); // Sign out if not verified
-          _showError('Please verify your email before logging in.');
-          return;
-        }
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
+        // Show success message/dialog
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppTheme.backgroundDark,
+            title: const Text(
+              'Verify your email',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              'A verification email has been sent to $email. Please check your inbox and verify your account before logging in.',
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(color: AppTheme.primary),
+                ),
+              ),
+            ],
+          ),
         );
+
+        // Sign out NOW, after they've seen the message
+        await _authService.signOut();
+
+        if (mounted) {
+          // Send them back to login screen
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
       _showError(e.toString().split(']').last.trim());
@@ -102,19 +107,17 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      _showError('Please enter your email to reset password');
-      return;
-    }
-
+  Future<void> _googleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      await _authService.sendPasswordResetEmail(email);
-      _showSuccess('Password reset email sent!');
+      final userCredential = await _authService.signInWithGoogle();
+      if (userCredential != null && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
     } catch (e) {
-      _showError(e.toString().split(']').last.trim());
+      _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -123,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDeep, // from tailwind HTML #020617
+      backgroundColor: AppTheme.backgroundDeep,
       body: Stack(
         children: [
           // Background Glows
@@ -145,60 +148,20 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppTheme.primary.withOpacity(0.1),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.7],
-                ),
-              ),
-            ),
-          ),
           // Content
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24.0,
-                  vertical: 48.0,
+                  vertical: 24.0,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Logo
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.4),
-                            blurRadius: 20,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.music_note,
-                        color: AppTheme.primary,
-                        size: 40,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
                     Text(
-                      'MoodCast',
+                      'Create Account',
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -208,16 +171,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Music for every mood',
+                      'Join us to unlock the full experience.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 18,
+                        fontSize: 16,
                         color: AppTheme.textMuted,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
 
-                    // Login Form
                     Container(
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: Column(
@@ -241,40 +203,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(
                               hintText: 'Enter your email',
                               prefixIcon: const Icon(
-                                Icons.person,
+                                Icons.email,
                                 color: Colors.white54,
                               ),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 4.0,
-                              bottom: 8.0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Password',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: _isLoading ? null : _resetPassword,
-                                  child: const Text(
-                                    'Forgot?',
-                                    style: TextStyle(
-                                      color: AppTheme.primary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          const Padding(
+                            padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
+                            child: Text(
+                              'Password',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                           TextField(
@@ -302,12 +245,50 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
+                            child: Text(
+                              'Confirm Password',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          TextField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'Rewrite password',
+                              prefixIcon: const Icon(
+                                Icons.lock,
+                                color: Colors.white54,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.white54,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
                           SizedBox(
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _login,
+                              onPressed: _isLoading ? null : _signUp,
                               child: _isLoading
                                   ? const SizedBox(
                                       height: 24,
@@ -318,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     )
                                   : const Text(
-                                      'LOG IN',
+                                      'SIGN UP',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -359,35 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             height: 56,
                             child: OutlinedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () async {
-                                      setState(() {
-                                        _isLoading = true;
-                                      });
-                                      try {
-                                        final userCredential =
-                                            await _authService
-                                                .signInWithGoogle();
-                                        if (userCredential != null &&
-                                            context.mounted) {
-                                          Navigator.of(context).pushReplacement(
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const MainScreen(),
-                                            ),
-                                          );
-                                        }
-                                      } catch (e) {
-                                        _showError(e.toString());
-                                      } finally {
-                                        if (context.mounted) {
-                                          setState(() {
-                                            _isLoading = false;
-                                          });
-                                        }
-                                      }
-                                    },
+                              onPressed: _isLoading ? null : _googleSignIn,
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: Colors.white.withOpacity(0.03),
                                 side: BorderSide(
@@ -438,7 +391,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Don\'t have an account? ',
+                          'Already have an account? ',
                           style: TextStyle(
                             color: AppTheme.textMuted,
                             fontSize: 14,
@@ -446,14 +399,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const SignupScreen(),
-                              ),
-                            );
+                            Navigator.of(context).pop();
                           },
                           child: const Text(
-                            'Sign up',
+                            'Log In',
                             style: TextStyle(
                               color: AppTheme.primary,
                               fontSize: 14,

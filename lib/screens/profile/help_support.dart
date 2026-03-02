@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../theme.dart';
+import '../../theme.dart';
+import '../../utils/ui_utils.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -114,13 +115,10 @@ class HelpSupportScreen extends StatelessWidget {
                               await launchUrl(emailLaunchUri);
                             } else {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Could not open email client.',
-                                    ),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
+                                UIUtils.showSnackBar(
+                                  context,
+                                  'Could not open email client.',
+                                  isError: true,
                                 );
                               }
                             }
@@ -132,14 +130,9 @@ class HelpSupportScreen extends StatelessWidget {
                           title: 'Live Chat',
                           subtitle: 'Available 9 AM - 5 PM EST',
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Connecting to Live Chat support agent... Please wait.',
-                                ),
-                                backgroundColor: AppTheme.primary,
-                                duration: Duration(seconds: 3),
-                              ),
+                            UIUtils.showSnackBar(
+                              context,
+                              'Connecting to Live Chat support agent... Please wait.',
                             );
                           },
                         ),

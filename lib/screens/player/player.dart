@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import '../theme.dart';
+import '../../theme.dart';
+import '../../utils/ui_utils.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -508,40 +509,14 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _showAddedToPlaylist() {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.playlist_add_check, color: Colors.white),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Added to your favorite playlist!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            IconButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                // Add undo logic here if needed
-              },
-              icon: const Icon(Icons.undo, color: Colors.white, size: 20),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
-        ),
-        backgroundColor: AppTheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 4),
-      ),
+    UIUtils.showSnackBar(
+      context,
+      'Added to your favorite playlist!',
+      icon: Icons.playlist_add_check,
+      actionIcon: Icons.rotate_left,
+      onActionPressed: () {
+        // Add undo logic here if needed
+      },
     );
   }
 
@@ -647,29 +622,10 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _setTimer(String label, int minutes) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.timer_outlined, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Sleep timer set for $label',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
-      ),
+    UIUtils.showSnackBar(
+      context,
+      'Sleep timer set for $label',
+      icon: Icons.timer_outlined,
     );
   }
 
@@ -877,25 +833,11 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.copy_rounded, color: Colors.white),
-            SizedBox(width: 12),
-            Text(
-              'Link copied to clipboard!',
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
-        backgroundColor: AppTheme.primary.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 2),
-      ),
+    UIUtils.showSnackBar(
+      context,
+      'Link copied to clipboard!',
+      icon: Icons.copy_rounded,
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -910,13 +852,10 @@ class _PlayerScreenState extends State<PlayerScreen>
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not open the app. Please make sure it is installed.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
+      UIUtils.showSnackBar(
+        context,
+        'Could not open the app. Please make sure it is installed.',
+        isError: true,
       );
     }
   }
@@ -931,8 +870,10 @@ class _PlayerScreenState extends State<PlayerScreen>
     } catch (e) {
       debugPrint('Error sharing: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open system share.')),
+      UIUtils.showSnackBar(
+        context,
+        'Could not open system share.',
+        isError: true,
       );
     }
   }

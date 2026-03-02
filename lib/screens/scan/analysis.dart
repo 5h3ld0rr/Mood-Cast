@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../theme.dart';
+import '../../theme.dart';
 
 class AnalysisScreen extends StatefulWidget {
   final bool isActive;
