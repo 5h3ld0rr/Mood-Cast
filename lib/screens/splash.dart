@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme.dart';
 import 'auth/login.dart';
 import 'main_screen.dart';
+import '../services/weather_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -33,26 +34,43 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    _animationController.forward().then((_) {
-      // Navigate to next screen after a short delay
-      Future.delayed(const Duration(milliseconds: 1200), () {
-        if (mounted) {
-          final User? user = FirebaseAuth.instance.currentUser;
-          final Widget nextScreen = user != null
-              ? const MainScreen()
-              : const LoginScreen();
+    _animationController.forward().then((_) async {
+      if (!mounted) return;
 
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              transitionDuration: const Duration(milliseconds: 800),
-              pageBuilder: (_, _, _) => nextScreen,
-              transitionsBuilder: (_, animation, _, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-            ),
-          );
+      final User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // If user is logged in, wait for essential data (Weather)
+        // We catch errors to ensure navigation happens even if weather fetch fails
+        try {
+          // Wait at least 500ms for visual smoothness if fetch is too fast
+          await Future.wait([
+            WeatherService().fetchWeather(),
+            Future.delayed(const Duration(milliseconds: 500)),
+          ]);
+        } catch (e) {
+          debugPrint("Splash: Weather fetch failed, proceeding anyway. $e");
         }
-      });
+      } else {
+        // If not logged in, add a small delay for branding before going to login
+        await Future.delayed(const Duration(milliseconds: 1000));
+      }
+
+      if (mounted) {
+        final Widget nextScreen = user != null
+            ? const MainScreen()
+            : const LoginScreen();
+
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 800),
+            pageBuilder: (_, _, _) => nextScreen,
+            transitionsBuilder: (_, animation, _, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        );
+      }
     });
   }
 

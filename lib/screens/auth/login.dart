@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../../utils/ui_utils.dart';
 import '../main_screen.dart';
 import 'signup.dart';
+import '../../services/weather_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -56,9 +57,19 @@ class _LoginScreenState extends State<LoginScreen> {
           _showError('Please verify your email before logging in.');
           return;
         }
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
+
+        // Wait for essential data before proceeding
+        try {
+          await WeatherService().fetchWeather();
+        } catch (e) {
+          debugPrint("Login: Weather fetch failed, proceeding anyway. $e");
+        }
+
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        }
       }
     } catch (e) {
       _showError(e.toString().split(']').last.trim());
@@ -336,12 +347,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 .signInWithGoogle();
                                         if (userCredential != null &&
                                             context.mounted) {
-                                          Navigator.of(context).pushReplacement(
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const MainScreen(),
-                                            ),
-                                          );
+                                          // Wait for essential data
+                                          try {
+                                            await WeatherService()
+                                                .fetchWeather();
+                                          } catch (e) {
+                                            debugPrint(
+                                              "Google Login: Weather fetch failed. $e",
+                                            );
+                                          }
+
+                                          if (context.mounted) {
+                                            Navigator.of(
+                                              context,
+                                            ).pushReplacement(
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const MainScreen(),
+                                              ),
+                                            );
+                                          }
                                         }
                                       } catch (e) {
                                         _showError(e.toString());

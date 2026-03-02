@@ -157,58 +157,28 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
 
-                        // Weather
-                        FutureBuilder<WeatherData>(
-                          future: WeatherService().fetchWeather(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Container(
-                                width: 40,
-                                height: 40,
-                                padding: const EdgeInsets.all(8),
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
+                        ValueListenableBuilder<WeatherData?>(
+                          valueListenable: WeatherService().currentWeather,
+                          builder: (context, weather, _) {
+                            if (weather == null) {
+                              return const SizedBox.shrink();
+                            }
+
+                            final condition = weather.condition;
+                            final temp = weather.temperature.toInt();
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildWeatherPill(
+                                  _getWeatherIcon(condition),
+                                  '$condition $temp°C',
                                 ),
-                              );
-                            }
-
-                            if (snapshot.hasError) {
-                              // If permission denied or other error, show a default state
-                              return _buildWeatherPill(
-                                Icons.cloud,
-                                'Cloudy 26°C',
-                              );
-                            }
-
-                            final weather = snapshot.data;
-                            final condition = weather?.condition ?? 'Cloudy';
-                            final temp = weather?.temperature.toInt() ?? 26;
-
-                            IconData weatherIcon;
-                            switch (condition.toLowerCase()) {
-                              case 'clear':
-                                weatherIcon = Icons.wb_sunny;
-                                break;
-                              case 'clouds':
-                                weatherIcon = Icons.cloud;
-                                break;
-                              case 'rain':
-                              case 'drizzle':
-                              case 'rainy':
-                                weatherIcon = Icons.cloudy_snowing;
-                                break;
-                              default:
-                                weatherIcon = Icons.cloud;
-                            }
-
-                            return _buildWeatherPill(
-                              weatherIcon,
-                              '$condition $temp°C',
+                                const SizedBox(height: 24),
+                              ],
                             );
                           },
                         ),
-                        const SizedBox(height: 24),
 
                         // Current Mood Card
                         Container(
@@ -335,6 +305,21 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _getWeatherIcon(String condition) {
+    switch (condition.toLowerCase()) {
+      case 'clear':
+        return Icons.wb_sunny;
+      case 'clouds':
+        return Icons.cloud;
+      case 'rain':
+      case 'drizzle':
+      case 'rainy':
+        return Icons.cloudy_snowing;
+      default:
+        return Icons.cloud;
+    }
   }
 
   Widget _buildWeatherPill(IconData icon, String text) {

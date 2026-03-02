@@ -5,6 +5,7 @@ import 'theme.dart';
 import 'screens/splash.dart';
 
 import 'services/notification_service.dart';
+import 'services/weather_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -17,6 +18,12 @@ void main() async {
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
+
+  // Pre-fetch weather in background
+  WeatherService().fetchWeather().catchError((e) {
+    debugPrint("Weather fetch failed: $e");
+    return WeatherData(condition: 'Unknown', temperature: 0, city: 'Unknown');
+  });
 
   runApp(const MoodCastApp());
 }
