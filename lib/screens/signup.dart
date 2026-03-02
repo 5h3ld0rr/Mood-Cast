@@ -2,21 +2,138 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'main_screen.dart';
 
-class SignupScreen extends StatelessWidget {
+import '../services/auth_service.dart';
+
+class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
+
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final AuthService _authService = AuthService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _signUp() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please fill in all fields');
+      return;
+    }
+
+    // Password validation
+    final passwordRegExp = RegExp(
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$',
+    );
+    if (!passwordRegExp.hasMatch(password)) {
+      _showError(
+        'Password must be at least 8 characters long, include uppercase, lowercase, and a symbol.',
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showError('Passwords do not match');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final userCredential = await _authService.signUpWithEmail(
+        email,
+        password,
+      );
+      if (userCredential != null && mounted) {
+        // Show success message/dialog
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppTheme.backgroundDark,
+            title: const Text(
+              'Verify your email',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              'A verification email has been sent to $email. Please check your inbox and verify your account before logging in.',
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(color: AppTheme.primary),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        // Sign out NOW, after they've seen the message
+        await _authService.signOut();
+
+        if (mounted) {
+          // Send them back to login screen
+          Navigator.of(context).pop();
+        }
+      }
+    } catch (e) {
+      _showError(e.toString().split(']').last.trim());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final userCredential = await _authService.signInWithGoogle();
+      if (userCredential != null && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDeep, // from tailwind HTML #020617
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+      backgroundColor: AppTheme.backgroundDeep,
       body: Stack(
         children: [
           // Background Glows
@@ -87,6 +204,8 @@ class SignupScreen extends StatelessWidget {
                             ),
                           ),
                           TextField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Enter your email',
@@ -109,7 +228,8 @@ class SignupScreen extends StatelessWidget {
                             ),
                           ),
                           TextField(
-                            obscureText: true,
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Enter your password',
@@ -117,9 +237,18 @@ class SignupScreen extends StatelessWidget {
                                 Icons.lock,
                                 color: Colors.white54,
                               ),
-                              suffixIcon: const Icon(
-                                Icons.visibility,
-                                color: Colors.white54,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.white54,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
                               ),
                             ),
                           ),
@@ -136,7 +265,8 @@ class SignupScreen extends StatelessWidget {
                             ),
                           ),
                           TextField(
-                            obscureText: true,
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Rewrite password',
@@ -144,9 +274,19 @@ class SignupScreen extends StatelessWidget {
                                 Icons.lock,
                                 color: Colors.white54,
                               ),
-                              suffixIcon: const Icon(
-                                Icons.visibility,
-                                color: Colors.white54,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.white54,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
+                                  });
+                                },
                               ),
                             ),
                           ),
@@ -155,20 +295,23 @@ class SignupScreen extends StatelessWidget {
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (context) => const MainScreen(),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'SIGN UP',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              onPressed: _isLoading ? null : _signUp,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'SIGN UP',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -204,7 +347,7 @@ class SignupScreen extends StatelessWidget {
                             width: double.infinity,
                             height: 56,
                             child: OutlinedButton(
-                              onPressed: () {},
+                              onPressed: _isLoading ? null : _googleSignIn,
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: Colors.white.withOpacity(0.03),
                                 side: BorderSide(
@@ -214,25 +357,35 @@ class SignupScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.g_mobiledata,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'CONTINUE WITH GOOGLE',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.g_mobiledata,
+                                          color: Colors.white,
+                                          size: 32,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'CONTINUE WITH GOOGLE',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ],

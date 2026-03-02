@@ -301,7 +301,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         ),
                                       ),
                                       Text(
-                                        'MoodCast AI • 432Hz Ambient',
+                                        'MoodCast • 432Hz Ambient',
                                         style: TextStyle(
                                           color: AppTheme.textMuted,
                                           fontSize: 11,

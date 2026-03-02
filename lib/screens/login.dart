@@ -14,6 +14,89 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   final AuthService _authService = AuthService();
+  bool _obscurePassword = true;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please fill in all fields');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final userCredential = await _authService.signInWithEmail(
+        email,
+        password,
+      );
+      if (userCredential != null && mounted) {
+        final user = userCredential.user;
+        if (user != null && !user.emailVerified) {
+          await _authService.signOut(); // Sign out if not verified
+          _showError('Please verify your email before logging in.');
+          return;
+        }
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
+    } catch (e) {
+      _showError(e.toString().split(']').last.trim());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _showError('Please enter your email to reset password');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      _showSuccess('Password reset email sent!');
+    } catch (e) {
+      _showError(e.toString().split(']').last.trim());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'MoodCast AI',
+                      'MoodCast',
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -121,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Padding(
                             padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
                             child: Text(
-                              'Email / Username',
+                              'Email',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
@@ -130,6 +213,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           TextField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Enter your email',
@@ -157,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 GestureDetector(
-                                  onTap: () {},
+                                  onTap: _isLoading ? null : _resetPassword,
                                   child: const Text(
                                     'Forgot?',
                                     style: TextStyle(
@@ -171,7 +256,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           TextField(
-                            obscureText: true,
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Enter your password',
@@ -179,9 +265,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Icons.lock,
                                 color: Colors.white54,
                               ),
-                              suffixIcon: const Icon(
-                                Icons.visibility,
-                                color: Colors.white54,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.white54,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
                               ),
                             ),
                           ),
@@ -190,23 +285,23 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () {
-                                      Navigator.of(context).pushReplacement(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const MainScreen(),
-                                        ),
-                                      );
-                                    },
-                              child: const Text(
-                                'LOG IN',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              onPressed: _isLoading ? null : _login,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'LOG IN',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 24),

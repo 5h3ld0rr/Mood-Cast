@@ -31,6 +31,67 @@ class AuthService {
     }
   }
 
+  // Email Sign In
+  Future<UserCredential?> signInWithEmail(String email, String password) async {
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      print("Email Sign-In Error: $e");
+      rethrow;
+    }
+  }
+
+  // Email Sign Up
+  Future<UserCredential?> signUpWithEmail(String email, String password) async {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      // Send verification email automatically
+      if (credential.user != null) {
+        try {
+          await credential.user!.reload(); // Refresh state
+          await credential.user!.sendEmailVerification();
+          print("Verification email requested for ${credential.user!.email}");
+        } catch (vError) {
+          print("Warning: Email verification failed to send: $vError");
+          // We don't want to fail the whole signup if just the email fails,
+          // but we should probably let the user know.
+          // For now, rethrow so the UI catches it.
+          rethrow;
+        }
+      }
+      return credential;
+    } catch (e) {
+      print("Email Sign-Up Error: $e");
+      rethrow;
+    }
+  }
+
+  // Send Email Verification
+  Future<void> sendEmailVerification() async {
+    try {
+      await _auth.currentUser?.sendEmailVerification();
+    } catch (e) {
+      print("Email Verification Error: $e");
+      rethrow;
+    }
+  }
+
+  // Password Reset
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      print("Password Reset Error: $e");
+      rethrow;
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     try {
@@ -58,6 +119,9 @@ class AuthService {
   // Get current user
   User? get currentUser => _auth.currentUser;
 
-  // Stream of auth changes
+  // Stream of user changes (emits on profile updates)
+  Stream<User?> get userChanges => _auth.userChanges();
+
+  // Stream of auth changes (emits on sign in/out)
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 }

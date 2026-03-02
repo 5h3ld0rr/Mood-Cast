@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme.dart';
 import '../services/auth_service.dart';
 import 'player.dart';
@@ -96,10 +97,11 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        StreamBuilder(
-                          stream: AuthService().authStateChanges,
+                        StreamBuilder<User?>(
+                          stream: AuthService().userChanges,
                           builder: (context, snapshot) {
-                            final user = AuthService().currentUser;
+                            final user =
+                                snapshot.data ?? AuthService().currentUser;
                             final name =
                                 user?.displayName?.split(' ').first ?? 'User';
 
@@ -112,13 +114,18 @@ class HomeScreen extends StatelessWidget {
                               timeGreeting = 'Good Evening';
                             }
 
-                            return Text(
-                              '$timeGreeting, $name',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$timeGreeting, $name',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             );
                           },
                         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme.dart';
 import '../services/auth_service.dart';
 import 'login.dart';
@@ -82,9 +83,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Builder(
-                          builder: (context) {
-                            final user = _authService.currentUser;
+                        StreamBuilder<User?>(
+                          stream: _authService.userChanges,
+                          builder: (context, snapshot) {
+                            final user =
+                                snapshot.data ?? _authService.currentUser;
                             final photoUrl = user?.photoURL;
                             final displayName = user?.displayName ?? 'User';
                             final email = user?.email ?? 'No email';
@@ -116,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               photoUrl.isNotEmpty
                                           ? NetworkImage(photoUrl)
                                           : const NetworkImage(
-                                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop',
+                                              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmn4pWrDE1f07NiO_-ALAPW18mUchf6vj9oA&s',
                                             ),
                                       fit: BoxFit.cover,
                                     ),
