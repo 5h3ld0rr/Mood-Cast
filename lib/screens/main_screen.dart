@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'home/home.dart';
 import 'scan/analysis.dart';
-import 'insights/insights.dart';
 import 'profile/profile.dart';
 import 'search/search.dart';
 import 'library/library.dart';
@@ -25,7 +24,6 @@ class _MainScreenState extends State<MainScreen> {
     _isAnalysisActivated
         ? AnalysisScreen(isActive: _currentIndex == 3)
         : const SizedBox.shrink(),
-    const InsightsScreen(),
     const ProfileScreen(),
   ];
 
@@ -93,13 +91,6 @@ class _MainScreenState extends State<MainScreen> {
                   child: Icon(Icons.document_scanner, size: 28),
                 ),
                 label: 'Scan',
-              ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.insights, size: 28),
-                ),
-                label: 'Insights',
               ),
               BottomNavigationBarItem(
                 icon: Padding(

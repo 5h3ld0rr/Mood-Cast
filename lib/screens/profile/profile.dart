@@ -4,10 +4,10 @@ import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../auth/login.dart';
 import 'edit_profile.dart';
-import 'notifications/notification_list.dart';
 import 'privacy_security.dart';
 import 'subscription.dart';
 import 'help_support.dart';
+import '../insights/insights.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -198,14 +198,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               _buildDivider(),
                               _buildMenuItem(
-                                icon: Icons.notifications_none,
-                                title: 'Notifications',
+                                icon: Icons.insights,
+                                title: 'Trends & Insights',
                                 onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          const NotificationListScreen(),
+                                          const InsightsScreen(),
                                     ),
                                   );
                                 },

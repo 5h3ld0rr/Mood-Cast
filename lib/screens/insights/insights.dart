@@ -101,19 +101,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.trending_up,
-                                color: AppTheme.primary,
+                            IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back_ios_new,
+                                color: Colors.white,
                                 size: 24,
                               ),
+                              onPressed: () => Navigator.pop(context),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 4),
                             const Text(
                               'Trends & Insights',
                               style: TextStyle(

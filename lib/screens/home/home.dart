@@ -4,6 +4,7 @@ import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/weather_service.dart';
 import '../player.dart';
+import '../profile/notifications/notification_list.dart';
 import 'recommendations.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -84,7 +85,22 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.notifications_none,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const NotificationListScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
