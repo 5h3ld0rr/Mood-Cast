@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'home/home.dart';
 import 'scan/analysis.dart';
-import 'player/player.dart';
+import 'player.dart';
 import 'insights/insights.dart';
 import 'profile/profile.dart';
 

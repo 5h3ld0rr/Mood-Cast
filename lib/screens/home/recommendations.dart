@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
-import 'player.dart';
+import '../../theme.dart';
+import '../player.dart';
 
 class RecommendationsScreen extends StatelessWidget {
   const RecommendationsScreen({super.key});
