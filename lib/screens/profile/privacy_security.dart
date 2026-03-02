@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../theme.dart';
 
 class PrivacySecurityScreen extends StatefulWidget {
   const PrivacySecurityScreen({super.key});

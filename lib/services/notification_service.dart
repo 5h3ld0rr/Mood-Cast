@@ -5,7 +5,7 @@ import 'dart:io';
 import 'dart:convert';
 import '../main.dart';
 import '../theme.dart';
-import '../screens/notification_details.dart';
+import '../screens/profile/notifications/notification_details.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
-import '../services/auth_service.dart';
+import '../../theme.dart';
+import '../../services/auth_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
