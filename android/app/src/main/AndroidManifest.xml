@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
     <application
-        android:label="mood_cast_2_0"
+        android:label="MoodCast"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
