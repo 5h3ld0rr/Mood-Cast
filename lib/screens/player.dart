@@ -360,16 +360,19 @@ class _PlayerScreenState extends State<PlayerScreen>
                             ),
                             child: Row(
                               children: [
-                                Container(
-                                  width: 56,
-                                  height: 56,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[700],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.music_note,
-                                    color: Colors.white54,
+                                Hero(
+                                  tag: 'player_art',
+                                  child: Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[700],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.music_note,
+                                      color: Colors.white54,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 16),

@@ -11,40 +11,108 @@ class MiniPlayer extends StatelessWidget {
     return ValueListenableBuilder<SongInfo?>(
       valueListenable: PlayerService().currentSong,
       builder: (context, song, _) {
-        if (song == null) return const SizedBox.shrink();
-
-        return GestureDetector(
-          onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const PlayerScreen()));
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          transitionBuilder: (child, animation) {
+            return SlideTransition(
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      // Song Cover
-                      Container(
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+          child: song == null
+              ? const SizedBox.shrink()
+              : KeyedSubtree(
+                  key: ValueKey(song.title),
+                  child: _MiniPlayerContent(song: song),
+                ),
+        );
+      },
+    );
+  }
+}
+
+class _MiniPlayerContent extends StatefulWidget {
+  final SongInfo song;
+  const _MiniPlayerContent({required this.song});
+
+  @override
+  State<_MiniPlayerContent> createState() => _MiniPlayerContentState();
+}
+
+class _MiniPlayerContentState extends State<_MiniPlayerContent> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: () {
+        Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const PlayerScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(0, 1),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                    child: child,
+                  );
+                },
+          ),
+        );
+      },
+      child: AnimatedScale(
+        scale: _isPressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    // Song Cover
+                    Hero(
+                      tag: 'player_art',
+                      child: Container(
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
@@ -57,91 +125,105 @@ class MiniPlayer extends StatelessWidget {
                           size: 24,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      // Song Info
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              song.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(width: 12),
+                    // Song Info
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.song.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Text(
-                              song.artist,
-                              style: const TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            widget.song.artist,
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 12,
                             ),
-                          ],
-                        ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      // Controls
-                      ValueListenableBuilder<bool>(
-                        valueListenable: PlayerService().isLiked,
-                        builder: (context, liked, _) {
-                          return IconButton(
-                            icon: Icon(
+                    ),
+                    // Controls
+                    ValueListenableBuilder<bool>(
+                      valueListenable: PlayerService().isLiked,
+                      builder: (context, liked, _) {
+                        return IconButton(
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder: (child, animation) {
+                              return ScaleTransition(
+                                scale: animation,
+                                child: child,
+                              );
+                            },
+                            child: Icon(
                               liked ? Icons.favorite : Icons.favorite_border,
+                              key: ValueKey<bool>(liked),
                               color: liked ? AppTheme.primary : Colors.white,
                               size: 24,
                             ),
-                            onPressed: () {
-                              PlayerService().toggleLiked();
-                            },
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 4),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: PlayerService().isPlaying,
-                        builder: (context, playing, _) {
-                          return IconButton(
-                            icon: Icon(
+                          ),
+                          onPressed: () {
+                            PlayerService().toggleLiked();
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 4),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: PlayerService().isPlaying,
+                      builder: (context, playing, _) {
+                        return IconButton(
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
                               playing ? Icons.pause : Icons.play_arrow,
+                              key: ValueKey<bool>(playing),
                               color: Colors.white,
                               size: 32,
                             ),
-                            onPressed: () {
-                              PlayerService().togglePlay();
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                          ),
+                          onPressed: () {
+                            PlayerService().togglePlay();
+                          },
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                // Progress Bar (Duration Indicator)
-                ValueListenableBuilder<double>(
-                  valueListenable: PlayerService().progress,
-                  builder: (context, progress, _) {
-                    return SizedBox(
-                      height: 2,
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.white.withOpacity(0.1),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppTheme.primary,
-                        ),
+              ),
+              // Progress Bar
+              ValueListenableBuilder<double>(
+                valueListenable: PlayerService().progress,
+                builder: (context, progress, _) {
+                  return SizedBox(
+                    height: 2,
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: Colors.white.withOpacity(0.1),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppTheme.primary,
                       ),
-                    );
-                  },
-                ),
-              ],
-            ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
