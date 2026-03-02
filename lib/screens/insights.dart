@@ -1,11 +1,56 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import 'recent_sessions.dart';
 
-class InsightsScreen extends StatelessWidget {
+class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
 
   @override
+  State<InsightsScreen> createState() => _InsightsScreenState();
+}
+
+class _InsightsScreenState extends State<InsightsScreen> {
+  String _selectedTab = 'Week';
+
+  Map<String, dynamic> _getTabData() {
+    switch (_selectedTab) {
+      case 'Day':
+        return {
+          'positive': '85%',
+          'calm': '30%',
+          'joy': '55%',
+          'focus': '10%',
+          'other': '5%',
+          'avg': '7.2',
+          'bars': [0.6, 0.7, 0.8, 0.6, 0.7, 0.9, 0.8],
+        };
+      case 'Month':
+        return {
+          'positive': '68%',
+          'calm': '50%',
+          'joy': '18%',
+          'focus': '20%',
+          'other': '12%',
+          'avg': '6.4',
+          'bars': [0.5, 0.6, 0.5, 0.7, 0.6, 0.5, 0.6],
+        };
+      case 'Week':
+      default:
+        return {
+          'positive': '72%',
+          'calm': '45%',
+          'joy': '27%',
+          'focus': '18%',
+          'other': '10%',
+          'avg': '6.8',
+          'bars': [0.4, 0.65, 0.85, 0.55, 0.45, 0.75, 0.5],
+        };
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final tabData = _getTabData();
     return Scaffold(
       backgroundColor: const Color(0xFF080C14),
       body: Stack(
@@ -103,9 +148,24 @@ class InsightsScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Expanded(child: _buildTab('Day', false)),
-                      Expanded(child: _buildTab('Week', true)),
-                      Expanded(child: _buildTab('Month', false)),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedTab = 'Day'),
+                          child: _buildTab('Day', _selectedTab == 'Day'),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedTab = 'Week'),
+                          child: _buildTab('Week', _selectedTab == 'Week'),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedTab = 'Month'),
+                          child: _buildTab('Month', _selectedTab == 'Month'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -152,16 +212,16 @@ class InsightsScreen extends StatelessWidget {
                                 child: Center(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
+                                    children: [
                                       Text(
-                                        '72%',
-                                        style: TextStyle(
+                                        tabData['positive'],
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      Text(
+                                      const Text(
                                         'POSITIVE',
                                         style: TextStyle(
                                           color: AppTheme.textMuted,
@@ -182,13 +242,13 @@ class InsightsScreen extends StatelessWidget {
                                       children: [
                                         _buildLegendItem(
                                           'Calm',
-                                          '45%',
+                                          tabData['calm'],
                                           AppTheme.primary,
                                         ),
                                         const SizedBox(height: 12),
                                         _buildLegendItem(
                                           'Joy',
-                                          '27%',
+                                          tabData['joy'],
                                           Colors.tealAccent,
                                         ),
                                       ],
@@ -200,13 +260,13 @@ class InsightsScreen extends StatelessWidget {
                                       children: [
                                         _buildLegendItem(
                                           'Focus',
-                                          '18%',
+                                          tabData['focus'],
                                           Colors.amberAccent,
                                         ),
                                         const SizedBox(height: 12),
                                         _buildLegendItem(
                                           'Other',
-                                          '10%',
+                                          tabData['other'],
                                           Colors.grey,
                                         ),
                                       ],
@@ -223,8 +283,8 @@ class InsightsScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.end,
-                          children: const [
-                            Text(
+                          children: [
+                            const Text(
                               'Emotional Intensity',
                               style: TextStyle(
                                 color: Colors.white,
@@ -233,8 +293,8 @@ class InsightsScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Avg: 6.8',
-                              style: TextStyle(
+                              'Avg: ${tabData['avg']}',
+                              style: const TextStyle(
                                 color: AppTheme.primary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -256,15 +316,9 @@ class InsightsScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              _buildBar(0.4),
-                              _buildBar(0.65),
-                              _buildBar(0.85),
-                              _buildBar(0.55),
-                              _buildBar(0.45),
-                              _buildBar(0.75),
-                              _buildBar(0.5),
-                            ],
+                            children: (tabData['bars'] as List<double>)
+                                .map((bar) => _buildBar(bar))
+                                .toList(),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -282,7 +336,15 @@ class InsightsScreen extends StatelessWidget {
                               ),
                             ),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RecentSessionsScreen(),
+                                  ),
+                                );
+                              },
                               child: const Text(
                                 'See all',
                                 style: TextStyle(
