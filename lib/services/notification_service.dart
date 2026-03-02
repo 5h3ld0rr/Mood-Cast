@@ -30,6 +30,19 @@ class NotificationService {
     importance: Importance.max,
   );
 
+  void markAsRead(String id) {
+    final index = _history.indexWhere((n) => n['id'] == id);
+    if (index != -1) {
+      _history[index]['isRead'] = true;
+    }
+  }
+
+  void markAllAsRead() {
+    for (var n in _history) {
+      n['isRead'] = true;
+    }
+  }
+
   Future<void> initialize() async {
     // Request permission (Required for iOS and Android 13+)
     NotificationSettings settings = await _fcm.requestPermission(
@@ -104,6 +117,7 @@ class NotificationService {
               title: data['title'] ?? 'Notification',
               body: data['body'] ?? '',
               payload: data['data']?.toString(),
+              timestamp: DateTime.now(),
             ),
           ),
         );
@@ -121,9 +135,11 @@ class NotificationService {
   }) async {
     // Add to history
     Map<String, dynamic> notificationData = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
       'title': title,
       'body': body,
-      'timestamp': DateTime.now().toString(),
+      'timestamp': DateTime.now(),
+      'isRead': false,
     };
 
     if (payload != null) {
@@ -135,6 +151,9 @@ class NotificationService {
       }
     }
     _history.add(notificationData);
+
+    // Notify listeners if you have any, or simple setState in screens
+    // For now we just update the list.
 
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
