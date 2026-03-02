@@ -38,6 +38,14 @@ class MoodCastApp extends StatelessWidget {
       title: 'MoodCast',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
+      builder: (context, child) {
+        return ScrollConfiguration(
+          behavior: const ScrollBehavior().copyWith(
+            physics: const BouncingScrollPhysics(),
+          ),
+          child: child!,
+        );
+      },
       home: const SplashScreen(),
     );
   }
