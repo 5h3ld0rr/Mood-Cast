@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../theme.dart';
 import '../../../services/notification_service.dart';
+import '../../../utils/ui_utils.dart';
 import 'notification_details.dart';
 
 class NotificationListScreen extends StatefulWidget {
@@ -51,13 +52,17 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
               onSelected: (value) {
-                setState(() {
-                  if (value == 'clear') {
+                if (value == 'clear') {
+                  setState(() {
                     NotificationService().clearHistory();
-                  } else if (value == 'read_all') {
+                  });
+                  UIUtils.showSnackBar(context, 'Notification history cleared');
+                } else if (value == 'read_all') {
+                  setState(() {
                     NotificationService().markAllAsRead();
-                  }
-                });
+                  });
+                  UIUtils.showSnackBar(context, 'All marked as read');
+                }
               },
               itemBuilder: (context) => [
                 const PopupMenuItem(

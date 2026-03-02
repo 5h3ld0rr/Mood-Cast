@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../main_screen.dart';
-
 import '../../services/auth_service.dart';
+import '../../utils/ui_utils.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -30,25 +30,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.redAccent.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    UIUtils.showSnackBar(context, message, isError: true);
   }
 
   Future<void> _signUp() async {

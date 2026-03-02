@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
+import '../../services/auth_service.dart';
+import '../../utils/ui_utils.dart';
 
 class PrivacySecurityScreen extends StatefulWidget {
   const PrivacySecurityScreen({super.key});
@@ -11,15 +13,10 @@ class PrivacySecurityScreen extends StatefulWidget {
 class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   bool _dataCollection = true;
   bool _personalizedAds = false;
+  final AuthService _authService = AuthService();
 
   void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.redAccent : AppTheme.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    UIUtils.showSnackBar(context, message, isError: isError);
   }
 
   @override
@@ -49,8 +46,21 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
               _buildSettingsTile(
                 icon: Icons.lock_outline,
                 title: 'Change Password',
-                onTap: () {
-                  _showSnackBar('Password reset link sent to your email.');
+                onTap: () async {
+                  final user = _authService.currentUser;
+                  if (user != null && user.email != null) {
+                    try {
+                      await _authService.sendPasswordResetEmail(user.email!);
+                      _showSnackBar('Password reset link sent to your email.');
+                    } catch (e) {
+                      _showSnackBar(
+                        'Failed to send reset link: ${e.toString()}',
+                        isError: true,
+                      );
+                    }
+                  } else {
+                    _showSnackBar('User email not found.', isError: true);
+                  }
                 },
               ),
             ]),
