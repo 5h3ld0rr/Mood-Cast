@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'theme.dart';
 import 'screens/splash.dart';
 
@@ -13,6 +14,9 @@ void main() async {
 
   // Initialize Notifications
   await NotificationService().initialize();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
 
   runApp(const MoodCastApp());
 }

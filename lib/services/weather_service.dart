@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WeatherData {
   final String condition;
@@ -24,8 +24,10 @@ class WeatherData {
 }
 
 class WeatherService {
-  // Replace this with your actual OpenWeatherMap API Key
-  static const String _apiKey = 'YOUR_API_KEY_HERE';
+  static final String _apiKey = dotenv.get(
+    'OPEN_WEATHER_API_KEY',
+    fallback: '',
+  );
 
   Future<WeatherData> fetchWeather() async {
     bool serviceEnabled;
@@ -54,8 +56,8 @@ class WeatherService {
     // Get current position
     Position position = await Geolocator.getCurrentPosition();
 
-    // If API Key is still default, return mock data but keep the location logic
-    if (_apiKey == 'YOUR_API_KEY_HERE') {
+    // If API Key is not set, return mock data but keep the location logic
+    if (_apiKey.isEmpty) {
       return WeatherData(
         condition: 'Rainy',
         temperature: 24.0,
