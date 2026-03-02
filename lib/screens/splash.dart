@@ -13,10 +13,12 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
+  late AnimationController _infiniteController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -33,6 +35,17 @@ class _SplashScreenState extends State<SplashScreen>
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
+
+    _infiniteController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _infiniteController, curve: Curves.easeInOutSine),
+    );
+
+    _infiniteController.repeat(reverse: true);
 
     _animationController.forward().then((_) async {
       if (!mounted) return;
@@ -61,15 +74,38 @@ class _SplashScreenState extends State<SplashScreen>
             ? const MainScreen()
             : const LoginScreen();
 
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 800),
-            pageBuilder: (_, _, _) => nextScreen,
-            transitionsBuilder: (_, animation, _, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-          ),
-        );
+        // Fade out splash elements first to create a clear "end" to the splash state
+        await _animationController.reverse();
+
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 800),
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  nextScreen,
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    final curve = Curves.easeInOutQuart;
+                    final fadeAnimation = CurvedAnimation(
+                      parent: animation,
+                      curve: curve,
+                    );
+                    final offsetAnimation = Tween<Offset>(
+                      begin: const Offset(0.0, 0.05),
+                      end: Offset.zero,
+                    ).animate(fadeAnimation);
+
+                    return FadeTransition(
+                      opacity: fadeAnimation,
+                      child: SlideTransition(
+                        position: offsetAnimation,
+                        child: child,
+                      ),
+                    );
+                  },
+            ),
+          );
+        }
       }
     });
   }
@@ -77,6 +113,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _infiniteController.dispose();
     super.dispose();
   }
 
@@ -130,29 +167,46 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // App Logo with glowing shadow
-                        Container(
-                          padding: const EdgeInsets.all(28),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(36),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.4),
-                                blurRadius: 60,
-                                spreadRadius: -10,
+                        // App Logo with glowing shadow and infinite pulse
+                        AnimatedBuilder(
+                          animation: _pulseAnimation,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _pulseAnimation.value,
+                              child: Container(
+                                padding: const EdgeInsets.all(28),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(36),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primary.withValues(
+                                        alpha:
+                                            0.4 *
+                                            _pulseAnimation
+                                                .value, // Pulsing glow intensity
+                                      ),
+                                      blurRadius: 60 * _pulseAnimation.value,
+                                      spreadRadius: -10,
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.music_note,
+                                  color: AppTheme.primary,
+                                  size: 80,
+                                ),
                               ),
-                            ],
-                            border: Border.all(
-                              color: AppTheme.primary.withValues(alpha: 0.3),
-                              width: 2,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.music_note,
-                            color: AppTheme.primary,
-                            size: 80,
-                          ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 48),
                         // App Name
