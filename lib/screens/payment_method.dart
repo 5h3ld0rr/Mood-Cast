@@ -55,7 +55,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
+        backgroundColor: AppTheme.backgroundDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Icon(
           Icons.check_circle_outline,

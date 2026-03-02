@@ -139,7 +139,7 @@ class _SplashScreenState extends State<SplashScreen>
                         const SizedBox(height: 48),
                         // App Name
                         const Text(
-                          'MoodCast AI',
+                          'MoodCast',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 40,

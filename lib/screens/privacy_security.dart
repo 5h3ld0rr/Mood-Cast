@@ -191,7 +191,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBg,
+        backgroundColor: AppTheme.backgroundDark,
         title: const Text(
           'Delete Account',
           style: TextStyle(color: Colors.white),
