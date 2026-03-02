@@ -7,7 +7,7 @@ import 'edit_profile.dart';
 import 'privacy_security.dart';
 import 'subscription.dart';
 import 'help_support.dart';
-import '../insights/insights.dart';
+import 'insights/insights.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

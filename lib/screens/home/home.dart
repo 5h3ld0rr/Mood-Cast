@@ -4,7 +4,7 @@ import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/weather_service.dart';
 import '../../services/player_service.dart';
-import '../profile/notifications/notification_list.dart';
+import '../notifications/notification_list.dart';
 import 'recommendations.dart';
 
 class HomeScreen extends StatelessWidget {

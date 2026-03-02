@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../theme.dart';
-import '../../../services/notification_service.dart';
-import '../../../utils/ui_utils.dart';
+import '../../theme.dart';
+import '../../services/notification_service.dart';
+import '../../utils/ui_utils.dart';
 import 'notification_details.dart';
 
 class NotificationListScreen extends StatefulWidget {

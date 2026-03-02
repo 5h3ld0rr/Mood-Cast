@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme.dart';
+import '../../../theme.dart';
 import 'recent_sessions.dart';
 
 class InsightsScreen extends StatefulWidget {
