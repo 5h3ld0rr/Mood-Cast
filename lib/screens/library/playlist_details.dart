@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
+import '../../utils/ui_utils.dart';
 
 class PlaylistDetailsScreen extends StatefulWidget {
   final String playlistName;
@@ -295,11 +296,10 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
                     ),
                     onPressed: () {
                       widget.onSongAdded(song);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${song['title']} added to playlist'),
-                          duration: const Duration(seconds: 1),
-                        ),
+                      UIUtils.showSnackBar(
+                        context,
+                        '${song['title']} added to playlist',
+                        duration: const Duration(seconds: 1),
                       );
                     },
                   ),
