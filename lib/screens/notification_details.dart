@@ -18,6 +18,26 @@ class NotificationDetailsScreen extends StatelessWidget {
     required this.timestamp,
   });
 
+  IconData _getIconForTitle(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('music') || t.contains('song') || t.contains('playlist')) {
+      return Icons.headset;
+    } else if (t.contains('account') ||
+        t.contains('profile') ||
+        t.contains('verify')) {
+      return Icons.person;
+    } else if (t.contains('subscription') ||
+        t.contains('plan') ||
+        t.contains('payment')) {
+      return Icons.star_rounded;
+    } else if (t.contains('analysis') ||
+        t.contains('mood') ||
+        t.contains('scan')) {
+      return Icons.psychology;
+    }
+    return Icons.notifications_active;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,8 +99,8 @@ class NotificationDetailsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.notifications_active,
+                      child: Icon(
+                        _getIconForTitle(title),
                         color: AppTheme.primary,
                         size: 48,
                       ),

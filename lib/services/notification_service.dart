@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:io';
 import 'dart:convert';
 import '../main.dart';
+import '../theme.dart';
 import '../screens/notification_details.dart';
 
 class NotificationService {
@@ -164,7 +165,7 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
           showWhen: true,
-          color: const Color(0xFF1DB954), // Spotify green
+          color: AppTheme.primary, // App brand color
           icon: '@mipmap/ic_launcher',
           styleInformation: BigTextStyleInformation(
             body,

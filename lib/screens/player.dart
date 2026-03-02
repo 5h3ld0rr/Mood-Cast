@@ -508,17 +508,39 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _showAddedToPlaylist() {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Added to your favorite playlist!'),
+        content: Row(
+          children: [
+            const Icon(Icons.playlist_add_check, color: Colors.white),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Added to your favorite playlist!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                // Add undo logic here if needed
+              },
+              icon: const Icon(Icons.undo, color: Colors.white, size: 20),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
         backgroundColor: AppTheme.primary,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        action: SnackBarAction(
-          label: 'UNDO',
-          textColor: Colors.white,
-          onPressed: () {},
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -628,9 +650,25 @@ class _PlayerScreenState extends State<PlayerScreen>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Sleep timer set for $label'),
-        backgroundColor: Colors.green.withOpacity(0.8),
+        content: Row(
+          children: [
+            const Icon(Icons.timer_outlined, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Sleep timer set for $label',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -841,10 +879,22 @@ class _PlayerScreenState extends State<PlayerScreen>
     Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Link copied to clipboard!'),
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.copy_rounded, color: Colors.white),
+            SizedBox(width: 12),
+            Text(
+              'Link copied to clipboard!',
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.primary.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
