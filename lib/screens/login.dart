@@ -4,13 +4,19 @@ import '../services/auth_service.dart';
 import 'main_screen.dart';
 import 'signup.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final AuthService _authService = AuthService();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isLoading = false;
+  final AuthService _authService = AuthService();
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundDeep, // from tailwind HTML #020617
       body: Stack(
@@ -184,13 +190,16 @@ class LoginScreen extends StatelessWidget {
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (context) => const MainScreen(),
-                                  ),
-                                );
-                              },
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const MainScreen(),
+                                        ),
+                                      );
+                                    },
                               child: const Text(
                                 'LOG IN',
                                 style: TextStyle(
@@ -233,17 +242,33 @@ class LoginScreen extends StatelessWidget {
                             width: double.infinity,
                             height: 56,
                             child: OutlinedButton(
-                              onPressed: () async {
-                                final userCredential = await _authService
-                                    .signInWithGoogle();
-                                if (userCredential != null && context.mounted) {
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (context) => const MainScreen(),
-                                    ),
-                                  );
-                                }
-                              },
+                              onPressed: _isLoading
+                                  ? null
+                                  : () async {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+                                      try {
+                                        final userCredential =
+                                            await _authService
+                                                .signInWithGoogle();
+                                        if (userCredential != null &&
+                                            context.mounted) {
+                                          Navigator.of(context).pushReplacement(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const MainScreen(),
+                                            ),
+                                          );
+                                        }
+                                      } finally {
+                                        if (context.mounted) {
+                                          setState(() {
+                                            _isLoading = false;
+                                          });
+                                        }
+                                      }
+                                    },
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: Colors.white.withOpacity(0.03),
                                 side: BorderSide(
@@ -253,25 +278,35 @@ class LoginScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.g_mobiledata,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'CONTINUE WITH GOOGLE',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.g_mobiledata,
+                                          color: Colors.white,
+                                          size: 32,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'CONTINUE WITH GOOGLE',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ],
