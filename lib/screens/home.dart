@@ -4,6 +4,7 @@ import '../theme.dart';
 import '../services/auth_service.dart';
 import '../services/weather_service.dart';
 import 'player.dart';
+import 'recommendations.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -270,7 +271,14 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RecommendationsScreen(),
+                                  ),
+                                );
+                              },
                               child: const Text(
                                 'See All',
                                 style: TextStyle(color: AppTheme.primary),

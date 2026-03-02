@@ -378,6 +378,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           );
                                         }
+                                      } catch (e) {
+                                        _showError(e.toString());
                                       } finally {
                                         if (context.mounted) {
                                           setState(() {
