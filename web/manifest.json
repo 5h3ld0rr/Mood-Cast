@@ -1,6 +1,6 @@
 {
-    "name": "mood_cast_2_0",
-    "short_name": "mood_cast_2_0",
+    "name": "mood_cast",
+    "short_name": "mood_cast",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

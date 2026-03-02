@@ -171,7 +171,7 @@ class HelpSupportScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               const Text(
-                                'Version 2.0.1',
+                                'Version 1.0.0',
                                 style: TextStyle(
                                   color: AppTheme.primary,
                                   fontSize: 14,

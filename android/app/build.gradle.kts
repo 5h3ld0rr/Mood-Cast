@@ -21,7 +21,7 @@ dependencies {
   // https://firebase.google.com/docs/android/setup#available-libraries
 }
 android {
-    namespace = "com.example.mood_cast_2_0"
+    namespace = "com.example.mood_cast"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.mood_cast_2_0"
+        applicationId = "com.example.mood_cast"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

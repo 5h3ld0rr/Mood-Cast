@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:138700460734:android:a435decc6f6528c95244ef",
+        "mobilesdk_app_id": "1:138700460734:android:2f955aa3f041ce9e5244ef",
         "android_client_info": {
-          "package_name": "com.example.mood_cast_2_0"
+          "package_name": "com.example.mood_cast"
         }
       },
       "oauth_client": [],

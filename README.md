@@ -1,4 +1,4 @@
-# mood_cast_2_0
+# mood_cast
 
 A new Flutter project.
 
