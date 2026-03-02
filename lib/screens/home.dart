@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../services/auth_service.dart';
+import '../services/weather_service.dart';
 import 'player.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -133,36 +134,55 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Weather
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(
-                                Icons.cloudy_snowing,
-                                color: AppTheme.primary,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Rainy 24°C',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
+                        FutureBuilder<WeatherData>(
+                          future: WeatherService().fetchWeather(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Container(
+                                width: 40,
+                                height: 40,
+                                padding: const EdgeInsets.all(8),
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
                                 ),
-                              ),
-                            ],
-                          ),
+                              );
+                            }
+
+                            if (snapshot.hasError) {
+                              // If permission denied or other error, show a default state
+                              return _buildWeatherPill(
+                                Icons.cloud,
+                                'Cloudy 26°C',
+                              );
+                            }
+
+                            final weather = snapshot.data;
+                            final condition = weather?.condition ?? 'Cloudy';
+                            final temp = weather?.temperature.toInt() ?? 26;
+
+                            IconData weatherIcon;
+                            switch (condition.toLowerCase()) {
+                              case 'clear':
+                                weatherIcon = Icons.wb_sunny;
+                                break;
+                              case 'clouds':
+                                weatherIcon = Icons.cloud;
+                                break;
+                              case 'rain':
+                              case 'drizzle':
+                              case 'rainy':
+                                weatherIcon = Icons.cloudy_snowing;
+                                break;
+                              default:
+                                weatherIcon = Icons.cloud;
+                            }
+
+                            return _buildWeatherPill(
+                              weatherIcon,
+                              '$condition $temp°C',
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
 
@@ -279,6 +299,32 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeatherPill(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xff1e293b).withOpacity(0.3), // card background
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: const Color(0xff2b6cf0), size: 24),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],

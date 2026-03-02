@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../theme.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -55,9 +59,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const SizedBox(
-                            width: 48,
-                          ), // Padding equivalent to hidden back button
+                          const SizedBox(width: 48),
                           const Text(
                             'Wellness Player',
                             style: TextStyle(
@@ -66,12 +68,81 @@ class _PlayerScreenState extends State<PlayerScreen>
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          IconButton(
+                          PopupMenuButton<String>(
                             icon: const Icon(
                               Icons.more_vert,
                               color: Colors.white,
                             ),
-                            onPressed: () {},
+                            color: const Color(0xFF1E293B),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'playlist':
+                                  _showAddedToPlaylist();
+                                  break;
+                                case 'sleep':
+                                  _showSleepTimerDialog();
+                                  break;
+                                case 'share':
+                                  _handleShare();
+                                  break;
+                              }
+                            },
+                            itemBuilder: (BuildContext context) => [
+                              PopupMenuItem<String>(
+                                value: 'playlist',
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.playlist_add,
+                                      size: 20,
+                                      color: Colors.white70,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Add to Playlist',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'sleep',
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.timer_outlined,
+                                      size: 20,
+                                      color: Colors.white70,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Sleep Timer',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'share',
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.share_outlined,
+                                      size: 20,
+                                      color: Colors.white70,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Share',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -130,7 +201,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                           Stack(
                             alignment: Alignment.center,
                             children: [
-                              // Outer Ring with animation
                               AnimatedBuilder(
                                 animation: _animationController,
                                 builder: (context, child) {
@@ -160,7 +230,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                                   );
                                 },
                               ),
-                              // Middle Ring
                               Container(
                                 width: 192,
                                 height: 192,
@@ -172,7 +241,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                                   ),
                                 ),
                               ),
-                              // Inner Circle
                               Container(
                                 width: 128,
                                 height: 128,
@@ -252,7 +320,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
-                          // Recommended Song Card
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -321,8 +388,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                             ),
                           ),
                           const SizedBox(height: 32),
-
-                          // Progress Bar
                           Column(
                             children: [
                               Container(
@@ -353,7 +418,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     style: TextStyle(
                                       color: Colors.grey,
                                       fontSize: 10,
-                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   Text(
@@ -361,7 +425,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     style: TextStyle(
                                       color: Colors.grey,
                                       fontSize: 10,
-                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ],
@@ -369,8 +432,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                             ],
                           ),
                           const SizedBox(height: 24),
-
-                          // Media Controls
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -441,6 +502,427 @@ class _PlayerScreenState extends State<PlayerScreen>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showAddedToPlaylist() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Added to your favorite playlist!'),
+        backgroundColor: AppTheme.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: SnackBarAction(
+          label: 'UNDO',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  void _showSleepTimerDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Sleep Timer', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildTimerOption('15 Minutes', 15),
+            _buildTimerOption('30 Minutes', 30),
+            _buildTimerOption('60 Minutes', 60),
+            _buildTimerOption('Custom', 0),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'CANCEL',
+              style: TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimerOption(String label, int minutes) {
+    return ListTile(
+      title: Text(label, style: const TextStyle(color: Colors.white70)),
+      onTap: () {
+        Navigator.pop(context);
+        if (minutes == 0) {
+          _showCustomTimeInput();
+        } else {
+          _setTimer(label, minutes);
+        }
+      },
+    );
+  }
+
+  void _showCustomTimeInput() {
+    final TextEditingController controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text(
+          'Custom Timer',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Enter minutes',
+            hintStyle: TextStyle(color: Colors.white38),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: AppTheme.primary),
+            ),
+          ),
+          onSubmitted: (value) {
+            _processCustomTime(dialogContext, value);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text(
+              'CANCEL',
+              style: TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _processCustomTime(dialogContext, controller.text);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _processCustomTime(BuildContext dialogContext, String value) {
+    if (value.isNotEmpty) {
+      final mins = int.tryParse(value);
+      if (mins != null && mins > 0) {
+        Navigator.pop(dialogContext);
+        _setTimer('$mins Minutes', mins);
+      }
+    }
+  }
+
+  void _setTimer(String label, int minutes) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Sleep timer set for $label'),
+        backgroundColor: Colors.green.withOpacity(0.8),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _handleShare() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: const BoxDecoration(
+          color: Color(0xFF121212),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(28),
+            topRight: Radius.circular(28),
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Track Share Card
+            Container(
+              width: MediaQuery.of(context).size.width * 0.75,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5E66), // Matching the image color
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Track Image
+                  AspectRatio(
+                    aspectRatio: 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        image: const DecorationImage(
+                          image: NetworkImage(
+                            'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=500&q=80',
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Midnight Solitude',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'MoodCast AI • 432Hz Ambient',
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black26,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.music_note,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'MoodCast AI',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Interaction Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildColorDot(const Color(0xFF8B5E66), isSelected: true),
+                const SizedBox(width: 12),
+                _buildColorDot(const Color(0xFF4A3439)),
+                const SizedBox(width: 12),
+                _buildColorDot(const Color(0xFF1A1A1A)),
+                const SizedBox(width: 24),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white24),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            // Social Icons Section
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.white12)),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    _buildShareAction(
+                      'Copy link',
+                      Icons.link,
+                      Colors.grey[800]!,
+                      () => _copyToClipboard(
+                        'https://moodcast.ai/track/midnight-solitude',
+                      ),
+                    ),
+                    _buildShareAction(
+                      'WhatsApp',
+                      FontAwesomeIcons.whatsapp,
+                      const Color(0xFF25D366),
+                      () => _launchURL(
+                        'https://wa.me/?text=Listening to Midnight Solitude on MoodCast AI! https://moodcast.ai/track/midnight-solitude',
+                      ),
+                    ),
+                    _buildShareAction(
+                      'Status',
+                      FontAwesomeIcons.circleNotch,
+                      const Color(0xFF25D366),
+                      () => _launchURL(
+                        'whatsapp://send?text=Check out this vibe: https://moodcast.ai/track/midnight-solitude',
+                      ),
+                    ),
+                    _buildShareAction(
+                      'Messages',
+                      Icons.message,
+                      const Color(0xFF007AFF),
+                      () => _launchURL(
+                        'sms:?body=Listen to this with me: https://moodcast.ai/track/midnight-solitude',
+                      ),
+                    ),
+                    _buildShareAction(
+                      'Stories',
+                      FontAwesomeIcons.facebook,
+                      const Color(0xFF1877F2),
+                      () => _launchURL(
+                        'https://www.facebook.com/sharer/sharer.php?u=https://moodcast.ai/track/midnight-solitude',
+                      ),
+                    ),
+                    _buildShareAction(
+                      'TikTok',
+                      FontAwesomeIcons.tiktok,
+                      Colors.black,
+                      () => _launchURL('https://www.tiktok.com/'),
+                    ),
+                    _buildShareAction(
+                      'More',
+                      Icons.more_horiz,
+                      Colors.grey[700]!,
+                      () => _handleGeneralShare(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _copyToClipboard(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Link copied to clipboard!'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        // Try anyway as canLaunchUrl is sometimes unreliable on Android
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not open the app. Please make sure it is installed.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleGeneralShare() async {
+    try {
+      debugPrint('Opening system share dialog...');
+      await Share.share(
+        'Check out Midnight Solitude on MoodCast AI! https://moodcast.ai/track/midnight-solitude',
+        subject: 'Shared from MoodCast AI',
+      );
+    } catch (e) {
+      debugPrint('Error sharing: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open system share.')),
+      );
+    }
+  }
+
+  Widget _buildColorDot(Color color, {bool isSelected = false}) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+      ),
+    );
+  }
+
+  Widget _buildShareAction(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: Icon(icon, color: Colors.white, size: 28),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ],
         ),
       ),
     );

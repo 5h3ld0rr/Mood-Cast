@@ -70,5 +70,9 @@
 	<array>
 		<string>mailto</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs your location to show local weather.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs your location to show local weather even in the background.</string>
 </dict>
 </plist>
