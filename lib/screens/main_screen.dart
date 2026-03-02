@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import 'home/home.dart';
 import 'scan/analysis.dart';
-import 'player.dart';
 import 'insights/insights.dart';
 import 'profile/profile.dart';
+import 'search/search.dart';
+import 'library/library.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,10 +20,11 @@ class _MainScreenState extends State<MainScreen> {
 
   List<Widget> get _screens => [
     const HomeScreen(),
+    const SearchScreen(),
+    const LibraryScreen(),
     _isAnalysisActivated
-        ? AnalysisScreen(isActive: _currentIndex == 1)
+        ? AnalysisScreen(isActive: _currentIndex == 3)
         : const SizedBox.shrink(),
-    const PlayerScreen(),
     const InsightsScreen(),
     const ProfileScreen(),
   ];
@@ -49,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
             onTap: (index) {
               setState(() {
                 _currentIndex = index;
-                if (index == 1) {
+                if (index == 3) {
                   _isAnalysisActivated = true;
                 }
               });
@@ -74,16 +76,23 @@ class _MainScreenState extends State<MainScreen> {
               BottomNavigationBarItem(
                 icon: Padding(
                   padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.document_scanner, size: 28),
+                  child: Icon(Icons.search, size: 28),
                 ),
-                label: 'Scan',
+                label: 'Search',
               ),
               BottomNavigationBarItem(
                 icon: Padding(
                   padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                  child: Icon(Icons.play_circle_fill, size: 28),
+                  child: Icon(Icons.library_music, size: 28),
                 ),
-                label: 'Player',
+                label: 'Library',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
+                  child: Icon(Icons.document_scanner, size: 28),
+                ),
+                label: 'Scan',
               ),
               BottomNavigationBarItem(
                 icon: Padding(
