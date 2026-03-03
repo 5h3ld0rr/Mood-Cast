@@ -36,6 +36,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   late AudioRecorder _audioRecorder;
   double _volumeLevel = 0.0;
   Timer? _recordingTimer;
+  final TextEditingController _textController = TextEditingController();
+  bool _isTextAnalyzing = false;
 
   @override
   void initState() {
@@ -193,11 +195,131 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     });
   }
 
+  void _startTextAnalysis(String text) async {
+    if (text.trim().isEmpty) return;
+
+    setState(() {
+      _isTextAnalyzing = true;
+      _detectedMood = null;
+      _progress = 0.0;
+    });
+
+    // Simulate analysis progress
+    for (int i = 0; i <= 100; i += 10) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+      setState(() {
+        _progress = i / 100;
+      });
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isTextAnalyzing = false;
+      _detectedMood = (_moods..shuffle()).first;
+      _textController.clear();
+    });
+  }
+
+  void _showTextInputDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 30,
+        ),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1F2B),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'How are you feeling?',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Describe your current vibe in a few words.',
+              style: TextStyle(color: Colors.white60, fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _textController,
+              maxLines: 3,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'e.g. I feeling really energetic today...',
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: AppTheme.primary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  final text = _textController.text;
+                  Navigator.pop(context);
+                  _startTextAnalysis(text);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                child: const Text(
+                  'ANALYZE TEXT',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _disposeCamera();
     _audioRecorder.dispose();
     _recordingTimer?.cancel();
+    _textController.dispose();
     super.dispose();
   }
 
@@ -452,6 +574,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                               Text(
                                 _detectedMood != null
                                     ? 'Mood Detected!'
+                                    : _isTextAnalyzing
+                                    ? 'Analyzing Text...'
                                     : 'Analyzing Face...',
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -569,10 +693,10 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildInputBtn(
-                                onTap: () {},
+                                onTap: _showTextInputDialog,
                                 icon: Icons.text_fields_outlined,
                                 label: 'Text Input',
-                                active: false,
+                                active: _isTextAnalyzing,
                               ),
                             ),
                           ],
