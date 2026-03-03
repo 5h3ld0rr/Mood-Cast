@@ -13,6 +13,19 @@ class AnalysisScreen extends StatefulWidget {
 class _AnalysisScreenState extends State<AnalysisScreen> {
   CameraController? _controller;
   bool _isCameraInitialized = false;
+  bool _isScanning = false;
+  bool _isRecording = false;
+  double _progress = 0.0;
+  double _zoomScale = 1.3; // Increased base zoom to ensure fill
+  String? _detectedMood;
+  final List<String> _moods = [
+    'Happy',
+    'Focused',
+    'Relaxing',
+    'Energetic',
+    'Calm',
+    'Inspired',
+  ];
 
   @override
   void initState() {
@@ -60,8 +73,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
       _controller = CameraController(
         camera,
-        ResolutionPreset.veryHigh,
+        ResolutionPreset.medium, // Better quality within stable limits
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
       await _controller!.initialize();
@@ -73,6 +87,52 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     } catch (e) {
       debugPrint('Error initializing camera: $e');
     }
+  }
+
+  void _startScan() async {
+    if (_isScanning) return;
+
+    setState(() {
+      _isScanning = true;
+      _progress = 0.0;
+      _zoomScale = 1.5; // Moderate scan zoom
+      _detectedMood = null;
+    });
+
+    // Simulate progress
+    for (int i = 0; i <= 100; i += 2) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (!mounted) return;
+      setState(() {
+        _progress = i / 100;
+      });
+    }
+
+    setState(() {
+      _isScanning = false;
+      _zoomScale = 1.3; // Return to base zoom
+      _detectedMood = (_moods..shuffle()).first;
+    });
+  }
+
+  void _startVoiceAnalysis() async {
+    if (_isRecording) return;
+
+    setState(() {
+      _isRecording = true;
+      _detectedMood = null;
+    });
+
+    // Simulate 3 seconds of recording
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    setState(() {
+      _isRecording = false;
+      _detectedMood = (_moods..shuffle()).first;
+      _progress = 1.0; // Mark as done
+    });
   }
 
   @override
@@ -87,20 +147,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       backgroundColor: const Color(0xFF0D121C),
       body: Stack(
         children: [
-          // Gradient BG
+          // Background Gradient blur
           Positioned(
-            top: 0,
-            left: 0,
+            top: -50,
+            left: -50,
             child: Container(
-              width: 500,
-              height: 500,
-              decoration: const BoxDecoration(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF1A2A44), Colors.transparent],
-                  stops: [0.0, 0.8],
-                  center: Alignment(-0.6, -0.8),
-                ),
+                color: AppTheme.primary.withOpacity(0.05),
               ),
             ),
           ),
@@ -109,144 +165,162 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             child: Column(
               children: [
                 // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const SizedBox(width: 48),
-                      const Text(
-                        'MoodCast AI Analysis',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 48),
-                    ],
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text(
+                    'MoodCast AI Analysis',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Live Camera View
+                        const SizedBox(height: 20),
+
+                        // The Scanning Box (Camera constrained here)
                         Container(
                           width: double.infinity,
                           height: 400,
                           decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: AppTheme.primary.withOpacity(0.3),
-                              width: 2,
-                            ),
+                            color: Colors
+                                .transparent, // Background borders removed
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: Colors.white10),
                           ),
+                          clipBehavior: Clip.antiAlias,
                           child: Stack(
                             children: [
-                              // Camera Preview
-                              if (_isCameraInitialized)
+                              // 1. Camera Preview (Full Fill - No Borders)
+                              if (_isCameraInitialized && _controller != null)
                                 Positioned.fill(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: CameraPreview(_controller!),
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      return AnimatedScale(
+                                        scale: _zoomScale,
+                                        duration: const Duration(seconds: 1),
+                                        curve: Curves.easeInOut,
+                                        child: FittedBox(
+                                          fit: BoxFit.cover,
+                                          child: SizedBox(
+                                            width: constraints.maxWidth,
+                                            height:
+                                                constraints.maxWidth /
+                                                (_controller!
+                                                            .value
+                                                            .aspectRatio >
+                                                        0
+                                                    ? _controller!
+                                                          .value
+                                                          .aspectRatio
+                                                    : 1.0),
+                                            child: CameraPreview(_controller!),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                              else
+                                const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppTheme.primary,
                                   ),
                                 ),
-                              if (!_isCameraInitialized)
-                                const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              // Border Overlays
+
+                              // 2. Corners (Positioned exactly at edges 0,0)
                               Positioned(
-                                top: 16,
-                                left: 16,
+                                top: 0,
+                                left: 0,
                                 child: _buildCorner(isTop: true, isLeft: true),
                               ),
                               Positioned(
-                                top: 16,
-                                right: 16,
+                                top: 0,
+                                right: 0,
                                 child: _buildCorner(isTop: true, isLeft: false),
                               ),
                               Positioned(
-                                bottom: 16,
-                                left: 16,
+                                bottom: 0,
+                                left: 0,
                                 child: _buildCorner(isTop: false, isLeft: true),
                               ),
                               Positioned(
-                                bottom: 16,
-                                right: 16,
+                                bottom: 0,
+                                right: 0,
                                 child: _buildCorner(
                                   isTop: false,
                                   isLeft: false,
                                 ),
                               ),
 
-                              // Scanning Line
-                              Positioned(
-                                top: 300,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  height: 2,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        AppTheme.primary,
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: AppTheme.primary,
-                                        blurRadius: 15,
+                              // 3. Scanning Animation (Constrained inside box)
+                              if (_isScanning)
+                                TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 10.0, end: 390.0),
+                                  duration: const Duration(seconds: 2),
+                                  builder: (context, value, child) {
+                                    return Positioned(
+                                      top: value,
+                                      left: 20,
+                                      right: 20,
+                                      child: Container(
+                                        height: 3,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.transparent,
+                                              AppTheme.primary,
+                                              Colors.transparent,
+                                            ],
+                                          ),
+                                          boxShadow: const [
+                                            BoxShadow(
+                                              color: AppTheme.primary,
+                                              blurRadius: 10,
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ],
-                                  ),
+                                    );
+                                  },
                                 ),
-                              ),
 
-                              // Indicator
+                              // 4. Indicator
                               Positioned(
                                 bottom: 16,
                                 left: 16,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
+                                    horizontal: 10,
+                                    vertical: 5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primary,
+                                    color: Colors.black54,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Row(
                                     children: [
                                       Container(
-                                        width: 8,
-                                        height: 8,
+                                        width: 6,
+                                        height: 6,
                                         decoration: const BoxDecoration(
-                                          color: Colors.white,
+                                          color: AppTheme.primary,
                                           shape: BoxShape.circle,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 6),
                                       const Text(
                                         'LIVE AI SCAN',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 10,
+                                          fontSize: 9,
                                           fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.2,
                                         ),
                                       ),
                                     ],
@@ -256,274 +330,144 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
 
-                        // Progress
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: const [
-                            Text(
-                              'Detecting Mood...',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
+                        const SizedBox(height: 30),
+
+                        // Analysis Progress / Results
+                        if (_isScanning || _detectedMood != null) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _detectedMood != null
+                                    ? 'Mood Detected!'
+                                    : 'Analyzing Face...',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                '${(_progress * 100).toInt()}%',
+                                style: const TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          LinearProgressIndicator(
+                            value: _progress,
+                            backgroundColor: Colors.white.withOpacity(0.05),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppTheme.primary,
+                            ),
+                            minHeight: 8,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        if (_detectedMood != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppTheme.primary.withOpacity(0.3),
                               ),
                             ),
-                            Text(
-                              '78%',
-                              style: TextStyle(
-                                color: AppTheme.primary,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: AppTheme.primary,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'VIBE CHECKED',
+                                      style: TextStyle(
+                                        color: AppTheme.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      _detectedMood!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        const SizedBox(height: 10),
+
+                        if (!_isScanning && _detectedMood == null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _startScan,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              child: const Text(
+                                'START AI SCAN',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // Alternative Inputs
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildInputBtn(
+                                onTap: _startVoiceAnalysis,
+                                icon: _isRecording
+                                    ? Icons.stop_circle
+                                    : Icons.mic_none,
+                                label: 'Voice Scan',
+                                active: _isRecording,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildInputBtn(
+                                onTap: () {},
+                                icon: Icons.text_fields_outlined,
+                                label: 'Text Input',
+                                active: false,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Container(
-                          height: 12,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF192233),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: 0.78,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.2),
-                            border: Border.all(
-                              color: AppTheme.primary.withOpacity(0.3),
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(
-                                Icons.gps_fixed,
-                                color: AppTheme.primary,
-                                size: 16,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'CURRENT ANALYSIS: FOCUSING',
-                                style: TextStyle(
-                                  color: AppTheme.primary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
 
-                        // Alternative Inputs
-                        const Text(
-                          'ALTERNATIVE INPUTS',
-                          style: TextStyle(
-                            color: Color(0xFF92A4C9),
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Voice Analysis
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF192233).withOpacity(0.5),
-                            border: Border.all(color: const Color(0xFF232F48)),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Voice Analysis',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: List.generate(
-                                      8,
-                                      (index) => Container(
-                                        margin: const EdgeInsets.only(right: 4),
-                                        width: 4,
-                                        height: [
-                                          8.0,
-                                          16.0,
-                                          24.0,
-                                          12.0,
-                                          20.0,
-                                          8.0,
-                                          16.0,
-                                          10.0,
-                                        ][index],
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primary,
-                                          borderRadius: BorderRadius.circular(
-                                            2,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primary.withOpacity(0.2),
-                                      blurRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.mic,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Text Input
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF192233).withOpacity(0.5),
-                            border: Border.all(color: const Color(0xFF232F48)),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  style: const TextStyle(color: Colors.white),
-                                  decoration: InputDecoration(
-                                    hintText: 'Describe how you feel...',
-                                    hintStyle: TextStyle(
-                                      color: const Color(0xFF92A4C9),
-                                    ),
-                                    border: InputBorder.none,
-                                    filled: false,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF192233),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.send,
-                                  color: AppTheme.primary,
-                                  size: 20,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // AI Quick Insights Card
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: LinearGradient(
-                              colors: [
-                                AppTheme.primary.withOpacity(0.3),
-                                const Color(0xFF192233),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            border: Border.all(
-                              color: AppTheme.primary.withOpacity(0.2),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primary,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(
-                                      Icons.lightbulb,
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'AI Quick Insights',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                '"Your current focus levels are peaking. This is an ideal window for complex problem-solving or deep learning tasks."',
-                                style: TextStyle(
-                                  color: Color(0xFF92A4C9),
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 100),
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -536,23 +480,64 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
+  Widget _buildInputBtn({
+    required VoidCallback onTap,
+    required IconData icon,
+    required String label,
+    required bool active,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: active
+              ? AppTheme.primary.withOpacity(0.1)
+              : const Color(0xFF192233),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: active ? AppTheme.primary : Colors.white.withOpacity(0.05),
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: active ? AppTheme.primary : Colors.white60,
+              size: 26,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: active ? AppTheme.primary : Colors.white60,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCorner({required bool isTop, required bool isLeft}) {
     return Container(
-      width: 32,
-      height: 32,
+      width: 35,
+      height: 35,
       decoration: BoxDecoration(
         border: Border(
           top: isTop
-              ? const BorderSide(color: AppTheme.primary, width: 2)
+              ? const BorderSide(color: AppTheme.primary, width: 3)
               : BorderSide.none,
           bottom: !isTop
-              ? const BorderSide(color: AppTheme.primary, width: 2)
+              ? const BorderSide(color: AppTheme.primary, width: 3)
               : BorderSide.none,
           left: isLeft
-              ? const BorderSide(color: AppTheme.primary, width: 2)
+              ? const BorderSide(color: AppTheme.primary, width: 3)
               : BorderSide.none,
           right: !isLeft
-              ? const BorderSide(color: AppTheme.primary, width: 2)
+              ? const BorderSide(color: AppTheme.primary, width: 3)
               : BorderSide.none,
         ),
       ),

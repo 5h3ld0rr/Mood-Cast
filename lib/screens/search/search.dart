@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
+import 'category_details.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -58,12 +59,16 @@ class SearchScreen extends StatelessWidget {
                   mainAxisSpacing: 16,
                   childAspectRatio: 1.6,
                   children: [
-                    _buildCategoryCard('Pop', Colors.pinkAccent),
-                    _buildCategoryCard('Chill', Colors.blueAccent),
-                    _buildCategoryCard('Indie', Colors.greenAccent),
-                    _buildCategoryCard('Electronic', Colors.purpleAccent),
-                    _buildCategoryCard('Rock', Colors.orangeAccent),
-                    _buildCategoryCard('Jazz', Colors.brown),
+                    _buildCategoryCard(context, 'Pop', Colors.pinkAccent),
+                    _buildCategoryCard(context, 'Chill', Colors.blueAccent),
+                    _buildCategoryCard(context, 'Indie', Colors.greenAccent),
+                    _buildCategoryCard(
+                      context,
+                      'Electronic',
+                      Colors.purpleAccent,
+                    ),
+                    _buildCategoryCard(context, 'Rock', Colors.orangeAccent),
+                    _buildCategoryCard(context, 'Jazz', Colors.brown),
                   ],
                 ),
               ),
@@ -74,20 +79,31 @@ class SearchScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(String name, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.4)),
-      ),
-      child: Center(
-        child: Text(
-          name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+  Widget _buildCategoryCard(BuildContext context, String name, Color color) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                CategoryDetailsScreen(categoryName: name, categoryColor: color),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.4)),
+        ),
+        child: Center(
+          child: Text(
+            name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
