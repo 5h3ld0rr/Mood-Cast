@@ -140,7 +140,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppTheme.primary.withOpacity(0.15),
+                    AppTheme.primary.withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.7],
@@ -312,7 +312,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             children: [
                               Expanded(
                                 child: Divider(
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: Colors.white.withValues(alpha: 0.1),
                                 ),
                               ),
                               Padding(
@@ -330,7 +330,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                               Expanded(
                                 child: Divider(
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: Colors.white.withValues(alpha: 0.1),
                                 ),
                               ),
                             ],
@@ -342,9 +342,11 @@ class _SignupScreenState extends State<SignupScreen> {
                             child: OutlinedButton(
                               onPressed: _isLoading ? null : _googleSignIn,
                               style: OutlinedButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.03),
+                                backgroundColor: Colors.white.withValues(
+                                  alpha: 0.03,
+                                ),
                                 side: BorderSide(
-                                  color: Colors.white.withOpacity(0.08),
+                                  color: Colors.white.withValues(alpha: 0.08),
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),

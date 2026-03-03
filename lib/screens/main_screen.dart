@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme.dart';
 import 'home/home.dart';
 import 'scan/analysis.dart';
@@ -63,7 +64,29 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF080C14), // #080c14
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) async {
+          if (didPop) return;
+
+          // Check if current tab navigator can pop
+          final currentNavigator = _navigatorKeys[_currentIndex]?.currentState;
+          if (currentNavigator != null && await currentNavigator.maybePop()) {
+            return;
+          }
+
+          if (_currentIndex != 0) {
+            setState(() {
+              _currentIndex = 0;
+              _isScanActiveNotifier.value = false;
+            });
+          } else {
+            // If on home tab and can't pop anymore, minimize app
+            await SystemNavigator.pop();
+          }
+        },
+        child: IndexedStack(index: _currentIndex, children: _screens),
+      ),
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
           splashColor: Colors.transparent,
@@ -75,9 +98,9 @@ class _MainScreenState extends State<MainScreen> {
             const MiniPlayer(),
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF080C14).withOpacity(0.9),
+                color: const Color(0xFF080C14).withValues(alpha: 0.9),
                 border: Border(
-                  top: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),
               ),
               child: BottomNavigationBar(

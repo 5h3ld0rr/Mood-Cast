@@ -101,13 +101,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: AppTheme.primary.withOpacity(0.5),
+                                      color: AppTheme.primary.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       width: 4,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppTheme.primary.withOpacity(
-                                          0.2,
+                                        color: AppTheme.primary.withValues(
+                                          alpha: 0.2,
                                         ),
                                         blurRadius: 24,
                                         spreadRadius: 4,
@@ -175,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: AppTheme.cardBg,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                             ),
                           ),
                           child: Column(
@@ -291,7 +293,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.redAccent,
                               side: BorderSide(
-                                color: Colors.redAccent.withOpacity(0.5),
+                                color: Colors.redAccent.withValues(alpha: 0.5),
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -356,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(0.1),
+          color: AppTheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: AppTheme.primary, size: 24),
@@ -383,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Divider(
       height: 1,
       thickness: 1,
-      color: Colors.white.withOpacity(0.05),
+      color: Colors.white.withValues(alpha: 0.05),
       indent: 64,
     );
   }

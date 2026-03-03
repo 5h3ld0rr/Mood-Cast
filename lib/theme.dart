@@ -37,26 +37,29 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 8,
-          shadowColor: primary.withOpacity(0.4),
+          shadowColor: primary.withValues(alpha: 0.4),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withOpacity(0.03),
+        fillColor: Colors.white.withValues(alpha: 0.03),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primary.withOpacity(0.5), width: 2),
+          borderSide: BorderSide(
+            color: primary.withValues(alpha: 0.5),
+            width: 2,
+          ),
         ),
         labelStyle: const TextStyle(color: textMuted),
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
       ),
     );
   }

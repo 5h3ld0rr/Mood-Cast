@@ -65,7 +65,7 @@ class HomeScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withOpacity(0.1),
+                              color: AppTheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -168,12 +168,14 @@ class HomeScreen extends StatelessWidget {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    AppTheme.primary.withOpacity(0.2),
-                                    AppTheme.primary.withOpacity(0.05),
+                                    AppTheme.primary.withValues(alpha: 0.2),
+                                    AppTheme.primary.withValues(alpha: 0.05),
                                   ],
                                 ),
                                 border: Border.all(
-                                  color: AppTheme.primary.withOpacity(0.2),
+                                  color: AppTheme.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
                                 ),
                               ),
                               child: Padding(
@@ -231,7 +233,9 @@ class HomeScreen extends StatelessWidget {
                                   }
                                   return Icon(
                                     _getWeatherIcon(weather.condition),
-                                    color: AppTheme.primary.withOpacity(0.8),
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.8,
+                                    ),
                                     size: 32,
                                   );
                                 },
@@ -325,12 +329,15 @@ class HomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         text,
-        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.8),
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -350,7 +357,7 @@ class HomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [

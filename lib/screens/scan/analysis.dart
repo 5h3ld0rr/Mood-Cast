@@ -297,16 +297,20 @@ class _AnalysisScreenState extends State<AnalysisScreen>
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'e.g. I feeling really energetic today...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                hintStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -372,7 +376,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.05),
+                color: AppTheme.primary.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -474,19 +478,19 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                                 shape: BoxShape.circle,
                                                 border: Border.all(
                                                   color: AppTheme.primary
-                                                      .withOpacity(0.8),
+                                                      .withValues(alpha: 0.8),
                                                   width: 2,
                                                 ),
                                                 boxShadow: [
                                                   BoxShadow(
                                                     color: AppTheme.primary
-                                                        .withOpacity(0.3),
+                                                        .withValues(alpha: 0.3),
                                                     blurRadius: 20 * scale,
                                                     spreadRadius: 5 * scale,
                                                   ),
                                                 ],
                                                 color: AppTheme.primary
-                                                    .withOpacity(0.2),
+                                                    .withValues(alpha: 0.2),
                                               ),
                                               child: const Icon(
                                                 Icons.mic,
@@ -630,7 +634,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                           const SizedBox(height: 12),
                           LinearProgressIndicator(
                             value: _progress,
-                            backgroundColor: Colors.white.withOpacity(0.05),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.05,
+                            ),
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               AppTheme.primary,
                             ),
@@ -644,10 +650,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withOpacity(0.15),
+                              color: AppTheme.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: AppTheme.primary.withOpacity(0.3),
+                                color: AppTheme.primary.withValues(alpha: 0.3),
                               ),
                             ),
                             child: Row(
@@ -761,11 +767,13 @@ class _AnalysisScreenState extends State<AnalysisScreen>
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: active
-              ? AppTheme.primary.withOpacity(0.1)
+              ? AppTheme.primary.withValues(alpha: 0.1)
               : const Color(0xFF192233),
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: active ? AppTheme.primary : Colors.white.withOpacity(0.05),
+            color: active
+                ? AppTheme.primary
+                : Colors.white.withValues(alpha: 0.05),
           ),
         ),
         child: Column(

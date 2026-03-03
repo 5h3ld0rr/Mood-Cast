@@ -20,7 +20,7 @@ class CategoryDetailsScreen extends StatelessWidget {
           categoryName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: categoryColor.withOpacity(0.2),
+        backgroundColor: categoryColor.withValues(alpha: 0.2),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -34,7 +34,7 @@ class CategoryDetailsScreen extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    categoryColor.withOpacity(0.4),
+                    categoryColor.withValues(alpha: 0.4),
                     const Color(0xFF080C14),
                   ],
                 ),
@@ -83,7 +83,7 @@ class CategoryDetailsScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -92,7 +92,7 @@ class CategoryDetailsScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: categoryColor.withOpacity(0.2),
+              color: categoryColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.music_note, color: categoryColor),

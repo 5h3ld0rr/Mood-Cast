@@ -104,20 +104,20 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                   Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.05),
+                      color: AppTheme.primary.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.notifications_off_outlined,
                       size: 64,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'All caught up!',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -126,7 +126,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                   Text(
                     'No new notifications at the moment.',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                       fontSize: 14,
                     ),
                   ),
@@ -169,20 +169,20 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isRead
-                          ? AppTheme.cardBg.withOpacity(0.1)
+                          ? AppTheme.cardBg.withValues(alpha: 0.1)
                           : AppTheme.cardBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isRead
-                            ? Colors.white.withOpacity(0.03)
-                            : AppTheme.primary.withOpacity(0.2),
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : AppTheme.primary.withValues(alpha: 0.2),
                         width: 1,
                       ),
                       boxShadow: isRead
                           ? []
                           : [
                               BoxShadow(
-                                color: AppTheme.primary.withOpacity(0.05),
+                                color: AppTheme.primary.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -199,8 +199,10 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: isRead
-                                      ? Colors.white.withOpacity(0.05)
-                                      : AppTheme.primary.withOpacity(0.15),
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : AppTheme.primary.withValues(
+                                          alpha: 0.15,
+                                        ),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Icon(
@@ -257,7 +259,9 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                                   Text(
                                     _getTimeAgo(timestamp),
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.3),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.3,
+                                      ),
                                       fontSize: 11,
                                     ),
                                   ),
@@ -268,8 +272,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                                 notification['body'] ?? '',
                                 style: TextStyle(
                                   color: isRead
-                                      ? Colors.white.withOpacity(0.4)
-                                      : Colors.white.withOpacity(0.7),
+                                      ? Colors.white.withValues(alpha: 0.4)
+                                      : Colors.white.withValues(alpha: 0.7),
                                   fontSize: 14,
                                   height: 1.4,
                                 ),
