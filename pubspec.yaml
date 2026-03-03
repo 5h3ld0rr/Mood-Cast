@@ -50,6 +50,9 @@ dependencies:
   font_awesome_flutter: ^10.7.0
   share_plus: ^10.1.4
   flutter_dotenv: ^6.0.0
+  record: ^6.2.0
+  permission_handler: ^12.0.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

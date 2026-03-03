@@ -1,5 +1,11 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:record/record.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../theme.dart';
 
 class AnalysisScreen extends StatefulWidget {
@@ -27,9 +33,14 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     'Inspired',
   ];
 
+  late AudioRecorder _audioRecorder;
+  double _volumeLevel = 0.0;
+  Timer? _recordingTimer;
+
   @override
   void initState() {
     super.initState();
+    _audioRecorder = AudioRecorder();
     if (widget.isActive) {
       _initializeCamera();
     }
@@ -118,26 +129,75 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   void _startVoiceAnalysis() async {
     if (_isRecording) return;
 
+    // Request microphone permission
+    final status = await Permission.microphone.request();
+    if (status != PermissionStatus.granted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission is required')),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _isRecording = true;
       _detectedMood = null;
+      _progress = 0.0;
     });
 
-    // Simulate 3 seconds of recording
-    await Future.delayed(const Duration(seconds: 3));
+    try {
+      // Get temp directory for recording
+      final tempDir = await getTemporaryDirectory();
+      final path = p.join(
+        tempDir.path,
+        'voice_scan_${DateTime.now().millisecondsSinceEpoch}.m4a',
+      );
+
+      // Start recording to a valid path
+      await _audioRecorder.start(const RecordConfig(), path: path);
+
+      // Start volume polling for visualization
+      _recordingTimer = Timer.periodic(const Duration(milliseconds: 100), (
+        timer,
+      ) async {
+        final amp = await _audioRecorder.getAmplitude();
+        if (mounted) {
+          setState(() {
+            // Map -60..0 to 0..1
+            double level = (amp.current + 60) / 60;
+            _volumeLevel = level.clamp(0.1, 1.0);
+            _progress = timer.tick / 30; // 3 seconds total (30 ticks)
+          });
+        }
+        if (timer.tick >= 30) {
+          _stopVoiceAnalysis();
+        }
+      });
+    } catch (e) {
+      debugPrint('Error recording: $e');
+      setState(() => _isRecording = false);
+    }
+  }
+
+  void _stopVoiceAnalysis() async {
+    _recordingTimer?.cancel();
+    await _audioRecorder.stop();
 
     if (!mounted) return;
 
     setState(() {
       _isRecording = false;
       _detectedMood = (_moods..shuffle()).first;
-      _progress = 1.0; // Mark as done
+      _progress = 1.0;
     });
   }
 
   @override
   void dispose() {
     _disposeCamera();
+    _audioRecorder.dispose();
+    _recordingTimer?.cancel();
     super.dispose();
   }
 
@@ -231,6 +291,57 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                                 const Center(
                                   child: CircularProgressIndicator(
                                     color: AppTheme.primary,
+                                  ),
+                                ),
+
+                              // Voice Scan Visualization
+                              if (_isRecording)
+                                Positioned.fill(
+                                  child: Container(
+                                    color: Colors.black54,
+                                    child: Center(
+                                      child: TweenAnimationBuilder<double>(
+                                        tween: Tween(
+                                          begin: 1.0,
+                                          end: 1.0 + (_volumeLevel * 0.5),
+                                        ),
+                                        duration: const Duration(
+                                          milliseconds: 100,
+                                        ),
+                                        builder: (context, scale, child) {
+                                          return Transform.scale(
+                                            scale: scale,
+                                            child: Container(
+                                              width: 120,
+                                              height: 120,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppTheme.primary
+                                                      .withOpacity(0.8),
+                                                  width: 2,
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primary
+                                                        .withOpacity(0.3),
+                                                    blurRadius: 20 * scale,
+                                                    spreadRadius: 5 * scale,
+                                                  ),
+                                                ],
+                                                color: AppTheme.primary
+                                                    .withOpacity(0.2),
+                                              ),
+                                              child: const Icon(
+                                                Icons.mic,
+                                                color: Colors.white,
+                                                size: 50,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   ),
                                 ),
 
