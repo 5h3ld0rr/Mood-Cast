@@ -18,6 +18,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   bool _isAnalysisActivated = false;
+  final ValueNotifier<bool> _isScanActiveNotifier = ValueNotifier<bool>(false);
 
   final Map<int, GlobalKey<NavigatorState>> _navigatorKeys = {
     0: GlobalKey<NavigatorState>(),
@@ -39,7 +40,7 @@ class _MainScreenState extends State<MainScreen> {
     _isAnalysisActivated
         ? TabNavigator(
             navigatorKey: _navigatorKeys[2]!,
-            rootScreen: AnalysisScreen(isActive: _currentIndex == 2),
+            rootScreen: AnalysisScreen(activeNotifier: _isScanActiveNotifier),
           )
         : const SizedBox.shrink(),
     TabNavigator(
@@ -51,6 +52,12 @@ class _MainScreenState extends State<MainScreen> {
       rootScreen: const ProfileScreen(),
     ),
   ];
+
+  @override
+  void dispose() {
+    _isScanActiveNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +85,7 @@ class _MainScreenState extends State<MainScreen> {
                 onTap: (index) {
                   setState(() {
                     _currentIndex = index;
+                    _isScanActiveNotifier.value = (index == 2);
                     if (index == 2) {
                       _isAnalysisActivated = true;
                     }

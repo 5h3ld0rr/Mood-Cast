@@ -9,14 +9,15 @@ import 'package:path/path.dart' as p;
 import '../../theme.dart';
 
 class AnalysisScreen extends StatefulWidget {
-  final bool isActive;
-  const AnalysisScreen({super.key, this.isActive = true});
+  final ValueNotifier<bool> activeNotifier;
+  const AnalysisScreen({super.key, required this.activeNotifier});
 
   @override
   State<AnalysisScreen> createState() => _AnalysisScreenState();
 }
 
-class _AnalysisScreenState extends State<AnalysisScreen> {
+class _AnalysisScreenState extends State<AnalysisScreen>
+    with WidgetsBindingObserver {
   CameraController? _controller;
   bool _isCameraInitialized = false;
   bool _isScanning = false;
@@ -42,19 +43,49 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _audioRecorder = AudioRecorder();
-    if (widget.isActive) {
+    widget.activeNotifier.addListener(_handleActiveChange);
+    if (widget.activeNotifier.value) {
       _initializeCamera();
+    }
+  }
+
+  void _handleActiveChange() {
+    if (widget.activeNotifier.value) {
+      _initializeCamera();
+    } else {
+      if (_isRecording) {
+        _stopVoiceAnalysis();
+      }
+      _disposeCamera();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      if (_isRecording) {
+        _stopVoiceAnalysis();
+      }
+      if (_controller != null && _controller!.value.isInitialized) {
+        _disposeCamera();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (widget.activeNotifier.value) {
+        _initializeCamera();
+      }
     }
   }
 
   @override
   void didUpdateWidget(AnalysisScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !oldWidget.isActive) {
-      _initializeCamera();
-    } else if (!widget.isActive && oldWidget.isActive) {
-      _disposeCamera();
+    if (oldWidget.activeNotifier != widget.activeNotifier) {
+      oldWidget.activeNotifier.removeListener(_handleActiveChange);
+      widget.activeNotifier.addListener(_handleActiveChange);
+      _handleActiveChange();
     }
   }
 
@@ -71,6 +102,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   }
 
   Future<void> _initializeCamera() async {
+    if (_isCameraInitialized || _controller != null) return;
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) return;
@@ -316,6 +348,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.activeNotifier.removeListener(_handleActiveChange);
     _disposeCamera();
     _audioRecorder.dispose();
     _recordingTimer?.cancel();
