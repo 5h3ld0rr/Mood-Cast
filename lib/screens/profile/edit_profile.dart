@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../utils/ui_utils.dart';
+import '../../widgets/cached_image.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -114,16 +115,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: AppTheme.primary, width: 2),
-            image: photoUrl.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(photoUrl),
-                    fit: BoxFit.cover,
-                  )
-                : null,
           ),
-          child: photoUrl.isEmpty
-              ? const Icon(Icons.person, color: Colors.white54, size: 60)
-              : null,
+          child: CachedImage(
+            imageUrl: photoUrl.isNotEmpty ? photoUrl : null,
+            isCircle: true,
+            width: 120,
+            height: 120,
+            errorWidget: const Icon(
+              Icons.person,
+              color: Colors.white54,
+              size: 60,
+            ),
+          ),
         ),
         Positioned(
           bottom: 0,

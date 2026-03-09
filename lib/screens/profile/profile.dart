@@ -9,6 +9,7 @@ import 'subscription.dart';
 import 'help_support.dart';
 import 'insights/insights.dart';
 import '../../services/player_service.dart';
+import '../../widgets/cached_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -116,16 +117,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         spreadRadius: 4,
                                       ),
                                     ],
-                                    image: DecorationImage(
-                                      image:
-                                          photoUrl != null &&
-                                              photoUrl.isNotEmpty
-                                          ? NetworkImage(photoUrl)
-                                          : const NetworkImage(
-                                              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmn4pWrDE1f07NiO_-ALAPW18mUchf6vj9oA&s',
-                                            ),
-                                      fit: BoxFit.cover,
-                                    ),
+                                  ),
+                                  child: CachedImage(
+                                    imageUrl:
+                                        photoUrl != null && photoUrl.isNotEmpty
+                                        ? photoUrl
+                                        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmn4pWrDE1f07NiO_-ALAPW18mUchf6vj9oA&s',
+                                    isCircle: true,
+                                    width: 120,
+                                    height: 120,
                                   ),
                                 ),
                                 const SizedBox(height: 16),

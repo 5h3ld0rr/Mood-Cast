@@ -38,27 +38,28 @@ dependencies:
   camera: ^0.12.0
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
-  google_sign_in: ^6.2.1
+  google_sign_in: ^7.2.0
   firebase_messaging: ^16.1.1
-  flutter_local_notifications: 20.1.0
+  flutter_local_notifications: ^21.0.0
   local_auth: ^3.0.1
   url_launcher: ^6.3.2
   shared_preferences: ^2.2.2
   geolocator: ^14.0.2
   http: ^1.6.0
   intl: ^0.20.2
-  font_awesome_flutter: ^10.7.0
-  share_plus: ^10.1.4
+  font_awesome_flutter: ^11.0.0
+  share_plus: ^12.0.1
   flutter_dotenv: ^6.0.0
   record: ^6.2.0
   permission_handler: ^12.0.1
   path_provider: ^2.1.5
   path: ^1.9.1
-  youtube_explode_dart: 3.0.0
+  youtube_explode_dart: ^3.0.5
   ytmusicapi_dart: 2.3.0
   just_audio: ^0.10.5
   shimmer: ^3.0.0
   cloud_firestore: ^6.1.3
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
@@ -70,7 +71,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 flutter_launcher_icons:
   android: "ic_launcher"

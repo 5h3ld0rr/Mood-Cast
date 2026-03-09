@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'theme.dart';
 import 'screens/splash.dart';
 
@@ -13,6 +14,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Initialize Google Sign In (Required for 7.0.0+)
+  await GoogleSignIn.instance.initialize();
 
   // Initialize Notifications
   await NotificationService().initialize();

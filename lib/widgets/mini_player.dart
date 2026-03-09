@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/player_service.dart';
 import '../theme.dart';
 import '../screens/player.dart';
+import 'cached_image.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
@@ -112,26 +113,11 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                     // Song Cover
                     Hero(
                       tag: 'player_art',
-                      child: Container(
+                      child: CachedImage(
+                        imageUrl: widget.song.coverUrl,
                         width: 44,
                         height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(4),
-                          image: widget.song.coverUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(widget.song.coverUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: widget.song.coverUrl == null
-                            ? const Icon(
-                                Icons.music_note,
-                                color: Colors.white54,
-                                size: 24,
-                              )
-                            : null,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     const SizedBox(width: 12),

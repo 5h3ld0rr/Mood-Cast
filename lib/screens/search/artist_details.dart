@@ -3,6 +3,7 @@ import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../services/database_service.dart';
+import '../../widgets/cached_image.dart';
 
 class ArtistDetailsScreen extends StatefulWidget {
   final YouTubeArtistMetadata artist;
@@ -95,10 +96,7 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (artist.artworkUrl != null)
-                    Image.network(artist.artworkUrl!, fit: BoxFit.cover)
-                  else
-                    Container(color: Colors.white10),
+                  CachedImage(imageUrl: artist.artworkUrl, fit: BoxFit.cover),
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -195,16 +193,11 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
                     horizontal: 16,
                     vertical: 4,
                   ),
-                  leading: ClipRRect(
+                  leading: CachedImage(
+                    imageUrl: track.artworkUrl,
+                    width: 48,
+                    height: 48,
                     borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      color: Colors.white10,
-                      child: track.artworkUrl != null
-                          ? Image.network(track.artworkUrl!, fit: BoxFit.cover)
-                          : const Icon(Icons.music_note, color: Colors.white24),
-                    ),
                   ),
                   title: Text(
                     track.title,

@@ -3,6 +3,7 @@ import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/cached_image.dart';
 
 class CategoryDetailsScreen extends StatefulWidget {
   final String categoryName;
@@ -155,22 +156,12 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
         ),
         child: Row(
           children: [
-            Container(
+            CachedImage(
+              imageUrl: track.artworkUrl,
               width: 48,
               height: 48,
-              decoration: BoxDecoration(
-                color: widget.categoryColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-                image: track.artworkUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(track.artworkUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: track.artworkUrl == null
-                  ? Icon(Icons.music_note, color: widget.categoryColor)
-                  : null,
+              borderRadius: BorderRadius.circular(8),
+              errorWidget: Icon(Icons.music_note, color: widget.categoryColor),
             ),
             const SizedBox(width: 16),
             Expanded(

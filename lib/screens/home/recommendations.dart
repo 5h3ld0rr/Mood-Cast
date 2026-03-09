@@ -4,6 +4,7 @@ import '../../services/player_service.dart';
 import '../../services/youtube_music_service.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/song_options.dart';
+import '../../widgets/cached_image.dart';
 
 class RecommendationsScreen extends StatefulWidget {
   final String? mood;
@@ -212,26 +213,11 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
           ),
           child: Row(
             children: [
-              ClipRRect(
+              CachedImage(
+                imageUrl: albumArt,
+                width: 60,
+                height: 60,
                 borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                  child: albumArt != null
-                      ? Image.network(
-                          albumArt,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                                Icons.music_note,
-                                color: Colors.white24,
-                              ),
-                        )
-                      : const Icon(Icons.music_note, color: Colors.white24),
-                ),
               ),
               const SizedBox(width: 16),
               Expanded(

@@ -8,6 +8,7 @@ import 'playlist_details.dart';
 import 'package:mood_cast/screens/search/artist_details.dart';
 import '../../utils/ui_utils.dart';
 import '../../services/download_service.dart';
+import '../../widgets/cached_image.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -455,22 +456,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       Container(
                         width: 56,
                         height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
+                        child: CachedImage(
+                          imageUrl: song.coverUrl,
                           borderRadius: BorderRadius.circular(4),
-                          image: song.coverUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(song.coverUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
+                          errorWidget: const Icon(
+                            Icons.music_note,
+                            color: Colors.white30,
+                          ),
                         ),
-                        child: song.coverUrl == null
-                            ? const Icon(
-                                Icons.music_note,
-                                color: Colors.white30,
-                              )
-                            : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -674,32 +667,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       )
                     : null,
                 borderRadius: BorderRadius.circular(4),
-                image: imageUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(imageUrl),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
-              child: imageUrl == null
-                  ? isLikedSongs
-                        ? const Center(
-                            child: Icon(
-                              Icons.favorite,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          )
-                        : isDownloaded
-                        ? const Center(
-                            child: Icon(
-                              Icons.download_done,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          )
-                        : Icon(icon, color: color, size: 28)
-                  : null,
+              child: (imageUrl != null && imageUrl.isNotEmpty)
+                  ? CachedImage(
+                      imageUrl: imageUrl,
+                      borderRadius: BorderRadius.circular(4),
+                    )
+                  : isLikedSongs
+                  ? const Center(
+                      child: Icon(
+                        Icons.favorite,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    )
+                  : isDownloaded
+                  ? const Center(
+                      child: Icon(
+                        Icons.download_done,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    )
+                  : Icon(icon, color: color, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -782,12 +772,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
             Container(
               width: 64,
               height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
-                ),
+              child: CachedImage(
+                imageUrl: imageUrl,
+                borderRadius: BorderRadius.circular(32),
               ),
             ),
             const SizedBox(width: 16),
@@ -952,15 +939,15 @@ class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
                           );
                         },
                         contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                        leading: CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Colors.white10,
-                          backgroundImage: artist.artworkUrl != null
-                              ? NetworkImage(artist.artworkUrl!)
-                              : null,
-                          child: artist.artworkUrl == null
-                              ? const Icon(Icons.person, color: Colors.white24)
-                              : null,
+                        leading: CachedImage(
+                          imageUrl: artist.artworkUrl,
+                          width: 60,
+                          height: 60,
+                          borderRadius: BorderRadius.circular(30),
+                          errorWidget: const Icon(
+                            Icons.person,
+                            color: Colors.white24,
+                          ),
                         ),
                         title: Text(
                           artist.name,

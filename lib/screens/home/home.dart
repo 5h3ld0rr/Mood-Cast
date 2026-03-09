@@ -10,6 +10,7 @@ import '../../services/mood_service.dart';
 import '../../services/database_service.dart';
 import '../notifications/notification_list.dart';
 import 'recommendations.dart';
+import '../../widgets/cached_image.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -467,19 +468,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               width: 56,
               height: 56,
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
+              child: CachedImage(
+                imageUrl: track.artworkUrl,
                 borderRadius: BorderRadius.circular(8),
-                image: track.artworkUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(track.artworkUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
-              child: track.artworkUrl == null
-                  ? const Icon(Icons.music_note, color: Colors.white54)
-                  : null,
             ),
             const SizedBox(width: 16),
             Expanded(

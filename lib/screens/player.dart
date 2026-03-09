@@ -8,6 +8,7 @@ import '../utils/ui_utils.dart';
 import '../services/player_service.dart';
 import '../services/mood_service.dart';
 import '../services/download_service.dart';
+import '../widgets/cached_image.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -403,29 +404,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     valueListenable:
                                         PlayerService().currentSong,
                                     builder: (context, song, _) {
-                                      return Container(
+                                      return CachedImage(
+                                        imageUrl: song?.coverUrl,
                                         width: 56,
                                         height: 56,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[700],
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          image: song?.coverUrl != null
-                                              ? DecorationImage(
-                                                  image: NetworkImage(
-                                                    song!.coverUrl!,
-                                                  ),
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
-                                        ),
-                                        child: song?.coverUrl == null
-                                            ? const Icon(
-                                                Icons.music_note,
-                                                color: Colors.white54,
-                                              )
-                                            : null,
+                                        borderRadius: BorderRadius.circular(8),
                                       );
                                     },
                                   ),
@@ -961,16 +944,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                   // Track Image
                   AspectRatio(
                     aspectRatio: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        image: const DecorationImage(
-                          image: NetworkImage(
-                            'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=500&q=80',
-                          ),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                    child: const CachedImage(
+                      imageUrl:
+                          'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=500&q=80',
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1063,7 +1040,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                   children: [
                     _buildShareAction(
                       'Copy link',
-                      Icons.link,
+                      const Icon(Icons.link, color: Colors.white, size: 28),
                       Colors.grey[800]!,
                       () => _copyToClipboard(
                         'https://moodcast.ai/track/midnight-solitude',
@@ -1071,7 +1048,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                     ),
                     _buildShareAction(
                       'WhatsApp',
-                      FontAwesomeIcons.whatsapp,
+                      const FaIcon(
+                        FontAwesomeIcons.whatsapp,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       const Color(0xFF25D366),
                       () => _launchURL(
                         'https://wa.me/?text=Listening to Midnight Solitude on MoodCast AI! https://moodcast.ai/track/midnight-solitude',
@@ -1079,7 +1060,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                     ),
                     _buildShareAction(
                       'Status',
-                      FontAwesomeIcons.circleNotch,
+                      const FaIcon(
+                        FontAwesomeIcons.circleNotch,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       const Color(0xFF25D366),
                       () => _launchURL(
                         'whatsapp://send?text=Check out this vibe: https://moodcast.ai/track/midnight-solitude',
@@ -1087,7 +1072,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                     ),
                     _buildShareAction(
                       'Messages',
-                      Icons.message,
+                      const Icon(Icons.message, color: Colors.white, size: 28),
                       const Color(0xFF007AFF),
                       () => _launchURL(
                         'sms:?body=Listen to this with me: https://moodcast.ai/track/midnight-solitude',
@@ -1095,7 +1080,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                     ),
                     _buildShareAction(
                       'Stories',
-                      FontAwesomeIcons.facebook,
+                      const FaIcon(
+                        FontAwesomeIcons.facebook,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       const Color(0xFF1877F2),
                       () => _launchURL(
                         'https://www.facebook.com/sharer/sharer.php?u=https://moodcast.ai/track/midnight-solitude',
@@ -1103,13 +1092,21 @@ class _PlayerScreenState extends State<PlayerScreen>
                     ),
                     _buildShareAction(
                       'TikTok',
-                      FontAwesomeIcons.tiktok,
+                      const FaIcon(
+                        FontAwesomeIcons.tiktok,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       Colors.black,
                       () => _launchURL('https://www.tiktok.com/'),
                     ),
                     _buildShareAction(
                       'More',
-                      Icons.more_horiz,
+                      const Icon(
+                        Icons.more_horiz,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       Colors.grey[700]!,
                       () => _handleGeneralShare(),
                     ),
@@ -1184,7 +1181,7 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   Widget _buildShareAction(
     String label,
-    IconData icon,
+    Widget icon,
     Color color,
     VoidCallback onTap,
   ) {
@@ -1198,7 +1195,7 @@ class _PlayerScreenState extends State<PlayerScreen>
               width: 56,
               height: 56,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              child: Icon(icon, color: Colors.white, size: 28),
+              child: Center(child: icon),
             ),
             const SizedBox(height: 8),
             Text(

@@ -5,6 +5,7 @@ import '../../services/database_service.dart';
 import '../../services/player_service.dart';
 import '../../services/download_service.dart';
 import '../../widgets/song_options.dart';
+import '../../widgets/cached_image.dart';
 
 class PlaylistDetailsScreen extends StatefulWidget {
   final String playlistName;
@@ -790,28 +791,14 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
         child: Row(
           children: [
             // Track Art
-            Container(
+            CachedImage(
+              imageUrl: song.coverUrl,
               width: 50,
               height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-                image: song.coverUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(song.coverUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+              borderRadius: BorderRadius.circular(4),
+              errorWidget: const Center(
+                child: Icon(Icons.music_note, color: Colors.white38, size: 20),
               ),
-              child: song.coverUrl == null
-                  ? const Center(
-                      child: Icon(
-                        Icons.music_note,
-                        color: Colors.white38,
-                        size: 20,
-                      ),
-                    )
-                  : null,
             ),
             const SizedBox(width: 16),
             // Title & Artist

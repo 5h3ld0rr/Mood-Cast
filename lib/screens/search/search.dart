@@ -8,6 +8,7 @@ import 'artist_details.dart';
 import 'category_details.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/song_options.dart';
+import '../../widgets/cached_image.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -495,21 +496,11 @@ class _SearchScreenState extends State<SearchScreen> {
               _playerService.playQueue(queue, initialIndex: itemIndex);
             },
             contentPadding: EdgeInsets.zero,
-            leading: ClipRRect(
+            leading: CachedImage(
+              imageUrl: albumArt,
+              width: 52,
+              height: 52,
               borderRadius: BorderRadius.circular(6),
-              child: Container(
-                width: 52,
-                height: 52,
-                color: Colors.white10,
-                child: albumArt != null
-                    ? Image.network(
-                        albumArt,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.music_note, color: Colors.white24),
-                      )
-                    : const Icon(Icons.music_note, color: Colors.white24),
-              ),
             ),
             title: Text(
               track.title,
@@ -563,21 +554,12 @@ class _SearchScreenState extends State<SearchScreen> {
           );
         },
         contentPadding: EdgeInsets.zero,
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(52), // Circular for artists
-          child: Container(
-            width: 52,
-            height: 52,
-            color: Colors.white10,
-            child: artist.artworkUrl != null
-                ? Image.network(
-                    artist.artworkUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.person, color: Colors.white24),
-                  )
-                : const Icon(Icons.person, color: Colors.white24),
-          ),
+        leading: CachedImage(
+          imageUrl: artist.artworkUrl,
+          width: 52,
+          height: 52,
+          isCircle: true,
+          errorWidget: const Icon(Icons.person, color: Colors.white24),
         ),
         title: Text(
           artist.name,
