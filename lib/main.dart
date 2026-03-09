@@ -8,6 +8,7 @@ import 'screens/splash.dart';
 import 'services/notification_service.dart';
 import 'services/weather_service.dart';
 import 'services/download_service.dart';
+import 'services/connectivity_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -23,6 +24,9 @@ void main() async {
 
   // Initialize Downloads
   await DownloadService().init();
+
+  // Initialize Connectivity Monitoring
+  ConnectivityService().initialize();
 
   // Load environment variables
   await dotenv.load(fileName: ".env");

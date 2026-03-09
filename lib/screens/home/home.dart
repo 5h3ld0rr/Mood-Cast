@@ -11,6 +11,7 @@ import '../../services/database_service.dart';
 import '../notifications/notification_list.dart';
 import 'recommendations.dart';
 import '../../widgets/cached_image.dart';
+import '../../services/connectivity_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,17 +31,27 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _moodService.currentMood.addListener(_onMoodChanged);
+    ConnectivityService().isOnline.addListener(_onConnectivityChanged);
     _fetchRecommendations();
   }
 
   @override
   void dispose() {
     _moodService.currentMood.removeListener(_onMoodChanged);
+    ConnectivityService().isOnline.removeListener(_onConnectivityChanged);
     super.dispose();
   }
 
   void _onMoodChanged() {
     _fetchRecommendations();
+  }
+
+  void _onConnectivityChanged() {
+    if (ConnectivityService().isOnline.value) {
+      // Refresh everything when we come back online
+      WeatherService().fetchWeather();
+      _fetchRecommendations();
+    }
   }
 
   Future<void> _fetchRecommendations() async {

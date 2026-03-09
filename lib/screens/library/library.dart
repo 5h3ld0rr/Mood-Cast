@@ -9,6 +9,7 @@ import 'package:mood_cast/screens/search/artist_details.dart';
 import '../../utils/ui_utils.dart';
 import '../../services/download_service.dart';
 import '../../widgets/cached_image.dart';
+import '../../services/connectivity_service.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -23,11 +24,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   final DatabaseService _db = DatabaseService();
 
+  @override
+  void initState() {
+    super.initState();
+    ConnectivityService().isOnline.addListener(_onConnectivityChanged);
+  }
+
+  void _onConnectivityChanged() {
+    if (mounted) setState(() {});
+  }
+
   // Artist search state within Library
   String _artistSearchQuery = '';
 
   @override
   void dispose() {
+    ConnectivityService().isOnline.removeListener(_onConnectivityChanged);
     super.dispose();
   }
 
@@ -821,6 +833,16 @@ class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
   bool _isLoading = false;
   Timer? _debounce;
 
+  @override
+  void initState() {
+    super.initState();
+    ConnectivityService().isOnline.addListener(_onConnectivityChanged);
+  }
+
+  void _onConnectivityChanged() {
+    if (mounted) setState(() {});
+  }
+
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -851,6 +873,7 @@ class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
   void dispose() {
     _controller.dispose();
     _debounce?.cancel();
+    ConnectivityService().isOnline.removeListener(_onConnectivityChanged);
     super.dispose();
   }
 
@@ -911,62 +934,96 @@ class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
             ),
           ),
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
-                  )
-                : _results.isEmpty && _controller.text.isNotEmpty
-                ? const Center(
-                    child: Text(
-                      'No artists found',
-                      style: TextStyle(color: Colors.white54),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _results.length,
-                    itemBuilder: (context, index) {
-                      final artist = _results[index];
-                      return ListTile(
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ArtistDetailsScreen(artist: artist),
-                            ),
-                          );
-                        },
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                        leading: CachedImage(
-                          imageUrl: artist.artworkUrl,
-                          width: 60,
-                          height: 60,
-                          borderRadius: BorderRadius.circular(30),
-                          errorWidget: const Icon(
-                            Icons.person,
-                            color: Colors.white24,
-                          ),
-                        ),
-                        title: Text(
-                          artist.name,
-                          style: const TextStyle(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: ConnectivityService().isOnline,
+              builder: (context, isOnline, _) {
+                if (!isOnline) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.wifi_off, color: Colors.white24, size: 64),
+                        SizedBox(height: 16),
+                        Text(
+                          'You\'re Offline',
+                          style: TextStyle(
                             color: Colors.white,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        subtitle: const Text(
-                          'Artist',
+                        SizedBox(height: 8),
+                        Text(
+                          'Please check your internet connection.',
                           style: TextStyle(color: Colors.white38),
                         ),
-                        trailing: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white24,
+                      ],
+                    ),
+                  );
+                }
+
+                return _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
                         ),
+                      )
+                    : _results.isEmpty && _controller.text.isNotEmpty
+                    ? const Center(
+                        child: Text(
+                          'No artists found',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _results.length,
+                        itemBuilder: (context, index) {
+                          final artist = _results[index];
+                          return ListTile(
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ArtistDetailsScreen(artist: artist),
+                                ),
+                              );
+                            },
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                            ),
+                            leading: CachedImage(
+                              imageUrl: artist.artworkUrl,
+                              width: 60,
+                              height: 60,
+                              borderRadius: BorderRadius.circular(30),
+                              errorWidget: const Icon(
+                                Icons.person,
+                                color: Colors.white24,
+                              ),
+                            ),
+                            title: Text(
+                              artist.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Artist',
+                              style: TextStyle(color: Colors.white38),
+                            ),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: Colors.white24,
+                            ),
+                          );
+                        },
                       );
-                    },
-                  ),
+              },
+            ),
           ),
         ],
       ),

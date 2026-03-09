@@ -9,6 +9,7 @@ import 'category_details.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/song_options.dart';
 import '../../widgets/cached_image.dart';
+import '../../services/connectivity_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -93,6 +94,7 @@ class _SearchScreenState extends State<SearchScreen> {
         });
       }
     });
+    ConnectivityService().isOnline.addListener(_onConnectivityChanged);
   }
 
   @override
@@ -100,6 +102,7 @@ class _SearchScreenState extends State<SearchScreen> {
     _searchController.dispose();
     _focusNode.dispose();
     _debounce?.cancel();
+    ConnectivityService().isOnline.removeListener(_onConnectivityChanged);
     super.dispose();
   }
 
@@ -116,6 +119,14 @@ class _SearchScreenState extends State<SearchScreen> {
         });
       }
     });
+  }
+
+  void _onConnectivityChanged() {
+    if (ConnectivityService().isOnline.value &&
+        _searchController.text.isNotEmpty) {
+      _performSearch(_searchController.text);
+    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _performSearch(
@@ -250,15 +261,29 @@ class _SearchScreenState extends State<SearchScreen> {
 
             // ── Body Content ──
             Expanded(
-              child: _isLoading
-                  ? ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: 10,
-                      itemBuilder: (context, index) => const TrackSkeleton(),
-                    )
-                  : _searchController.text.isEmpty
-                  ? (_isFocused ? _buildInitialContent() : _buildBrowseAll())
-                  : _buildSearchResults(),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: ConnectivityService().isOnline,
+                builder: (context, isOnline, _) {
+                  if (!isOnline &&
+                      _searchResults.isEmpty &&
+                      _artistResults.isEmpty) {
+                    return _buildOfflineState();
+                  }
+
+                  return _isLoading
+                      ? ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: 10,
+                          itemBuilder: (context, index) =>
+                              const TrackSkeleton(),
+                        )
+                      : _searchController.text.isEmpty
+                      ? (_isFocused
+                            ? _buildInitialContent()
+                            : _buildBrowseAll())
+                      : _buildSearchResults();
+                },
+              ),
             ),
           ],
         ),
@@ -576,6 +601,60 @@ class _SearchScreenState extends State<SearchScreen> {
           style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.white24),
+      ),
+    );
+  }
+
+  Widget _buildOfflineState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.wifi_off_rounded,
+              color: Colors.white.withValues(alpha: 0.1),
+              size: 100,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'You\'re Offline',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Check your connection to search for music.',
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                if (ConnectivityService().isOnline.value &&
+                    _searchController.text.isNotEmpty) {
+                  _performSearch(_searchController.text);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
       ),
     );
   }
