@@ -4,7 +4,6 @@ import 'package:camera/camera.dart';
 
 import '../../theme.dart';
 import '../../services/mood_service.dart';
-import '../../widgets/skeleton.dart';
 import '../home/recommendations.dart';
 
 class AnalysisScreen extends StatefulWidget {
@@ -67,9 +66,6 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     if (mood == 'Natural') return (_naturalPhrases..shuffle()).first;
     return "";
   }
-
-  double _voiceVolumeSum = 0.0;
-  int _voiceSamplesCount = 0;
 
   @override
   void initState() {
