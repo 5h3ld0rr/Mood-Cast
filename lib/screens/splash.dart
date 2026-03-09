@@ -176,19 +176,23 @@ class _SplashScreenState extends State<SplashScreen>
                               child: Container(
                                 padding: const EdgeInsets.all(28),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primary.withOpacity(0.1),
+                                  color: AppTheme.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(36),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.primary.withOpacity(
-                                        0.4 * _pulseAnimation.value,
+                                      color: AppTheme.primary.withValues(
+                                        alpha: 0.4 * _pulseAnimation.value,
                                       ),
                                       blurRadius: 60 * _pulseAnimation.value,
                                       spreadRadius: -10,
                                     ),
                                   ],
                                   border: Border.all(
-                                    color: AppTheme.primary.withOpacity(0.3),
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
                                     width: 2,
                                   ),
                                 ),

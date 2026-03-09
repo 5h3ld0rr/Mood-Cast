@@ -265,7 +265,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: (isVisa ? Colors.blue : Colors.black).withOpacity(0.3),
+            color: (isVisa ? Colors.blue : Colors.black).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -357,13 +357,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         height: 60,
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withOpacity(0.1)
+              ? AppTheme.primary.withValues(alpha: 0.1)
               : AppTheme.cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? AppTheme.primary
-                : Colors.white.withOpacity(0.1),
+                : Colors.white.withValues(alpha: 0.1),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -412,7 +412,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             filled: true,
             fillColor: AppTheme.cardBg,
             border: OutlineInputBorder(
@@ -471,4 +471,3 @@ class _ExpiryDateFormatter extends TextInputFormatter {
     );
   }
 }
-
