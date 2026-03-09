@@ -145,9 +145,9 @@ class _MainScreenState extends State<MainScreen> {
                   BottomNavigationBarItem(
                     icon: Padding(
                       padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                      child: Icon(Icons.document_scanner, size: 28),
+                      child: Icon(Icons.auto_awesome, size: 28),
                     ),
-                    label: 'Scan',
+                    label: 'MoodSync',
                   ),
                   BottomNavigationBarItem(
                     icon: Padding(
