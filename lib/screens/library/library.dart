@@ -18,7 +18,7 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   String selectedFilter = 'Playlists';
-  final List<String> filters = ['Playlists', 'Artists', 'Albums', 'Downloads'];
+  final List<String> filters = ['Playlists', 'Artists', 'Downloads'];
 
   final DatabaseService _db = DatabaseService();
 
@@ -369,38 +369,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   );
                 },
               ),
-            ),
-          ],
-        );
-      case 'Albums':
-        return ListView(
-          physics: const BouncingScrollPhysics(),
-          children: [
-            _buildLibraryItem(
-              'Endless Summer',
-              'The Midnight • 2016',
-              Icons.album,
-              Colors.orange,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200',
-            ),
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Kids',
-              'The Midnight • 2018',
-              Icons.album,
-              Colors.blue,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=200',
-            ),
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Monsters',
-              'The Midnight • 2020',
-              Icons.album,
-              Colors.purple,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200',
             ),
           ],
         );
