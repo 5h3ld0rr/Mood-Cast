@@ -3,20 +3,72 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/weather_service.dart';
+import '../../widgets/skeleton.dart';
 import '../../services/player_service.dart';
+import '../../services/youtube_music_service.dart';
+import '../../services/mood_service.dart';
 import '../notifications/notification_list.dart';
 import 'recommendations.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final YouTubeMusicService _ytmService = YouTubeMusicService();
+  final MoodService _moodService = MoodService();
+  List<YouTubeMusicMetadata> _recommendations = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _moodService.currentMood.addListener(_onMoodChanged);
+    _fetchRecommendations();
+  }
+
+  @override
+  void dispose() {
+    _moodService.currentMood.removeListener(_onMoodChanged);
+    super.dispose();
+  }
+
+  void _onMoodChanged() {
+    _fetchRecommendations();
+  }
+
+  Future<void> _fetchRecommendations() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final tracks = await _ytmService.getRecommendationsByMood(
+        _moodService.currentMood.value,
+      );
+      if (mounted) {
+        setState(() {
+          _recommendations = tracks.take(6).toList(); // Show top 6 on home
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching home recommendations: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14), // #080c14
+      backgroundColor: const Color(0xFF080C14),
       body: Stack(
         children: [
-          // Gradients
+          // Background Gradients
           Positioned(
             top: -100,
             right: -100,
@@ -108,6 +160,7 @@ class HomeScreen extends StatelessWidget {
                 // Scrollable Content
                 Expanded(
                   child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16.0,
                       vertical: 8.0,
@@ -123,7 +176,6 @@ class HomeScreen extends StatelessWidget {
                             final name =
                                 user?.displayName?.split(' ').first ?? 'User';
 
-                            // Determine time-based greeting
                             final hour = DateTime.now().hour;
                             String timeGreeting = 'Good Morning';
                             if (hour >= 12 && hour < 17) {
@@ -193,29 +245,31 @@ class HomeScreen extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Happy',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 36,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
+                                    Text(
+                                      _moodService.currentMood.value,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     const SizedBox(height: 16),
-                                    Row(
-                                      children: [
-                                        _buildTag('Upbeat'),
-                                        const SizedBox(width: 8),
-                                        _buildTag('Energetic'),
-                                        const SizedBox(width: 8),
-                                        _buildTag('Sunny Vibes'),
-                                      ],
+                                    const SizedBox(height: 16),
+                                    ValueListenableBuilder<String>(
+                                      valueListenable: _moodService.currentMood,
+                                      builder: (context, mood, _) {
+                                        final tags = _getMoodTags(mood);
+                                        return Row(
+                                          children: tags.map((tag) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                right: 8.0,
+                                              ),
+                                              child: _buildTag(tag),
+                                            );
+                                          }).toList(),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
@@ -245,8 +299,6 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
 
-                        const SizedBox(height: 32),
-
                         // Recommended Section
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -263,8 +315,9 @@ class HomeScreen extends StatelessWidget {
                               onPressed: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RecommendationsScreen(),
+                                    builder: (context) => RecommendationsScreen(
+                                      mood: _moodService.currentMood.value,
+                                    ),
                                   ),
                                 );
                               },
@@ -277,27 +330,36 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
 
-                        _buildSongTile(
-                          context,
-                          'Happy Vibes',
-                          'Sunshine Collective',
-                          Icons.play_circle_fill,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildSongTile(
-                          context,
-                          'Summer Pop',
-                          'Neon Horizon',
-                          Icons.play_circle_fill,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildSongTile(
-                          context,
-                          'Golden Hour',
-                          'The Midnight',
-                          Icons.play_circle_fill,
-                        ),
-                        const SizedBox(height: 100), // padding for bottom nav
+                        if (_isLoading)
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: 6,
+                            itemBuilder: (context, index) =>
+                                const TrackSkeleton(),
+                          )
+                        else if (_recommendations.isEmpty)
+                          const Center(
+                            child: Text(
+                              'No music recommendations found.',
+                              style: TextStyle(color: AppTheme.textMuted),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _recommendations.length,
+                            itemBuilder: (context, index) {
+                              final track = _recommendations[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: _buildTrackTile(context, track),
+                              );
+                            },
+                          ),
+
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -308,6 +370,27 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  List<String> _getMoodTags(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'happy':
+        return ['Upbeat', 'Energetic', 'Sunny'];
+      case 'calm':
+        return ['Peaceful', 'Ambient', 'Zen'];
+      case 'energetic':
+        return ['Power', 'Bass', 'Fast'];
+      case 'focused':
+        return ['Lo-fi', 'Deep', 'Work'];
+      case 'relaxing':
+        return ['Acoustic', 'Soft', 'Chill'];
+      case 'inspired':
+        return ['Dreamy', 'Cloudy', 'Soul'];
+      case 'sad':
+        return ['Melodic', 'Slow', 'Emotional'];
+      default:
+        return ['Vibe', 'Music', 'Discovery'];
+    }
   }
 
   IconData _getWeatherIcon(String condition) {
@@ -342,22 +425,24 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSongTile(
-    BuildContext context,
-    String title,
-    String artist,
-    IconData icon,
-  ) {
+  Widget _buildTrackTile(BuildContext context, YouTubeMusicMetadata track) {
     return GestureDetector(
       onTap: () {
-        PlayerService().play(SongInfo(title: title, artist: artist));
+        PlayerService().play(
+          SongInfo(
+            title: track.title,
+            artist: track.artist,
+            coverUrl: track.artworkUrl,
+            videoId: track.videoId,
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppTheme.cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Row(
           children: [
@@ -365,10 +450,18 @@ class HomeScreen extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: Colors.grey[800],
+                color: Colors.grey[900],
                 borderRadius: BorderRadius.circular(8),
+                image: track.artworkUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(track.artworkUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: const Icon(Icons.music_note, color: Colors.white54),
+              child: track.artworkUrl == null
+                  ? const Icon(Icons.music_note, color: Colors.white54)
+                  : null,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -376,7 +469,9 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    track.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -384,7 +479,9 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    artist,
+                    track.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppTheme.textMuted,
                       fontSize: 14,
@@ -393,7 +490,11 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(icon, color: AppTheme.primary, size: 40),
+            const Icon(
+              Icons.play_circle_fill,
+              color: AppTheme.primary,
+              size: 40,
+            ),
           ],
         ),
       ),

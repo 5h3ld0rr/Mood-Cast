@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:record/record.dart';
@@ -7,6 +6,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../../theme.dart';
+import '../../services/mood_service.dart';
+import '../../widgets/skeleton.dart';
+import '../home/recommendations.dart';
 
 class AnalysisScreen extends StatefulWidget {
   final ValueNotifier<bool> activeNotifier;
@@ -39,6 +41,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   Timer? _recordingTimer;
   final TextEditingController _textController = TextEditingController();
   bool _isTextAnalyzing = false;
+  double _voiceVolumeSum = 0.0;
+  int _voiceSamplesCount = 0;
 
   @override
   void initState() {
@@ -46,6 +50,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     WidgetsBinding.instance.addObserver(this);
     _audioRecorder = AudioRecorder();
     widget.activeNotifier.addListener(_handleActiveChange);
+
     if (widget.activeNotifier.value) {
       _initializeCamera();
     }
@@ -135,29 +140,49 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   }
 
   void _startScan() async {
-    if (_isScanning) return;
+    if (_isScanning || _controller == null || !_controller!.value.isInitialized)
+      return;
 
     setState(() {
       _isScanning = true;
       _progress = 0.0;
-      _zoomScale = 1.5; // Moderate scan zoom
+      _zoomScale = 1.5;
       _detectedMood = null;
     });
 
-    // Simulate progress
-    for (int i = 0; i <= 100; i += 2) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      if (!mounted) return;
+    try {
+      // 1. Take a picture for analysis
+      await _controller!.takePicture();
+
+      // 2. Simulate progress for UI feel
+      for (int i = 0; i <= 60; i += 5) {
+        await Future.delayed(const Duration(milliseconds: 50));
+        setState(() => _progress = i / 100);
+      }
+
+      // 3. Pick a random mood (simplified since ML Kit is removed)
+      final resultMood = (_moods..shuffle()).first;
+
+      // 5. Complete progress
+      for (int i = 65; i <= 100; i += 10) {
+        await Future.delayed(const Duration(milliseconds: 50));
+        setState(() => _progress = i / 100);
+      }
+
       setState(() {
-        _progress = i / 100;
+        _isScanning = false;
+        _zoomScale = 1.3;
+        _detectedMood = resultMood;
+      });
+      MoodService().updateMood(_detectedMood!);
+    } catch (e) {
+      debugPrint('Error during scan: $e');
+      setState(() {
+        _isScanning = false;
+        _zoomScale = 1.3;
+        _detectedMood = 'Calm';
       });
     }
-
-    setState(() {
-      _isScanning = false;
-      _zoomScale = 1.3; // Return to base zoom
-      _detectedMood = (_moods..shuffle()).first;
-    });
   }
 
   void _startVoiceAnalysis() async {
@@ -178,6 +203,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
       _isRecording = true;
       _detectedMood = null;
       _progress = 0.0;
+      _voiceVolumeSum = 0.0;
+      _voiceSamplesCount = 0;
     });
 
     try {
@@ -201,6 +228,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
             // Map -60..0 to 0..1
             double level = (amp.current + 60) / 60;
             _volumeLevel = level.clamp(0.1, 1.0);
+            _voiceVolumeSum += _volumeLevel;
+            _voiceSamplesCount++;
             _progress = timer.tick / 30; // 3 seconds total (30 ticks)
           });
         }
@@ -220,11 +249,24 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
     if (!mounted) return;
 
+    String voiceMood = 'Calm';
+    if (_voiceSamplesCount > 0) {
+      double avgVolume = _voiceVolumeSum / _voiceSamplesCount;
+      if (avgVolume > 0.6) {
+        voiceMood = 'Energetic';
+      } else if (avgVolume > 0.3) {
+        voiceMood = 'Inspired';
+      } else {
+        voiceMood = 'Relaxing';
+      }
+    }
+
     setState(() {
       _isRecording = false;
-      _detectedMood = (_moods..shuffle()).first;
+      _detectedMood = voiceMood;
       _progress = 1.0;
     });
+    MoodService().updateMood(_detectedMood!);
   }
 
   void _startTextAnalysis(String text) async {
@@ -247,11 +289,51 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
     if (!mounted) return;
 
+    final resultMood = _analyzeTextMood(text);
+
     setState(() {
       _isTextAnalyzing = false;
-      _detectedMood = (_moods..shuffle()).first;
+      _detectedMood = resultMood;
       _textController.clear();
     });
+    MoodService().updateMood(_detectedMood!);
+  }
+
+  String _analyzeTextMood(String text) {
+    final lowerText = text.toLowerCase();
+
+    if (lowerText.contains('happy') ||
+        lowerText.contains('great') ||
+        lowerText.contains('good') ||
+        lowerText.contains('awesome')) {
+      return 'Happy';
+    }
+    if (lowerText.contains('sad') ||
+        lowerText.contains('lonely') ||
+        lowerText.contains('cried') ||
+        lowerText.contains('miss')) {
+      return 'Calm';
+    }
+    if (lowerText.contains('work') ||
+        lowerText.contains('study') ||
+        lowerText.contains('focus') ||
+        lowerText.contains('concentrate')) {
+      return 'Focused';
+    }
+    if (lowerText.contains('energy') ||
+        lowerText.contains('hype') ||
+        lowerText.contains('workout') ||
+        lowerText.contains('run')) {
+      return 'Energetic';
+    }
+    if (lowerText.contains('relax') ||
+        lowerText.contains('chill') ||
+        lowerText.contains('tired') ||
+        lowerText.contains('sleep')) {
+      return 'Relaxing';
+    }
+
+    return (_moods..shuffle()).first;
   }
 
   void _showTextInputDialog() {
@@ -448,9 +530,11 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                   ),
                                 )
                               else
-                                const Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppTheme.primary,
+                                const Positioned.fill(
+                                  child: Skeleton(
+                                    height: double.infinity,
+                                    width: double.infinity,
+                                    borderRadius: 0,
                                   ),
                                 ),
 
@@ -686,6 +770,46 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                   ],
                                 ),
                               ],
+                            ),
+                          ),
+                        if (_detectedMood != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20.0),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RecommendationsScreen(
+                                            mood: _detectedMood,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.auto_awesome,
+                                  color: Colors.black,
+                                ),
+                                label: const Text(
+                                  'GENERATE VIBE PLAYLIST',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primary,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 18,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
 

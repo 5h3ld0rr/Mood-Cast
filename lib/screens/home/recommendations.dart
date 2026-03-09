@@ -1,18 +1,65 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/player_service.dart';
+import '../../services/youtube_music_service.dart';
+import '../../widgets/skeleton.dart';
 
-class RecommendationsScreen extends StatelessWidget {
-  const RecommendationsScreen({super.key});
+class RecommendationsScreen extends StatefulWidget {
+  final String? mood;
+  const RecommendationsScreen({super.key, this.mood});
+
+  @override
+  State<RecommendationsScreen> createState() => _RecommendationsScreenState();
+}
+
+class _RecommendationsScreenState extends State<RecommendationsScreen> {
+  final YouTubeMusicService _ytmService = YouTubeMusicService();
+  List<YouTubeMusicMetadata> _tracks = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecommendations();
+  }
+
+  Future<void> _fetchRecommendations() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final mood = widget.mood ?? 'Happy'; // Fallback
+      final tracks = await _ytmService.getRecommendationsByMood(mood);
+
+      if (mounted) {
+        setState(() {
+          _tracks = tracks;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load recommendations. Please try again.';
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final displayMood = widget.mood ?? 'Personalized';
+
     return Scaffold(
       backgroundColor: const Color(0xFF080C14),
       appBar: AppBar(
-        title: const Text(
-          'Recommended for You',
-          style: TextStyle(
+        title: Text(
+          '$displayMood Vibes',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -23,98 +70,98 @@ class RecommendationsScreen extends StatelessWidget {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildSongTile(
-              context,
-              'Happy Vibes',
-              'Sunshine Collective',
-              Icons.play_circle_fill,
-            ),
-            const SizedBox(height: 12),
-            _buildSongTile(
-              context,
-              'Summer Pop',
-              'Neon Horizon',
-              Icons.play_circle_fill,
-            ),
-            const SizedBox(height: 12),
-            _buildSongTile(
-              context,
-              'Golden Hour',
-              'The Midnight',
-              Icons.play_circle_fill,
-            ),
-            const SizedBox(height: 12),
-            _buildSongTile(
-              context,
-              'Midnight City',
-              'M83',
-              Icons.play_circle_fill,
-            ),
-            const SizedBox(height: 12),
-            _buildSongTile(
-              context,
-              'Lofi Dreams',
-              'Study Beats',
-              Icons.play_circle_fill,
-            ),
-            const SizedBox(height: 12),
-            _buildSongTile(
-              context,
-              'Chill Waves',
-              'Ocean Breeze',
-              Icons.play_circle_fill,
-            ),
-            const SizedBox(height: 12),
-            _buildSongTile(
-              context,
-              'Starlight',
-              'Muse',
-              Icons.play_circle_fill,
-            ),
-            const SizedBox(height: 12),
-            _buildSongTile(
-              context,
-              'Electric Feel',
-              'MGMT',
-              Icons.play_circle_fill,
-            ),
-          ],
-        ),
-      ),
+      body: SafeArea(child: _buildContent()),
     );
   }
 
-  Widget _buildSongTile(
-    BuildContext context,
-    String title,
-    String artist,
-    IconData icon,
-  ) {
+  Widget _buildContent() {
+    if (_isLoading) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: 8,
+        itemBuilder: (context, index) => const TrackSkeleton(),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_errorMessage!, style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchRecommendations,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_tracks.isEmpty) {
+      return const Center(
+        child: Text(
+          'No songs found for this vibe.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: _tracks.length,
+      itemBuilder: (context, index) {
+        final track = _tracks[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: _buildSongTile(context, track),
+        );
+      },
+    );
+  }
+
+  Widget _buildSongTile(BuildContext context, YouTubeMusicMetadata track) {
+    final albumArt = track.artworkUrl;
+    final artistName = track.artist;
+
     return GestureDetector(
       onTap: () {
-        PlayerService().play(SongInfo(title: title, artist: artist));
+        PlayerService().play(
+          SongInfo(
+            title: track.title,
+            artist: artistName,
+            coverUrl: albumArt,
+            videoId: track.videoId,
+            previewUrl: null,
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppTheme.cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Row(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(12),
+                image: albumArt != null
+                    ? DecorationImage(
+                        image: NetworkImage(albumArt),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: const Icon(Icons.music_note, color: Colors.white54),
+              child: albumArt == null
+                  ? const Icon(Icons.music_note, color: Colors.white54)
+                  : null,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -122,7 +169,9 @@ class RecommendationsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    track.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -130,16 +179,22 @@ class RecommendationsScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    artist,
+                    artistName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppTheme.textMuted,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(icon, color: AppTheme.primary, size: 40),
+            const Icon(
+              Icons.play_circle_filled_rounded,
+              color: AppTheme.primary,
+              size: 36,
+            ),
           ],
         ),
       ),

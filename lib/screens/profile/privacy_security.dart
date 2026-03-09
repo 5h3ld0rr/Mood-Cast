@@ -82,7 +82,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           : 'Data collection disabled',
                     );
                   },
-                  activeColor: AppTheme.primary,
+                  activeThumbColor: AppTheme.primary,
                 ),
               ),
               _buildDivider(),
@@ -99,7 +99,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           : 'Personalized ads disabled',
                     );
                   },
-                  activeColor: AppTheme.primary,
+                  activeThumbColor: AppTheme.primary,
                 ),
               ),
             ]),

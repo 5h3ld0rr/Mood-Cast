@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../theme.dart';
 import '../utils/ui_utils.dart';
 import '../services/player_service.dart';
+import '../services/mood_service.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -199,21 +200,26 @@ class _PlayerScreenState extends State<PlayerScreen>
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(
+                            children: [
+                              const Icon(
                                 Icons.emergency,
                                 color: AppTheme.primary,
                                 size: 16,
                               ),
-                              SizedBox(width: 8),
-                              Text(
-                                'CURRENT MOOD: STRESSED • ANXIOUS',
-                                style: TextStyle(
-                                  color: AppTheme.primary,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
+                              const SizedBox(width: 8),
+                              ValueListenableBuilder<String>(
+                                valueListenable: MoodService().currentMood,
+                                builder: (context, mood, _) {
+                                  return Text(
+                                    'CURRENT MOOD: ${mood.toUpperCase()}',
+                                    style: const TextStyle(
+                                      color: AppTheme.primary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -291,20 +297,30 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(
+                                  children: [
+                                    const Icon(
                                       Icons.air,
                                       color: Colors.white,
                                       size: 40,
                                     ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'DEEP CALM',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    const SizedBox(height: 4),
+                                    ValueListenableBuilder<String>(
+                                      valueListenable:
+                                          MoodService().currentMood,
+                                      builder: (context, mood, _) {
+                                        return Text(
+                                          mood == 'Focused'
+                                              ? 'WORK MODE'
+                                              : mood == 'Energetic'
+                                              ? 'HYPE UP'
+                                              : 'DEEP CALM',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
@@ -370,17 +386,35 @@ class _PlayerScreenState extends State<PlayerScreen>
                               children: [
                                 Hero(
                                   tag: 'player_art',
-                                  child: Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[700],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(
-                                      Icons.music_note,
-                                      color: Colors.white54,
-                                    ),
+                                  child: ValueListenableBuilder<SongInfo?>(
+                                    valueListenable:
+                                        PlayerService().currentSong,
+                                    builder: (context, song, _) {
+                                      return Container(
+                                        width: 56,
+                                        height: 56,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[700],
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          image: song?.coverUrl != null
+                                              ? DecorationImage(
+                                                  image: NetworkImage(
+                                                    song!.coverUrl!,
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : null,
+                                        ),
+                                        child: song?.coverUrl == null
+                                            ? const Icon(
+                                                Icons.music_note,
+                                                color: Colors.white54,
+                                              )
+                                            : null,
+                                      );
+                                    },
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -444,21 +478,52 @@ class _PlayerScreenState extends State<PlayerScreen>
                             builder: (context, progress, _) {
                               return Column(
                                 children: [
-                                  Container(
-                                    height: 6,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[900],
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                    child: FractionallySizedBox(
-                                      alignment: Alignment.centerLeft,
-                                      widthFactor: progress,
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onHorizontalDragUpdate: (details) {
+                                      final RenderBox box =
+                                          context.findRenderObject()
+                                              as RenderBox;
+                                      final double width = box.size.width;
+                                      final double relative =
+                                          details.localPosition.dx / width;
+                                      PlayerService().seek(
+                                        relative.clamp(0.0, 1.0),
+                                      );
+                                    },
+                                    onTapUp: (details) {
+                                      final RenderBox box =
+                                          context.findRenderObject()
+                                              as RenderBox;
+                                      final double width = box.size.width;
+                                      final double relative =
+                                          details.localPosition.dx / width;
+                                      PlayerService().seek(
+                                        relative.clamp(0.0, 1.0),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                      ),
                                       child: Container(
+                                        height: 6,
+                                        width: double.infinity,
                                         decoration: BoxDecoration(
-                                          color: AppTheme.primary,
+                                          color: Colors.grey[900],
                                           borderRadius: BorderRadius.circular(
                                             3,
+                                          ),
+                                        ),
+                                        child: FractionallySizedBox(
+                                          alignment: Alignment.centerLeft,
+                                          widthFactor: progress,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(3),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -470,15 +535,30 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        _formatDuration(progress * 180),
+                                        _formatDuration(
+                                          progress *
+                                              (PlayerService()
+                                                          .currentSong
+                                                          .value
+                                                          ?.previewUrl !=
+                                                      null
+                                                  ? 30
+                                                  : 180),
+                                        ),
                                         style: const TextStyle(
                                           color: Colors.grey,
                                           fontSize: 10,
                                         ),
                                       ),
-                                      const Text(
-                                        '3:00',
-                                        style: TextStyle(
+                                      Text(
+                                        PlayerService()
+                                                    .currentSong
+                                                    .value
+                                                    ?.previewUrl !=
+                                                null
+                                            ? '0:30'
+                                            : '3:00',
+                                        style: const TextStyle(
                                           color: Colors.grey,
                                           fontSize: 10,
                                         ),
@@ -532,14 +612,29 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       ),
                                       child: ValueListenableBuilder<bool>(
                                         valueListenable:
-                                            PlayerService().isPlaying,
-                                        builder: (context, playing, _) {
-                                          return Icon(
-                                            playing
-                                                ? Icons.pause
-                                                : Icons.play_arrow,
-                                            color: Colors.white,
-                                            size: 40,
+                                            PlayerService().isBuffering,
+                                        builder: (context, buffering, _) {
+                                          if (buffering) {
+                                            return const Padding(
+                                              padding: EdgeInsets.all(16.0),
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 3,
+                                              ),
+                                            );
+                                          }
+                                          return ValueListenableBuilder<bool>(
+                                            valueListenable:
+                                                PlayerService().isPlaying,
+                                            builder: (context, playing, _) {
+                                              return Icon(
+                                                playing
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
+                                                color: Colors.white,
+                                                size: 40,
+                                              );
+                                            },
                                           );
                                         },
                                       ),

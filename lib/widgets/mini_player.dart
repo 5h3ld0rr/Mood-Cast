@@ -118,12 +118,20 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                         decoration: BoxDecoration(
                           color: Colors.grey[800],
                           borderRadius: BorderRadius.circular(4),
+                          image: widget.song.coverUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(widget.song.coverUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: const Icon(
-                          Icons.music_note,
-                          color: Colors.white54,
-                          size: 24,
-                        ),
+                        child: widget.song.coverUrl == null
+                            ? const Icon(
+                                Icons.music_note,
+                                color: Colors.white54,
+                                size: 24,
+                              )
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -183,20 +191,38 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                     ),
                     const SizedBox(width: 4),
                     ValueListenableBuilder<bool>(
-                      valueListenable: PlayerService().isPlaying,
-                      builder: (context, playing, _) {
-                        return IconButton(
-                          icon: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(
-                              playing ? Icons.pause : Icons.play_arrow,
-                              key: ValueKey<bool>(playing),
-                              color: Colors.white,
-                              size: 32,
+                      valueListenable: PlayerService().isBuffering,
+                      builder: (context, buffering, _) {
+                        if (buffering) {
+                          return const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.primary,
+                              ),
                             ),
-                          ),
-                          onPressed: () {
-                            PlayerService().togglePlay();
+                          );
+                        }
+                        return ValueListenableBuilder<bool>(
+                          valueListenable: PlayerService().isPlaying,
+                          builder: (context, playing, _) {
+                            return IconButton(
+                              icon: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: Icon(
+                                  playing ? Icons.pause : Icons.play_arrow,
+                                  key: ValueKey<bool>(playing),
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                              ),
+                              onPressed: () {
+                                PlayerService().togglePlay();
+                              },
+                            );
                           },
                         );
                       },

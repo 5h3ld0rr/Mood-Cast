@@ -1,60 +1,217 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
+import 'package:http/http.dart' as http;
 
 class SongInfo {
   final String title;
   final String artist;
   final String? coverUrl;
+  final String? previewUrl;
+  final String? videoId;
 
-  SongInfo({required this.title, required this.artist, this.coverUrl});
+  SongInfo({
+    required this.title,
+    required this.artist,
+    this.coverUrl,
+    this.previewUrl,
+    this.videoId,
+  });
+}
+
+/// Streams YouTube audio directly without downloading to a file.
+/// Uses [StreamAudioSource] to pipe YouTube bytes to just_audio,
+/// with range-request support for seeking.
+class _YouTubeStreamAudioSource extends StreamAudioSource {
+  final String videoId;
+  final yt.YoutubeExplode _yt;
+  yt.AudioOnlyStreamInfo? _streamInfo;
+
+  _YouTubeStreamAudioSource({
+    required this.videoId,
+    required yt.YoutubeExplode ytExplode,
+  }) : _yt = ytExplode;
+
+  Future<void> _initStream() async {
+    if (_streamInfo != null) return;
+
+    // Use androidVr client — bypasses YouTube's API restrictions and 403s
+    final manifest = await _yt.videos.streamsClient.getManifest(
+      videoId,
+      ytClients: [yt.YoutubeApiClient.androidVr],
+    );
+
+    // Prefer WebM (Opus) first as it is more stable for streaming on Android
+    final allAudio = manifest.audioOnly.sortByBitrate().toList();
+    final webmStreams = allAudio
+        .where((s) => s.container.name == 'webm')
+        .toList();
+    _streamInfo = webmStreams.isNotEmpty ? webmStreams.first : allAudio.first;
+  }
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    await _initStream();
+    final streamInfo = _streamInfo!;
+
+    final totalBytes = streamInfo.size.totalBytes;
+    final from = start ?? 0;
+    // If stream is throttled, limit the chunk size to avoid connection drops
+    final to =
+        (end ?? (streamInfo.isThrottled ? (from + 10379935) : totalBytes))
+            .clamp(0, totalBytes);
+
+    final finalTo = to >= totalBytes ? totalBytes - 1 : to;
+
+    debugPrint(
+      'YouTube stream request: bytes=$from-$finalTo / $totalBytes (${streamInfo.container.name})',
+    );
+
+    // Use a manual HTTP request to support range headers since the local
+    // youtube_explode version's get() doesn't expose range parameters.
+    final client = http.Client();
+    final request = http.Request('GET', streamInfo.url);
+
+    // Add essential headers to bypass YouTube restrictions
+    request.headers['User-Agent'] =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.18 Safari/537.36';
+    request.headers['Range'] = 'bytes=$from-$finalTo';
+
+    final response = await client.send(request);
+
+    return StreamAudioResponse(
+      sourceLength: totalBytes,
+      contentLength: response.contentLength,
+      offset: from,
+      stream: response.stream.asBroadcastStream(),
+      contentType: streamInfo.codec.mimeType,
+    );
+  }
 }
 
 class PlayerService {
   static final PlayerService _instance = PlayerService._internal();
   factory PlayerService() => _instance;
-  PlayerService._internal();
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final yt.YoutubeExplode _yt = yt.YoutubeExplode();
 
   final ValueNotifier<SongInfo?> currentSong = ValueNotifier<SongInfo?>(null);
   final ValueNotifier<bool> isPlaying = ValueNotifier<bool>(false);
   final ValueNotifier<double> progress = ValueNotifier<double>(0.0);
   final ValueNotifier<bool> isLiked = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isBuffering = ValueNotifier<bool>(false);
+  final ValueNotifier<Duration> position = ValueNotifier<Duration>(
+    Duration.zero,
+  );
+  final ValueNotifier<Duration> duration = ValueNotifier<Duration>(
+    const Duration(seconds: 1),
+  );
 
-  Timer? _timer;
+  PlayerService._internal() {
+    _audioPlayer.positionStream.listen((p) {
+      position.value = p;
+      final dur = _audioPlayer.duration;
+      if (dur != null && dur.inMilliseconds > 0) {
+        progress.value = p.inMilliseconds / dur.inMilliseconds;
+      }
+    });
 
-  void play(SongInfo song) {
+    _audioPlayer.playingStream.listen((playing) {
+      isPlaying.value = playing;
+    });
+
+    _audioPlayer.durationStream.listen((d) {
+      if (d != null) duration.value = d;
+    });
+
+    _audioPlayer.processingStateStream.listen((state) {
+      isBuffering.value =
+          state == ProcessingState.loading ||
+          state == ProcessingState.buffering;
+    });
+  }
+
+  Future<void> play(SongInfo song) async {
     currentSong.value = song;
-    isPlaying.value = true;
+    isLiked.value = false;
     progress.value = 0.0;
-    isLiked.value = false; // Mock: reset for new song
-    _startTimer();
+    position.value = Duration.zero;
+    duration.value = const Duration(seconds: 1);
+    isBuffering.value = true;
+
+    try {
+      await _audioPlayer.stop();
+
+      String? targetVideoId = song.videoId;
+
+      if (targetVideoId == null || targetVideoId.isEmpty) {
+        debugPrint(
+          "PlayerService: Searching for '${song.title} ${song.artist}'",
+        );
+        final results = await _yt.search.search("${song.title} ${song.artist}");
+        if (results.isNotEmpty) {
+          targetVideoId = results.first.id.value;
+          debugPrint("PlayerService: Found videoId: $targetVideoId");
+        }
+      }
+
+      if (targetVideoId == null || targetVideoId.isEmpty) {
+        debugPrint("PlayerService: No videoId found, cannot play.");
+        isBuffering.value = false;
+        return;
+      }
+
+      debugPrint(
+        "PlayerService: Streaming videoId=$targetVideoId via StreamAudioSource...",
+      );
+
+      // Using the androidVr client and StreamAudioSource avoids the 403 errors
+      // and eliminates the need to download the entire file before playing.
+      await _audioPlayer.setAudioSource(
+        _YouTubeStreamAudioSource(videoId: targetVideoId, ytExplode: _yt),
+      );
+      await _audioPlayer.play();
+      debugPrint("PlayerService: Playback started!");
+    } catch (e, stack) {
+      debugPrint("PlayerService ERROR: $e");
+      debugPrint("Stack: $stack");
+    } finally {
+      isBuffering.value = false;
+    }
   }
 
   void toggleLiked() {
     isLiked.value = !isLiked.value;
   }
 
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (isPlaying.value) {
-        progress.value = (progress.value + 0.001) % 1.0;
-      }
-    });
-  }
-
-  void togglePlay() {
-    isPlaying.value = !isPlaying.value;
-    if (isPlaying.value) {
-      _startTimer();
+  Future<void> togglePlay() async {
+    if (_audioPlayer.playing) {
+      await _audioPlayer.pause();
     } else {
-      _timer?.cancel();
+      await _audioPlayer.play();
     }
   }
 
-  void stop() {
-    _timer?.cancel();
+  Future<void> stop() async {
+    await _audioPlayer.stop();
     isPlaying.value = false;
     currentSong.value = null;
     progress.value = 0.0;
+    position.value = Duration.zero;
+    duration.value = const Duration(seconds: 1);
+  }
+
+  Future<void> seek(double value) async {
+    final dur = _audioPlayer.duration;
+    if (dur != null && dur.inMilliseconds > 0) {
+      final pos = value * dur.inMilliseconds;
+      await _audioPlayer.seek(Duration(milliseconds: pos.round()));
+    }
+  }
+
+  void dispose() {
+    _yt.close();
+    _audioPlayer.dispose();
   }
 }
