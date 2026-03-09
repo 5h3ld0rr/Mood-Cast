@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -12,32 +13,50 @@ class DownloadService {
   DownloadService._internal();
 
   final yt.YoutubeExplode _yt = yt.YoutubeExplode();
-  final ValueNotifier<Set<String>> downloadedIds = ValueNotifier<Set<String>>(
-    {},
-  );
+
+  final ValueNotifier<List<SongInfo>> downloadedSongs =
+      ValueNotifier<List<SongInfo>>([]);
   final ValueNotifier<Map<String, double>> downloadProgress = ValueNotifier({});
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList('downloaded_ids') ?? [];
-    downloadedIds.value = ids.toSet();
+    final jsonList = prefs.getStringList('downloaded_metadata') ?? [];
 
-    // Cleanup any IDs that don't have files (maybe file was deleted)
-    final cleanedIds = <String>{};
-    for (final id in downloadedIds.value) {
-      if (await getLocalPath(id) != null) {
-        cleanedIds.add(id);
+    final songs = <SongInfo>[];
+    for (final jsonStr in jsonList) {
+      try {
+        final map = jsonDecode(jsonStr);
+        final song = SongInfo.fromMap(map);
+
+        // Cleanup any IDs that don't have files
+        if (song.videoId != null && await getLocalPath(song.videoId!) != null) {
+          songs.add(song);
+        }
+      } catch (e) {
+        debugPrint("Error loading downloaded song metadata: $e");
       }
     }
 
-    if (cleanedIds.length != downloadedIds.value.length) {
-      downloadedIds.value = cleanedIds;
-      await prefs.setStringList('downloaded_ids', cleanedIds.toList());
-    }
+    downloadedSongs.value = songs;
+    await _persist();
+  }
+
+  Future<void> _persist() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = downloadedSongs.value
+        .map((s) => jsonEncode(s.toMap()))
+        .toList();
+    await prefs.setStringList('downloaded_metadata', jsonList);
+
+    // Also keep the old one for compatibility if needed elsewhere
+    final ids = downloadedSongs.value
+        .where((s) => s.videoId != null)
+        .map((s) => s.videoId!)
+        .toList();
+    await prefs.setStringList('downloaded_ids', ids);
   }
 
   Future<String> getDownloadPath() async {
-    // getApplicationDocumentsDirectory is safe for both iOS and Android
     final dir = await getApplicationDocumentsDirectory();
     final downloadDir = Directory(p.join(dir.path, 'downloads'));
     if (!await downloadDir.exists()) {
@@ -48,7 +67,7 @@ class DownloadService {
 
   bool isDownloaded(String? videoId) {
     if (videoId == null) return false;
-    return downloadedIds.value.contains(videoId);
+    return downloadedSongs.value.any((s) => s.videoId == videoId);
   }
 
   double getProgress(String? videoId) {
@@ -59,7 +78,6 @@ class DownloadService {
   Future<void> downloadSong(SongInfo song) async {
     String? videoId = song.videoId;
     if (videoId == null || videoId.isEmpty) {
-      // Try to find it first
       try {
         final results = await _yt.search.search("${song.title} ${song.artist}");
         if (results.isNotEmpty) {
@@ -71,13 +89,16 @@ class DownloadService {
     }
 
     if (videoId == null || videoId.isEmpty) return;
-    if (downloadedIds.value.contains(videoId)) return;
+    if (isDownloaded(videoId)) return;
     if (downloadProgress.value.containsKey(videoId)) return;
 
     try {
       downloadProgress.value = {...downloadProgress.value, videoId: 0.1};
 
-      final manifest = await _yt.videos.streamsClient.getManifest(videoId);
+      final manifest = await _yt.videos.streamsClient.getManifest(
+        videoId,
+        ytClients: [yt.YoutubeApiClient.androidVr],
+      );
       final streamInfo = manifest.audioOnly.withHighestBitrate();
       final stream = _yt.videos.streamsClient.get(streamInfo);
 
@@ -85,7 +106,6 @@ class DownloadService {
       final path = p.join(base, "$videoId.${streamInfo.container.name}");
       final file = File(path);
 
-      // Delete old file if it exists but wasn't tracked
       if (await file.exists()) await file.delete();
 
       final fileStream = file.openWrite();
@@ -96,7 +116,6 @@ class DownloadService {
       await for (final data in stream) {
         fileStream.add(data);
         downloaded += data.length;
-        // Update every 10% or so to avoid too many UI rebuilds
         final newProgress = downloaded / total;
         if (newProgress - (downloadProgress.value[videoId] ?? 0) > 0.05) {
           downloadProgress.value = {
@@ -109,10 +128,17 @@ class DownloadService {
       await fileStream.flush();
       await fileStream.close();
 
-      // Save to prefs
-      final prefs = await SharedPreferences.getInstance();
-      downloadedIds.value = {...downloadedIds.value, videoId};
-      await prefs.setStringList('downloaded_ids', downloadedIds.value.toList());
+      // Create a final song info with the correct videoId if it was fetched
+      final finalSong = SongInfo(
+        title: song.title,
+        artist: song.artist,
+        coverUrl: song.coverUrl,
+        previewUrl: song.previewUrl,
+        videoId: videoId,
+      );
+
+      downloadedSongs.value = [...downloadedSongs.value, finalSong];
+      await _persist();
 
       downloadProgress.value = Map.from(downloadProgress.value)
         ..remove(videoId);
@@ -131,9 +157,10 @@ class DownloadService {
       if (await file.exists()) await file.delete();
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    downloadedIds.value = Set.from(downloadedIds.value)..remove(videoId);
-    await prefs.setStringList('downloaded_ids', downloadedIds.value.toList());
+    downloadedSongs.value = downloadedSongs.value
+        .where((s) => s.videoId != videoId)
+        .toList();
+    await _persist();
   }
 
   Future<String?> getLocalPath(String videoId) async {

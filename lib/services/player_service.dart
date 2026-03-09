@@ -21,6 +21,26 @@ class SongInfo {
     this.previewUrl,
     this.videoId,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'artist': artist,
+      'coverUrl': coverUrl,
+      'previewUrl': previewUrl,
+      'videoId': videoId,
+    };
+  }
+
+  factory SongInfo.fromMap(Map<String, dynamic> map) {
+    return SongInfo(
+      title: map['title'] ?? 'Unknown',
+      artist: map['artist'] ?? 'Unknown',
+      coverUrl: map['coverUrl'],
+      previewUrl: map['previewUrl'],
+      videoId: map['videoId'],
+    );
+  }
 }
 
 /// Streams YouTube audio directly without downloading to a file.

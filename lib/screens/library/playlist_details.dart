@@ -597,9 +597,9 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                   child: Row(
                     children: [
                       // Download Icon
-                      ValueListenableBuilder<Set<String>>(
-                        valueListenable: DownloadService().downloadedIds,
-                        builder: (context, downloadedIds, _) {
+                      ValueListenableBuilder<List<SongInfo>>(
+                        valueListenable: DownloadService().downloadedSongs,
+                        builder: (context, downloadedSongs, _) {
                           // Check if all songs in this snapshot are downloaded
                           // For simplicity, we just show if it's "downloading" or "downloaded"
                           return IconButton(
@@ -894,11 +894,11 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                             ],
                           );
                         }
-                        return ValueListenableBuilder<Set<String>>(
-                          valueListenable: DownloadService().downloadedIds,
-                          builder: (context, downloadedIds, _) {
-                            final isDownloaded = downloadedIds.contains(
-                              song.videoId,
+                        return ValueListenableBuilder<List<SongInfo>>(
+                          valueListenable: DownloadService().downloadedSongs,
+                          builder: (context, downloadedSongs, _) {
+                            final isDownloaded = downloadedSongs.any(
+                              (s) => s.videoId == song.videoId,
                             );
                             if (isDownloaded) {
                               return const Row(
