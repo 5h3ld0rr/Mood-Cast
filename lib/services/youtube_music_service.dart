@@ -97,3 +97,4 @@ class YouTubeMusicService {
     return await searchTracks(query);
   }
 }
+

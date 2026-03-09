@@ -55,7 +55,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 hintStyle: const TextStyle(color: Colors.white38),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    color: AppTheme.primary.withValues(alpha: 0.5),
+                    color: AppTheme.primary.withOpacity(0.5),
                   ),
                 ),
                 focusedBorder: const UnderlineInputBorder(
@@ -347,12 +347,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primary
-              : Colors.white.withValues(alpha: 0.05),
+              : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? AppTheme.primary
-                : Colors.white.withValues(alpha: 0.1),
+                : Colors.white.withOpacity(0.1),
           ),
         ),
         child: Text(
@@ -382,7 +382,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 32),
@@ -448,3 +448,4 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 }
+

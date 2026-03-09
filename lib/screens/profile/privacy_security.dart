@@ -140,7 +140,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(children: children),
     );
@@ -160,7 +160,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withValues(alpha: 0.1),
+          color: AppTheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: AppTheme.primary, size: 24),
@@ -177,7 +177,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
           ? Text(
               subtitle,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.4),
+                color: Colors.white.withOpacity(0.4),
                 fontSize: 12,
               ),
             )
@@ -192,7 +192,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     return Divider(
       height: 1,
       thickness: 1,
-      color: Colors.white.withValues(alpha: 0.05),
+      color: Colors.white.withOpacity(0.05),
       indent: 64,
     );
   }
@@ -236,3 +236,4 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     );
   }
 }
+

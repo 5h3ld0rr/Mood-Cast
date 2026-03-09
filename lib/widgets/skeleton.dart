@@ -17,8 +17,8 @@ class Skeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.white.withValues(alpha: 0.05),
-      highlightColor: Colors.white.withValues(alpha: 0.1),
+      baseColor: Colors.white.withOpacity(0.05),
+      highlightColor: Colors.white.withOpacity(0.1),
       child: Container(
         height: height,
         width: width,
@@ -41,20 +41,20 @@ class TrackSkeleton extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
         children: [
-          const Skeleton(height: 56, width: 56, borderRadius: 12),
+          const Skeleton(height: 56, width: 56, borderRadius: 14),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Skeleton(height: 16, width: double.infinity),
+                Skeleton(height: 16, width: double.infinity, borderRadius: 8),
                 SizedBox(height: 8),
-                Skeleton(height: 12, width: 100),
+                Skeleton(height: 12, width: 100, borderRadius: 6),
               ],
             ),
           ),
@@ -65,3 +65,4 @@ class TrackSkeleton extends StatelessWidget {
     );
   }
 }
+

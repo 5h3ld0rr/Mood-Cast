@@ -69,7 +69,7 @@ class NotificationDetailsScreen extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withValues(alpha: 0.05),
+                color: AppTheme.primary.withOpacity(0.05),
               ),
             ),
           ),
@@ -89,11 +89,11 @@ class NotificationDetailsScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.1),
+                        color: AppTheme.primary.withOpacity(0.1),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            color: AppTheme.primary.withOpacity(0.1),
                             blurRadius: 40,
                             spreadRadius: 10,
                           ),
@@ -115,13 +115,13 @@ class NotificationDetailsScreen extends StatelessWidget {
                     Icon(
                       Icons.access_time,
                       size: 14,
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: Colors.white.withOpacity(0.3),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       DateFormat('MMMM dd, yyyy • hh:mm a').format(timestamp),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.white.withOpacity(0.3),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -157,7 +157,7 @@ class NotificationDetailsScreen extends StatelessWidget {
                 Text(
                   body,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Colors.white.withOpacity(0.8),
                     fontSize: 18,
                     height: 1.6,
                     letterSpacing: 0.2,
@@ -174,10 +174,10 @@ class NotificationDetailsScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.03),
+                      color: Colors.white.withOpacity(0.03),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: Colors.white.withOpacity(0.05),
                       ),
                     ),
                     child: Column(
@@ -227,7 +227,7 @@ class NotificationDetailsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+            top: BorderSide(color: Colors.white.withOpacity(0.05)),
           ),
         ),
         child: SizedBox(
@@ -253,3 +253,4 @@ class NotificationDetailsScreen extends StatelessWidget {
     );
   }
 }
+

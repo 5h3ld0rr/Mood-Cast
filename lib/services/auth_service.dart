@@ -125,3 +125,4 @@ class AuthService {
   // Stream of auth changes (emits on sign in/out)
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 }
+

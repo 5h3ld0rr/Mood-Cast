@@ -98,9 +98,9 @@ class _MainScreenState extends State<MainScreen> {
             const MiniPlayer(),
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF080C14).withValues(alpha: 0.9),
+                color: const Color(0xFF080C14).withOpacity(0.9),
                 border: Border(
-                  top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  top: BorderSide(color: Colors.white.withOpacity(0.1)),
                 ),
               ),
               child: BottomNavigationBar(
@@ -172,3 +172,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+

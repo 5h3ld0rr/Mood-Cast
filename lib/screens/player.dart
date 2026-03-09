@@ -192,9 +192,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.2),
+                            color: AppTheme.primary.withOpacity(0.2),
                             border: Border.all(
-                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              color: AppTheme.primary.withOpacity(0.3),
                             ),
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -247,17 +247,15 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: AppTheme.primary.withValues(
-                                          alpha: 0.1,
+                                        color: AppTheme.primary.withOpacity(
+                                          0.1,
                                         ),
                                         width: 2,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppTheme.primary.withValues(
-                                            alpha:
-                                                0.3 *
-                                                _animationController.value,
+                                          color: AppTheme.primary.withOpacity(
+                                            0.3 * _animationController.value,
                                           ),
                                           blurRadius: 40,
                                           spreadRadius: 10,
@@ -273,9 +271,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppTheme.primary.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                    color: AppTheme.primary.withOpacity(0.3),
                                     width: 2,
                                   ),
                                 ),
@@ -288,9 +284,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                   color: AppTheme.primary,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.primary.withValues(
-                                        alpha: 0.4,
-                                      ),
+                                      color: AppTheme.primary.withOpacity(0.4),
                                       blurRadius: 20,
                                     ),
                                   ],
@@ -374,11 +368,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF1E293B,
-                              ).withValues(alpha: 0.4),
+                              color: const Color(0xFF1E293B).withOpacity(0.4),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.1),
+                                color: Colors.white.withOpacity(0.1),
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -603,8 +595,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppTheme.primary.withValues(
-                                              alpha: 0.3,
+                                            color: AppTheme.primary.withOpacity(
+                                              0.3,
                                             ),
                                             blurRadius: 15,
                                           ),
