@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
+import '../../services/search_history_service.dart';
+import 'history_screen.dart';
 import 'category_details.dart';
 import '../../widgets/skeleton.dart';
 
@@ -17,8 +19,10 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final YouTubeMusicService _ytmService = YouTubeMusicService();
   final PlayerService _playerService = PlayerService();
+  final SearchHistoryService _searchHistoryService = SearchHistoryService();
 
   List<YouTubeMusicMetadata> _searchResults = [];
+  YouTubeArtistMetadata? _artistResult;
   bool _isLoading = false;
   Timer? _debounce;
   bool _isFocused = false;
@@ -91,6 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
       } else {
         setState(() {
           _searchResults = [];
+          _artistResult = null;
           _isLoading = false;
         });
       }
@@ -101,11 +106,20 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final results = await _ytmService.searchTracks(query);
+      // Fetch both tracks and artist details concurrently
+      final tracksFuture = _ytmService.searchTracks(query);
+      final artistFuture = _ytmService.searchArtist(query);
+
+      final results = await tracksFuture;
+      final artist = await artistFuture;
+
       if (mounted) {
         setState(() {
           _searchResults = results;
+          _artistResult = artist;
           _isLoading = false;
+          // Save the successful query to history
+          _searchHistoryService.addSearch(query);
         });
       }
     } catch (e) {
@@ -138,11 +152,20 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                   if (!_isFocused)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.history, color: Colors.white),
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HistoryScreen(),
+                          ),
+                        );
+                        if (result != null && result is String) {
+                          _searchController.text = result;
+                          _performSearch(result);
+                        }
+                      },
                     ),
                 ],
               ),
@@ -164,11 +187,23 @@ class _SearchScreenState extends State<SearchScreen> {
                     onChanged: _onSearchChanged,
                     style: const TextStyle(color: Colors.black, fontSize: 16),
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Colors.black54,
-                        size: 24,
-                      ),
+                      prefixIcon: _isFocused
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.black54,
+                              ),
+                              onPressed: () {
+                                FocusScope.of(context).unfocus();
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                          : const Icon(
+                              Icons.search,
+                              color: Colors.black54,
+                              size: 24,
+                            ),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(
@@ -208,7 +243,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       itemBuilder: (context, index) => const TrackSkeleton(),
                     )
                   : _searchController.text.isEmpty
-                  ? _buildBrowseAll()
+                  ? (_isFocused ? _buildInitialContent() : _buildBrowseAll())
                   : _buildSearchResults(),
             ),
           ],
@@ -251,6 +286,73 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // Show recent search history when the query is empty.
+  Widget _buildInitialContent() {
+    return FutureBuilder<List<String>>(
+      future: _searchHistoryService.getHistory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final history = snapshot.data ?? [];
+        if (history.isEmpty) {
+          // Fallback to browse all if no history.
+          return _buildBrowseAll();
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                'Recent searches',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 0,
+                ),
+                itemCount: history.length,
+                itemBuilder: (context, index) {
+                  final term = history[index];
+                  return ListTile(
+                    leading: const Icon(Icons.history, color: Colors.white70),
+                    title: Text(
+                      term,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white54,
+                        size: 20,
+                      ),
+                      onPressed: () async {
+                        await _searchHistoryService.deleteTerm(term);
+                        setState(() {}); // Refresh the view
+                      },
+                    ),
+                    onTap: () {
+                      _searchController.text = term;
+                      _performSearch(term);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -329,7 +431,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // ── Search Results ──
   Widget _buildSearchResults() {
-    if (_searchResults.isEmpty && !_isLoading) {
+    if (_searchResults.isEmpty && _artistResult == null && !_isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -349,12 +451,20 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
+    final int itemCount =
+        _searchResults.length + (_artistResult != null ? 1 : 0);
+
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       physics: const BouncingScrollPhysics(),
-      itemCount: _searchResults.length,
+      itemCount: itemCount,
       itemBuilder: (context, index) {
-        final track = _searchResults[index];
+        if (_artistResult != null && index == 0) {
+          return _buildArtistCard(_artistResult!);
+        }
+
+        final itemIndex = _artistResult != null ? index - 1 : index;
+        final track = _searchResults[itemIndex];
         final albumArt = track.artworkUrl;
         final artistName = track.artist;
 
@@ -371,7 +481,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   previewUrl: null,
                 );
               }).toList();
-              _playerService.playQueue(queue, initialIndex: index);
+              _playerService.playQueue(queue, initialIndex: itemIndex);
             },
             contentPadding: EdgeInsets.zero,
             leading: ClipRRect(
@@ -410,6 +520,85 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildArtistCard(YouTubeArtistMetadata artist) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24, top: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.primary.withValues(alpha: 0.1),
+              image: artist.artworkUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(artist.artworkUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: artist.artworkUrl == null
+                ? const Icon(Icons.person, size: 40, color: AppTheme.primary)
+                : null,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Artist',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  artist.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (artist.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    artist.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
