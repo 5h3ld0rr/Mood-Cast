@@ -192,9 +192,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.2),
+                            color: AppTheme.primary.withValues(alpha: 0.2),
                             border: Border.all(
-                              color: AppTheme.primary.withOpacity(0.3),
+                              color: AppTheme.primary.withValues(alpha: 0.3),
                             ),
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -247,15 +247,17 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: AppTheme.primary.withOpacity(
-                                          0.1,
+                                        color: AppTheme.primary.withValues(
+                                          alpha: 0.1,
                                         ),
                                         width: 2,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppTheme.primary.withOpacity(
-                                            0.3 * _animationController.value,
+                                          color: AppTheme.primary.withValues(
+                                            alpha:
+                                                0.3 *
+                                                _animationController.value,
                                           ),
                                           blurRadius: 40,
                                           spreadRadius: 10,
@@ -271,7 +273,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppTheme.primary.withOpacity(0.3),
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
                                     width: 2,
                                   ),
                                 ),
@@ -284,7 +288,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                   color: AppTheme.primary,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.primary.withOpacity(0.4),
+                                      color: AppTheme.primary.withValues(
+                                        alpha: 0.4,
+                                      ),
                                       blurRadius: 20,
                                     ),
                                   ],
@@ -368,9 +374,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B).withOpacity(0.4),
+                              color: const Color(
+                                0xFF1E293B,
+                              ).withValues(alpha: 0.4),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                               ),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -526,35 +534,34 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      ValueListenableBuilder<Duration>(
-                                        valueListenable:
-                                            PlayerService().position,
-                                        builder: (context, pos, _) {
-                                          return Text(
-                                            _formatDuration(
-                                              pos.inSeconds.toDouble(),
-                                            ),
-                                            style: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 10,
-                                            ),
-                                          );
-                                        },
+                                      Text(
+                                        _formatDuration(
+                                          progress *
+                                              (PlayerService()
+                                                          .currentSong
+                                                          .value
+                                                          ?.previewUrl !=
+                                                      null
+                                                  ? 30
+                                                  : 180),
+                                        ),
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 10,
+                                        ),
                                       ),
-                                      ValueListenableBuilder<Duration>(
-                                        valueListenable:
-                                            PlayerService().duration,
-                                        builder: (context, dur, _) {
-                                          return Text(
-                                            _formatDuration(
-                                              dur.inSeconds.toDouble(),
-                                            ),
-                                            style: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 10,
-                                            ),
-                                          );
-                                        },
+                                      Text(
+                                        PlayerService()
+                                                    .currentSong
+                                                    .value
+                                                    ?.previewUrl !=
+                                                null
+                                            ? '0:30'
+                                            : '3:00',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 10,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -566,20 +573,13 @@ class _PlayerScreenState extends State<PlayerScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              ValueListenableBuilder<bool>(
-                                valueListenable: PlayerService().isShuffled,
-                                builder: (context, shuffled, _) {
-                                  return IconButton(
-                                    icon: Icon(
-                                      Icons.shuffle,
-                                      color: shuffled
-                                          ? AppTheme.primary
-                                          : AppTheme.textMuted,
-                                    ),
-                                    onPressed: () {
-                                      PlayerService().toggleShuffle();
-                                    },
-                                  );
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.shuffle,
+                                  color: AppTheme.textMuted,
+                                ),
+                                onPressed: () {
+                                  PlayerService().shuffleQueue();
                                 },
                               ),
                               Row(
@@ -607,8 +607,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppTheme.primary.withOpacity(
-                                              0.3,
+                                            color: AppTheme.primary.withValues(
+                                              alpha: 0.3,
                                             ),
                                             blurRadius: 15,
                                           ),
@@ -657,21 +657,12 @@ class _PlayerScreenState extends State<PlayerScreen>
                                   ),
                                 ],
                               ),
-                              ValueListenableBuilder<bool>(
-                                valueListenable: PlayerService().isLooping,
-                                builder: (context, looping, _) {
-                                  return IconButton(
-                                    icon: Icon(
-                                      Icons.repeat,
-                                      color: looping
-                                          ? AppTheme.primary
-                                          : AppTheme.textMuted,
-                                    ),
-                                    onPressed: () {
-                                      PlayerService().toggleLoop();
-                                    },
-                                  );
-                                },
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.repeat,
+                                  color: AppTheme.textMuted,
+                                ),
+                                onPressed: () {},
                               ),
                             ],
                           ),

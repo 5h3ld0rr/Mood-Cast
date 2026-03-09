@@ -163,14 +163,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           decoration: BoxDecoration(
             color: AppTheme.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: TextField(
             controller: controller,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
               prefixIcon: Icon(icon, color: AppTheme.primary),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(20),
@@ -213,4 +213,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 }
-

@@ -50,8 +50,8 @@ class UIUtils {
           ],
         ),
         backgroundColor: isError
-            ? Colors.redAccent.withOpacity(0.9)
-            : AppTheme.primary.withOpacity(0.95),
+            ? Colors.redAccent.withValues(alpha: 0.9)
+            : AppTheme.primary.withValues(alpha: 0.95),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.all(16),
@@ -61,4 +61,3 @@ class UIUtils {
     );
   }
 }
-

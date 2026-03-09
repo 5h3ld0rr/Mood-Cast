@@ -140,7 +140,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                         ),
                       ),
                     ),
@@ -200,7 +200,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Column(
               children: [
@@ -312,7 +312,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -424,7 +424,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return Container(
       width: 20,
       decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.8),
+        color: AppTheme.primary.withValues(alpha: 0.8),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
       ),
       child: FractionallySizedBox(
@@ -452,14 +452,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -501,4 +501,3 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 }
-

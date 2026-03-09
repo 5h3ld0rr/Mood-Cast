@@ -91,12 +91,12 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, -2),
               ),
             ],
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -238,7 +238,7 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                     height: 2,
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         AppTheme.primary,
                       ),
@@ -253,4 +253,3 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
     );
   }
 }
-

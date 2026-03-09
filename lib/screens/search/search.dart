@@ -140,7 +140,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   if (!_isFocused)
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Padding(
@@ -284,8 +284,8 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    (cat['color'] as Color).withOpacity(0.9),
-                    (cat['color'] as Color).withOpacity(0.5),
+                    (cat['color'] as Color).withValues(alpha: 0.9),
+                    (cat['color'] as Color).withValues(alpha: 0.5),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -377,10 +377,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   coverUrl: t.artworkUrl,
                   videoId: t.videoId,
                   previewUrl: null,
-                  );
+                );
               }).toList();
-            _playerService.playQueue(queue, initialIndex: index);
-          },
+              _playerService.playQueue(queue, initialIndex: index);
+            },
             contentPadding: EdgeInsets.zero,
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(6),

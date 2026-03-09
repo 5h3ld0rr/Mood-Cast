@@ -58,7 +58,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
           widget.categoryName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: widget.categoryColor.withOpacity(0.2),
+        backgroundColor: widget.categoryColor.withValues(alpha: 0.2),
         elevation: 0,
       ),
       body: _isLoading
@@ -78,7 +78,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          widget.categoryColor.withOpacity(0.4),
+                          widget.categoryColor.withValues(alpha: 0.4),
                           const Color(0xFF080C14),
                         ],
                       ),
@@ -150,7 +150,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -159,7 +159,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: widget.categoryColor.withOpacity(0.2),
+                color: widget.categoryColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
                 image: track.artworkUrl != null
                     ? DecorationImage(
@@ -210,4 +210,3 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
     );
   }
 }
-

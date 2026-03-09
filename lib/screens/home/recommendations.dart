@@ -67,7 +67,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.15),
+                color: AppTheme.primary.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -79,7 +79,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.purple.withOpacity(0.1),
+                color: Colors.purple.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -200,16 +200,16 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               coverUrl: t.artworkUrl,
               videoId: t.videoId,
               previewUrl: null,
-              );
+            );
           }).toList();
-        PlayerService().playQueue(queue, initialIndex: index);
-      },
+          PlayerService().playQueue(queue, initialIndex: index);
+        },
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
+            color: Colors.white.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: Row(
             children: [
@@ -219,7 +219,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                   ),
                   child: albumArt != null
                       ? Image.network(
@@ -266,7 +266,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.1),
+                  color: AppTheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -282,4 +282,3 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     );
   }
 }
-
