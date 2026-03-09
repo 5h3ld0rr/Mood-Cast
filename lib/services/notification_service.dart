@@ -192,3 +192,4 @@ class NotificationService {
     print("Handling a background message: ${message.messageId}");
   }
 }
+

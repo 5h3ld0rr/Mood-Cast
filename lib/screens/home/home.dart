@@ -117,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              color: AppTheme.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -191,8 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   '$timeGreeting, $name',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 28,
+                                    fontSize: 32,
                                     fontWeight: FontWeight.bold,
+                                    letterSpacing: -1,
                                   ),
                                 ),
                               ],
@@ -215,19 +216,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(28),
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    AppTheme.primary.withValues(alpha: 0.2),
-                                    AppTheme.primary.withValues(alpha: 0.05),
+                                    AppTheme.primary.withOpacity(0.15),
+                                    Colors.white.withOpacity(0.05),
                                   ],
                                 ),
                                 border: Border.all(
-                                  color: AppTheme.primary.withValues(
-                                    alpha: 0.2,
-                                  ),
+                                  color: Colors.white.withOpacity(0.1),
                                 ),
                               ),
                               child: Padding(
@@ -287,9 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }
                                   return Icon(
                                     _getWeatherIcon(weather.condition),
-                                    color: AppTheme.primary.withValues(
-                                      alpha: 0.8,
-                                    ),
+                                    color: AppTheme.primary.withOpacity(0.8),
                                     size: 32,
                                   );
                                 },
@@ -412,13 +409,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: Colors.white.withOpacity(0.8),
           fontSize: 12,
         ),
       ),
@@ -446,9 +443,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          color: Colors.white.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
         ),
         child: Row(
           children: [
@@ -507,3 +504,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+

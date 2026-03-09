@@ -55,7 +55,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      widget.color.withValues(alpha: 0.4),
+                      widget.color.withOpacity(0.4),
                       const Color(0xFF080C14),
                     ],
                   ),
@@ -68,11 +68,11 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: widget.color.withValues(alpha: 0.1),
+                        color: widget.color.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: widget.color.withValues(alpha: 0.2),
+                            color: widget.color.withOpacity(0.2),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
@@ -108,11 +108,11 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                     icon: const Icon(Icons.add),
                     label: const Text('Add Songs'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.05),
+                      backgroundColor: Colors.white.withOpacity(0.05),
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 50),
                       side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white.withOpacity(0.1),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
@@ -170,7 +170,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(4),
           ),
           child: const Icon(Icons.music_note, color: Colors.white38),
@@ -260,7 +260,7 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.05),
+                fillColor: Colors.white.withOpacity(0.05),
                 hintText: 'Search songs or artists',
                 hintStyle: const TextStyle(color: Colors.white38),
                 prefixIcon: const Icon(Icons.search, color: Colors.white38),
@@ -314,3 +314,4 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
     );
   }
 }
+

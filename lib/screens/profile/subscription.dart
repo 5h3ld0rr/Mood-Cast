@@ -156,8 +156,8 @@ class SubscriptionScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isCurrent
-              ? AppTheme.primary.withValues(alpha: 0.5)
-              : Colors.white.withValues(alpha: 0.1),
+              ? AppTheme.primary.withOpacity(0.5)
+              : Colors.white.withOpacity(0.1),
           width: isCurrent ? 2 : 1,
         ),
         gradient: isCurrent
@@ -165,7 +165,7 @@ class SubscriptionScreen extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.primary.withValues(alpha: 0.15),
+                  AppTheme.primary.withOpacity(0.15),
                   Colors.transparent,
                 ],
               )
@@ -193,7 +193,7 @@ class SubscriptionScreen extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isCurrent
-                        ? AppTheme.primary.withValues(alpha: 0.2)
+                        ? AppTheme.primary.withOpacity(0.2)
                         : AppTheme.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -261,7 +261,7 @@ class SubscriptionScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.white.withValues(alpha: 0.05),
+                disabledBackgroundColor: Colors.white.withOpacity(0.05),
                 disabledForegroundColor: Colors.white54,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -278,3 +278,4 @@ class SubscriptionScreen extends StatelessWidget {
     );
   }
 }
+

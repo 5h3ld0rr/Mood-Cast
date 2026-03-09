@@ -201,7 +201,6 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     }
   }
 
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -225,7 +224,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withValues(alpha: 0.05),
+                color: AppTheme.primary.withOpacity(0.05),
               ),
             ),
           ),
@@ -451,9 +450,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                           const SizedBox(height: 12),
                           LinearProgressIndicator(
                             value: _progress,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.05,
-                            ),
+                            backgroundColor: Colors.white.withOpacity(0.05),
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               AppTheme.primary,
                             ),
@@ -467,10 +464,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.15),
+                              color: AppTheme.primary.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: AppTheme.primary.withValues(alpha: 0.3),
+                                color: AppTheme.primary.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
@@ -580,15 +577,15 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  AppTheme.primary.withValues(alpha: 0.1),
-                                  Colors.white.withValues(alpha: 0.05),
+                                  AppTheme.primary.withOpacity(0.1),
+                                  Colors.white.withOpacity(0.05),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.1),
+                                color: Colors.white.withOpacity(0.1),
                               ),
                             ),
                             child: Column(
@@ -604,9 +601,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                       ? 'CHEER UP JOKE! 😂'
                                       : 'AI INSIGHT ✨',
                                   style: TextStyle(
-                                    color: AppTheme.primary.withValues(
-                                      alpha: 0.5,
-                                    ),
+                                    color: AppTheme.primary.withOpacity(0.5),
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 2,
@@ -668,16 +663,12 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? AppTheme.primary
-                                          : Colors.white.withValues(
-                                              alpha: 0.05,
-                                            ),
+                                          : Colors.white.withOpacity(0.05),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
                                         color: isSelected
                                             ? AppTheme.primary
-                                            : Colors.white.withValues(
-                                                alpha: 0.1,
-                                              ),
+                                            : Colors.white.withOpacity(0.1),
                                       ),
                                     ),
                                     child: Row(
