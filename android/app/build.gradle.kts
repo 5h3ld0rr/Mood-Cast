@@ -6,19 +6,8 @@ plugins {
     id("com.google.gms.google-services")
 }
 dependencies {
-  // Import the Firebase BoM
-  implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
-
   // Core Library Desugaring
   coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-
-  // TODO: Add the dependencies for Firebase products you want to use
-  // When using the BoM, don't specify versions in Firebase dependencies
-  implementation("com.google.firebase:firebase-analytics")
-
-
-  // Add the dependencies for any other desired Firebase products
-  // https://firebase.google.com/docs/android/setup#available-libraries
 }
 android {
     namespace = "com.example.mood_cast"
@@ -44,6 +33,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
     }
 
     buildTypes {

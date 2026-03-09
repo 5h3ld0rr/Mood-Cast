@@ -53,11 +53,11 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      debugPrint('User granted permission');
 
       // Get the token (for testing/server use)
       String? token = await _fcm.getToken();
-      print("FCM Token: $token");
+      debugPrint("FCM Token: $token");
 
       // Initialize local notifications
       const AndroidInitializationSettings initializationSettingsAndroid =
@@ -104,7 +104,7 @@ class NotificationService {
         }
       });
     } else {
-      print('User declined or has not accepted permission');
+      debugPrint('User declined or has not accepted permission');
     }
   }
 
@@ -123,7 +123,7 @@ class NotificationService {
           ),
         );
       } catch (e) {
-        print("Error parsing notification payload: $e");
+        debugPrint("Error parsing notification payload: $e");
       }
     }
   }
@@ -189,7 +189,6 @@ class NotificationService {
   static Future<void> _firebaseMessagingBackgroundHandler(
     RemoteMessage message,
   ) async {
-    print("Handling a background message: ${message.messageId}");
+    debugPrint("Handling a background message: ${message.messageId}");
   }
 }
-

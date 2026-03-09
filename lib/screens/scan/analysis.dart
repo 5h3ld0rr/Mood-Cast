@@ -334,7 +334,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         child: Text(
                           'MoodCast AI',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
@@ -439,7 +439,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                     const SizedBox(height: 12),
                     LinearProgressIndicator(
                       value: _progress,
-                      backgroundColor: Colors.white.withOpacity(0.05),
+                      backgroundColor: Colors.white.withValues(alpha: 0.05),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         AppTheme.primary,
                       ),

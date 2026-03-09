@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -25,8 +26,8 @@ class AuthService {
       // Once signed in, return the UserCredential
       return await _auth.signInWithCredential(credential);
     } catch (e, stack) {
-      print("Google Sign-In Error: $e");
-      print("Stack trace: $stack");
+      debugPrint("Google Sign-In Error: $e");
+      debugPrint("Stack trace: $stack");
       return null;
     }
   }
@@ -39,7 +40,7 @@ class AuthService {
         password: password,
       );
     } catch (e) {
-      print("Email Sign-In Error: $e");
+      debugPrint("Email Sign-In Error: $e");
       rethrow;
     }
   }
@@ -56,9 +57,11 @@ class AuthService {
         try {
           await credential.user!.reload(); // Refresh state
           await credential.user!.sendEmailVerification();
-          print("Verification email requested for ${credential.user!.email}");
+          debugPrint(
+            "Verification email requested for ${credential.user!.email}",
+          );
         } catch (vError) {
-          print("Warning: Email verification failed to send: $vError");
+          debugPrint("Warning: Email verification failed to send: $vError");
           // We don't want to fail the whole signup if just the email fails,
           // but we should probably let the user know.
           // For now, rethrow so the UI catches it.
@@ -67,7 +70,7 @@ class AuthService {
       }
       return credential;
     } catch (e) {
-      print("Email Sign-Up Error: $e");
+      debugPrint("Email Sign-Up Error: $e");
       rethrow;
     }
   }
@@ -77,7 +80,7 @@ class AuthService {
     try {
       await _auth.currentUser?.sendEmailVerification();
     } catch (e) {
-      print("Email Verification Error: $e");
+      debugPrint("Email Verification Error: $e");
       rethrow;
     }
   }
@@ -87,7 +90,7 @@ class AuthService {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } catch (e) {
-      print("Password Reset Error: $e");
+      debugPrint("Password Reset Error: $e");
       rethrow;
     }
   }
@@ -98,7 +101,7 @@ class AuthService {
       await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
-      print("Sign-Out Error: $e");
+      debugPrint("Sign-Out Error: $e");
     }
   }
 
@@ -112,7 +115,7 @@ class AuthService {
         await user.reload(); // Refresh user data
       }
     } catch (e) {
-      print("Update Profile Error: $e");
+      debugPrint("Update Profile Error: $e");
     }
   }
 
@@ -125,4 +128,3 @@ class AuthService {
   // Stream of auth changes (emits on sign in/out)
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 }
-

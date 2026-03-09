@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../utils/ui_utils.dart';
+import '../../services/database_service.dart';
+import '../../services/player_service.dart';
+import '../../widgets/song_options.dart';
 
 class PlaylistDetailsScreen extends StatefulWidget {
   final String playlistName;
   final String subtitle;
   final IconData icon;
   final Color color;
+  final String? playlistId;
+  final bool isLikedSongs;
 
   const PlaylistDetailsScreen({
     super.key,
@@ -14,6 +19,8 @@ class PlaylistDetailsScreen extends StatefulWidget {
     required this.subtitle,
     required this.icon,
     required this.color,
+    this.playlistId,
+    this.isLikedSongs = false,
   });
 
   @override
@@ -21,7 +28,8 @@ class PlaylistDetailsScreen extends StatefulWidget {
 }
 
 class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
-  final List<Map<String, String>> _playlistSongs = [];
+  final DatabaseService _db = DatabaseService();
+  final PlayerService _player = PlayerService();
 
   void _showAddSongsSearch() {
     showModalBottomSheet(
@@ -29,10 +37,9 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddSongsBottomSheet(
+        playlistId: widget.playlistId,
         onSongAdded: (song) {
-          setState(() {
-            _playlistSongs.add(song);
-          });
+          // Song is already added via DatabaseService in the bottom sheet
         },
       ),
     );
@@ -120,39 +127,55 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  if (_playlistSongs.isEmpty)
-                    Center(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 40),
-                          Icon(
-                            Icons.music_note,
-                            color: Colors.white24,
-                            size: 64,
+                  StreamBuilder<List<SongInfo>>(
+                    stream: widget.isLikedSongs
+                        ? _db.getLikedSongs()
+                        : _db.getPlaylistSongs(widget.playlistId!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primary,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Your playlist is empty',
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 16,
-                            ),
+                        );
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 40),
+                              Icon(
+                                Icons.music_note,
+                                color: Colors.white24,
+                                size: 64,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Your playlist is empty',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    )
-                  else
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _playlistSongs.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final song = _playlistSongs[index];
-                        return _buildSongItem(song['title']!, song['artist']!);
-                      },
-                    ),
+                        );
+                      }
+
+                      final songs = snapshot.data!;
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: songs.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final song = songs[index];
+                          return _buildSongItem(song, index, songs);
+                        },
+                      );
+                    },
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -163,62 +186,109 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
     );
   }
 
-  Widget _buildSongItem(String title, String artist) {
-    return Row(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(4),
+  Widget _buildSongItem(SongInfo song, int index, List<SongInfo> queue) {
+    return GestureDetector(
+      onTap: () {
+        _player.playQueue(queue, initialIndex: index);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(4),
+              image: song.coverUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(song.coverUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: song.coverUrl == null
+                ? const Icon(Icons.music_note, color: Colors.white38)
+                : null,
           ),
-          child: const Icon(Icons.music_note, color: Colors.white38),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  song.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              Text(
-                artist,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
-              ),
-            ],
+                Text(
+                  song.artist,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const Icon(Icons.more_vert, color: Colors.white54),
-      ],
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.white54),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (context) => SongOptionsBottomSheet(song: song),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _AddSongsBottomSheet extends StatefulWidget {
-  final Function(Map<String, String>) onSongAdded;
+  final String? playlistId;
+  final Function(SongInfo) onSongAdded;
 
-  const _AddSongsBottomSheet({required this.onSongAdded});
+  const _AddSongsBottomSheet({this.playlistId, required this.onSongAdded});
 
   @override
   State<_AddSongsBottomSheet> createState() => _AddSongsBottomSheetState();
 }
 
 class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
-  final List<Map<String, String>> _allSongs = [
-    {'title': 'Blinding Lights', 'artist': 'The Weeknd'},
-    {'title': 'Starboy', 'artist': 'The Weeknd'},
-    {'title': 'Save Your Tears', 'artist': 'The Weeknd'},
-    {'title': 'Nightcall', 'artist': 'Kavinsky'},
-    {'title': 'Midnight City', 'artist': 'M83'},
-    {'title': 'Ocean Drive', 'artist': 'Duke Dumont'},
-    {'title': 'Resonance', 'artist': 'Home'},
+  final DatabaseService _db = DatabaseService();
+  final List<SongInfo> _allSongs = [
+    SongInfo(
+      title: 'Blinding Lights',
+      artist: 'The Weeknd',
+      coverUrl:
+          'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100',
+    ),
+    SongInfo(
+      title: 'Starboy',
+      artist: 'The Weeknd',
+      coverUrl:
+          'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100',
+    ),
+    SongInfo(
+      title: 'Save Your Tears',
+      artist: 'The Weeknd',
+      coverUrl:
+          'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=100',
+    ),
+    SongInfo(title: 'Nightcall', artist: 'Kavinsky'),
+    SongInfo(title: 'Midnight City', artist: 'M83'),
+    SongInfo(title: 'Ocean Drive', artist: 'Duke Dumont'),
+    SongInfo(title: 'Resonance', artist: 'Home'),
   ];
 
   String _searchQuery = '';
@@ -228,12 +298,8 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
     final filteredSongs = _allSongs
         .where(
           (song) =>
-              song['title']!.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ) ||
-              song['artist']!.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ),
+              song.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              song.artist.toLowerCase().contains(_searchQuery.toLowerCase()),
         )
         .toList();
 
@@ -284,11 +350,11 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
                 return ListTile(
                   leading: const Icon(Icons.music_note, color: Colors.white38),
                   title: Text(
-                    song['title']!,
+                    song.title,
                     style: const TextStyle(color: Colors.white),
                   ),
                   subtitle: Text(
-                    song['artist']!,
+                    song.artist,
                     style: const TextStyle(color: AppTheme.textMuted),
                   ),
                   trailing: IconButton(
@@ -297,10 +363,15 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
                       color: AppTheme.primary,
                     ),
                     onPressed: () {
+                      if (widget.playlistId != null) {
+                        _db.addSongToPlaylist(widget.playlistId!, song);
+                      } else {
+                        _db.toggleLikedSong(song);
+                      }
                       widget.onSongAdded(song);
                       UIUtils.showSnackBar(
                         context,
-                        '${song['title']} added to playlist',
+                        '${song.title} added',
                         duration: const Duration(seconds: 1),
                       );
                     },

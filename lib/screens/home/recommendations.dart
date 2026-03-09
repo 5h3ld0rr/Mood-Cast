@@ -3,6 +3,7 @@ import '../../theme.dart';
 import '../../services/player_service.dart';
 import '../../services/youtube_music_service.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/song_options.dart';
 
 class RecommendationsScreen extends StatefulWidget {
   final String? mood;
@@ -274,6 +275,23 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                   color: AppTheme.primary,
                   size: 28,
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.white54),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => SongOptionsBottomSheet(
+                      song: SongInfo(
+                        title: track.title,
+                        artist: track.artist,
+                        coverUrl: track.artworkUrl,
+                        videoId: track.videoId,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

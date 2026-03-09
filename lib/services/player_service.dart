@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:http/http.dart' as http;
+import 'database_service.dart';
 
 enum AudioQuality { low, medium, high }
 
@@ -107,6 +108,7 @@ class PlayerService {
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   final yt.YoutubeExplode _yt = yt.YoutubeExplode();
+  final DatabaseService _db = DatabaseService();
 
   final ValueNotifier<SongInfo?> currentSong = ValueNotifier<SongInfo?>(null);
   final ValueNotifier<bool> isPlaying = ValueNotifier<bool>(false);
@@ -227,7 +229,7 @@ class PlayerService {
 
   Future<void> play(SongInfo song) async {
     currentSong.value = song;
-    isLiked.value = false;
+    isLiked.value = await _db.isSongLiked(song);
     progress.value = 0.0;
     position.value = Duration.zero;
     duration.value = const Duration(seconds: 1);
@@ -278,8 +280,12 @@ class PlayerService {
     }
   }
 
-  void toggleLiked() {
-    isLiked.value = !isLiked.value;
+  void toggleLiked() async {
+    final song = currentSong.value;
+    if (song != null) {
+      await _db.toggleLikedSong(song);
+      isLiked.value = !isLiked.value;
+    }
   }
 
   Future<void> togglePlay() async {

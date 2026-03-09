@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme.dart';
+import '../../services/database_service.dart';
+import '../../services/player_service.dart';
 import 'playlist_details.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -11,11 +13,9 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   String selectedFilter = 'Playlists';
-
   final List<String> filters = ['Playlists', 'Artists', 'Albums', 'Downloaded'];
 
-  // State for user-created playlists
-  final List<Map<String, dynamic>> _customPlaylists = [];
+  final DatabaseService _db = DatabaseService();
 
   void _showCreatePlaylistDialog() {
     String playlistName = '';
@@ -79,14 +79,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ElevatedButton(
                   onPressed: () {
                     if (playlistName.isNotEmpty) {
-                      setState(() {
-                        _customPlaylists.insert(0, {
-                          'title': playlistName,
-                          'subtitle': '0 songs',
-                          'icon': Icons.queue_music,
-                          'color': AppTheme.primary,
-                        });
-                      });
+                      _db.createPlaylist(playlistName);
                       Navigator.pop(context);
                     }
                   },
@@ -235,99 +228,94 @@ class _LibraryScreenState extends State<LibraryScreen> {
         );
       case 'Playlists':
       default:
-        return ListView(
-          physics: const BouncingScrollPhysics(),
+        return Column(
           children: [
-            // User custom playlists
-            ..._customPlaylists.map(
-              (playlist) => Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: _buildLibraryItem(
-                  playlist['title'] as String,
-                  playlist['subtitle'] as String,
-                  playlist['icon'] as IconData,
-                  playlist['color'] as Color,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PlaylistDetailsScreen(
-                          playlistName: playlist['title'] as String,
-                          subtitle: playlist['subtitle'] as String,
-                          icon: playlist['icon'] as IconData,
-                          color: playlist['color'] as Color,
+            // User Liked Songs Playlist (Static position)
+            StreamBuilder<List<SongInfo>>(
+              stream: _db.getLikedSongs(),
+              builder: (context, snapshot) {
+                final count = snapshot.hasData ? snapshot.data!.length : 0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _buildLibraryItem(
+                    'Liked Songs',
+                    'Playlist • $count songs',
+                    Icons.favorite,
+                    Colors.pink,
+                    isLikedSongs: true,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PlaylistDetailsScreen(
+                            playlistName: 'Liked Songs',
+                            subtitle: 'Your Liked Songs',
+                            icon: Icons.favorite,
+                            color: Colors.pink,
+                            isLikedSongs: true,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            // Default playlists
-            _buildLibraryItem(
-              'Liked Songs',
-              'Playlist • 124 songs',
-              Icons.favorite,
-              Colors.pink,
-              isLikedSongs: true, // Special rendering for liked songs
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PlaylistDetailsScreen(
-                      playlistName: 'Liked Songs',
-                      subtitle: 'Playlist • 124 songs',
-                      icon: Icons.favorite,
-                      color: Colors.pink,
-                    ),
+                      );
+                    },
                   ),
                 );
               },
             ),
 
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Deep Focus',
-              'Playlist • 45 songs',
-              Icons.center_focus_strong,
-              Colors.blue,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=200',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PlaylistDetailsScreen(
-                      playlistName: 'Deep Focus',
-                      subtitle: 'Playlist • 45 songs',
-                      icon: Icons.center_focus_strong,
-                      color: Colors.blue,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Recent Sessions',
-              'History • 12 sessions',
-              Icons.history,
-              AppTheme.primary,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PlaylistDetailsScreen(
-                      playlistName: 'Recent Sessions',
-                      subtitle: 'History • 12 sessions',
-                      icon: Icons.history,
-                      color: AppTheme.primary,
-                    ),
-                  ),
-                );
-              },
+            // Firestore Data Playlists
+            Expanded(
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _db.getPlaylists(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: AppTheme.primary),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No playlists yet',
+                        style: TextStyle(color: Colors.white60),
+                      ),
+                    );
+                  }
+
+                  final playlists = snapshot.data!;
+                  return ListView(
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      ...playlists.map(
+                        (playlist) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: _buildLibraryItem(
+                            playlist['name'] as String,
+                            'Playlist • ${playlist['songCount']} songs',
+                            Icons.queue_music,
+                            AppTheme.primary,
+                            imageUrl: playlist['coverUrl'],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PlaylistDetailsScreen(
+                                    playlistName: playlist['name'] as String,
+                                    subtitle:
+                                        'Playlist • ${playlist['songCount']} songs',
+                                    icon: Icons.queue_music,
+                                    color: AppTheme.primary,
+                                    playlistId: playlist['id'] as String,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         );

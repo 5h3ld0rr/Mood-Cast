@@ -5,6 +5,7 @@ import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import 'category_details.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/song_options.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -406,7 +407,23 @@ class _SearchScreenState extends State<SearchScreen> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
             ),
-            trailing: const Icon(Icons.more_vert, color: Colors.white54),
+            trailing: IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.white54),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => SongOptionsBottomSheet(
+                    song: SongInfo(
+                      title: track.title,
+                      artist: track.artist,
+                      coverUrl: track.artworkUrl,
+                      videoId: track.videoId,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         );
       },

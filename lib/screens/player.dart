@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../utils/ui_utils.dart';
 import '../services/player_service.dart';
 import '../services/mood_service.dart';
+import '../widgets/song_options.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -454,18 +455,44 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 ValueListenableBuilder<bool>(
                                   valueListenable: PlayerService().isLiked,
                                   builder: (context, liked, _) {
-                                    return IconButton(
-                                      icon: Icon(
-                                        liked
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: liked
-                                            ? AppTheme.primary
-                                            : AppTheme.textMuted,
-                                      ),
-                                      onPressed: () {
-                                        PlayerService().toggleLiked();
-                                      },
+                                    return Row(
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            liked
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color: liked
+                                                ? AppTheme.primary
+                                                : AppTheme.textMuted,
+                                          ),
+                                          onPressed: () {
+                                            PlayerService().toggleLiked();
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.more_vert,
+                                            color: AppTheme.textMuted,
+                                          ),
+                                          onPressed: () {
+                                            final song = PlayerService()
+                                                .currentSong
+                                                .value;
+                                            if (song != null) {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                backgroundColor:
+                                                    Colors.transparent,
+                                                builder: (context) =>
+                                                    SongOptionsBottomSheet(
+                                                      song: song,
+                                                    ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ],
                                     );
                                   },
                                 ),
