@@ -9,6 +9,8 @@ import 'package:mood_cast/screens/search/artist_details.dart';
 import '../../utils/ui_utils.dart';
 import '../../services/download_service.dart';
 import '../../widgets/cached_image.dart';
+import '../../widgets/playlist_options.dart';
+import '../../widgets/song_options.dart';
 import '../../services/connectivity_service.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -34,8 +36,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (mounted) setState(() {});
   }
 
-  // Artist search state within Library
+  // Search state within Library
   String _artistSearchQuery = '';
+  String _playlistSearchQuery = '';
+  String _downloadSearchQuery = '';
 
   @override
   void dispose() {
@@ -46,6 +50,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void _onArtistSearchChanged(String query) {
     setState(() {
       _artistSearchQuery = query;
+    });
+  }
+
+  void _onPlaylistSearchChanged(String query) {
+    setState(() {
+      _playlistSearchQuery = query;
+    });
+  }
+
+  void _onDownloadSearchChanged(String query) {
+    setState(() {
+      _downloadSearchQuery = query;
     });
   }
 
@@ -164,7 +180,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                   ),
                   const Spacer(),
-                  if (selectedFilter != 'Artists')
+                  if (selectedFilter != 'Artists' &&
+                      selectedFilter != 'Playlists' &&
+                      selectedFilter != 'Downloads')
                     IconButton(
                       icon: const Icon(
                         Icons.search,
@@ -363,7 +381,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     'Artist',
                                     artist.artworkUrl ??
                                         'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
-                                    artist.browseId,
+                                    browseId: artist.browseId,
                                   ),
                                 );
                               }).toList(),
@@ -395,7 +413,99 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         'Artist',
                         artist.artworkUrl ??
                             'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
-                        artist.browseId,
+                        browseId: artist.browseId,
+                        isPinned: artist.isPinned,
+                        onMoreTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF161B22),
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(20),
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.person,
+                                      color: AppTheme.primary,
+                                    ),
+                                    title: Text(
+                                      artist.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    subtitle: const Text(
+                                      'Artist Options',
+                                      style: TextStyle(
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                  const Divider(color: Colors.white10),
+                                  ListTile(
+                                    leading: Icon(
+                                      artist.isPinned
+                                          ? Icons.push_pin
+                                          : Icons.push_pin_outlined,
+                                      color: Colors.white70,
+                                    ),
+                                    title: Text(
+                                      artist.isPinned
+                                          ? 'Unpin Artist'
+                                          : 'Pin Artist',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    onTap: () async {
+                                      await _db.togglePinArtist(
+                                        artist.browseId,
+                                        artist.isPinned,
+                                      );
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                        UIUtils.showSnackBar(
+                                          context,
+                                          artist.isPinned
+                                              ? 'Artist unpinned'
+                                              : 'Artist pinned',
+                                        );
+                                      }
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.person_remove_outlined,
+                                      color: Colors.redAccent,
+                                    ),
+                                    title: const Text(
+                                      'Unfollow Artist',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    onTap: () async {
+                                      await _db.toggleFollowArtist(artist);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                        UIUtils.showSnackBar(
+                                          context,
+                                          'Unfollowed ${artist.name}',
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   );
@@ -408,110 +518,192 @@ class _LibraryScreenState extends State<LibraryScreen> {
         return ValueListenableBuilder<List<SongInfo>>(
           valueListenable: DownloadService().downloadedSongs,
           builder: (context, songs, _) {
-            if (songs.isEmpty) {
-              return ListView(
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _buildLibraryItem(
-                    'Your Downloads',
-                    'Playlist • 0 songs',
-                    Icons.download_done,
-                    Colors.green,
-                    isDownloaded: true,
-                    onTap: () {
-                      UIUtils.showSnackBar(context, 'No downloaded songs yet!');
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildLibraryItem(
-                    'Local Files',
-                    'Songs from this device',
-                    Icons.folder_open,
-                    Colors.grey,
-                    onTap: () {
-                      UIUtils.showSnackBar(
-                        context,
-                        'Local files feature coming soon!',
-                      );
-                    },
-                  ),
-                ],
-              );
-            }
-
-            return ListView.separated(
-              itemCount: songs.length + 1,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                if (index == songs.length) {
-                  return _buildLibraryItem(
-                    'Local Files',
-                    'Songs from this device',
-                    Icons.folder_open,
-                    Colors.grey,
-                    onTap: () {
-                      UIUtils.showSnackBar(
-                        context,
-                        'Local files feature coming soon!',
-                      );
-                    },
+            final filteredSongs = songs.where((song) {
+              return song.title.toLowerCase().contains(
+                    _downloadSearchQuery.toLowerCase(),
+                  ) ||
+                  song.artist.toLowerCase().contains(
+                    _downloadSearchQuery.toLowerCase(),
                   );
-                }
+            }).toList();
 
-                final song = songs[index];
-                return InkWell(
-                  onTap: () {
-                    PlayerService().play(song);
-                  },
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        child: CachedImage(
-                          imageUrl: song.coverUrl,
-                          borderRadius: BorderRadius.circular(4),
-                          errorWidget: const Icon(
-                            Icons.music_note,
-                            color: Colors.white30,
-                          ),
-                        ),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: TextField(
+                    onChanged: _onDownloadSearchChanged,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search downloads',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.white70,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      suffixIcon: _downloadSearchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                                color: Colors.white70,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _downloadSearchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.05),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: filteredSongs.isEmpty && songs.isNotEmpty
+                      ? const Center(
+                          child: Text(
+                            'No matching downloads found',
+                            style: TextStyle(color: Colors.white38),
+                          ),
+                        )
+                      : songs.isEmpty
+                      ? ListView(
+                          physics: const BouncingScrollPhysics(),
                           children: [
-                            Text(
-                              song.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            _buildLibraryItem(
+                              'Your Downloads',
+                              'Playlist • 0 songs',
+                              Icons.download_done,
+                              Colors.green,
+                              isDownloaded: true,
+                              onTap: () {
+                                UIUtils.showSnackBar(
+                                  context,
+                                  'No downloaded songs yet!',
+                                );
+                              },
                             ),
-                            Text(
-                              song.artist,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white38,
-                                fontSize: 13,
-                              ),
+                            const SizedBox(height: 16),
+                            _buildLibraryItem(
+                              'Local Files',
+                              'Songs from this device',
+                              Icons.folder_open,
+                              Colors.grey,
+                              onTap: () {
+                                UIUtils.showSnackBar(
+                                  context,
+                                  'Local files feature coming soon!',
+                                );
+                              },
                             ),
                           ],
+                        )
+                      : ListView.separated(
+                          itemCount:
+                              filteredSongs.length +
+                              (_downloadSearchQuery.isEmpty ? 1 : 0),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            if (_downloadSearchQuery.isEmpty &&
+                                index == filteredSongs.length) {
+                              return _buildLibraryItem(
+                                'Local Files',
+                                'Songs from this device',
+                                Icons.folder_open,
+                                Colors.grey,
+                                onTap: () {
+                                  UIUtils.showSnackBar(
+                                    context,
+                                    'Local files feature coming soon!',
+                                  );
+                                },
+                              );
+                            }
+
+                            final song = filteredSongs[index];
+                            return InkWell(
+                              onTap: () {
+                                PlayerService().play(song);
+                              },
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 56,
+                                    height: 56,
+                                    child: CachedImage(
+                                      imageUrl: song.coverUrl,
+                                      borderRadius: BorderRadius.circular(4),
+                                      errorWidget: const Icon(
+                                        Icons.music_note,
+                                        color: Colors.white30,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          song.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          song.artist,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white38,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (song.isPinned)
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 8.0),
+                                      child: Icon(
+                                        Icons.push_pin,
+                                        color: AppTheme.primary,
+                                        size: 14,
+                                      ),
+                                    ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.more_vert,
+                                      color: Colors.white38,
+                                    ),
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) =>
+                                            SongOptionsBottomSheet(song: song),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                      const Icon(
-                        Icons.download_done,
-                        color: AppTheme.primary,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                );
-              },
+                ),
+              ],
             );
           },
         );
@@ -519,39 +711,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
       default:
         return Column(
           children: [
-            // User Liked Songs Playlist (Static position)
-            StreamBuilder<List<SongInfo>>(
-              stream: _db.getLikedSongs(),
-              builder: (context, snapshot) {
-                final count = snapshot.hasData ? snapshot.data!.length : 0;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: _buildLibraryItem(
-                    'Liked Songs',
-                    'Playlist • $count songs',
-                    Icons.favorite,
-                    Colors.pink,
-                    isLikedSongs: true,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PlaylistDetailsScreen(
-                            playlistName: 'Liked Songs',
-                            subtitle: 'Your Liked Songs',
-                            icon: Icons.favorite,
-                            color: Colors.pink,
-                            isLikedSongs: true,
-                          ),
-                        ),
-                      );
-                    },
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: TextField(
+                onChanged: _onPlaylistSearchChanged,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Search playlists',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                  suffixIcon: _playlistSearchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.white70),
+                          onPressed: () {
+                            setState(() {
+                              _playlistSearchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
-                );
-              },
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                ),
+              ),
             ),
-
-            // Firestore Data Playlists
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _db.getPlaylists(),
@@ -561,20 +749,79 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       child: CircularProgressIndicator(color: AppTheme.primary),
                     );
                   }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No playlists yet',
-                        style: TextStyle(color: Colors.white60),
-                      ),
-                    );
-                  }
 
-                  final playlists = snapshot.data!;
+                  final playlists = snapshot.data ?? [];
+                  final filteredPlaylists = playlists.where((p) {
+                    final name = (p['name'] as String).toLowerCase();
+                    return name.contains(_playlistSearchQuery.toLowerCase());
+                  }).toList();
+
+                  final showLikedSongs =
+                      _playlistSearchQuery.isEmpty ||
+                      'liked songs'.contains(
+                        _playlistSearchQuery.toLowerCase(),
+                      );
+
                   return ListView(
                     physics: const BouncingScrollPhysics(),
                     children: [
-                      ...playlists.map(
+                      if (showLikedSongs)
+                        StreamBuilder<List<SongInfo>>(
+                          stream: _db.getLikedSongs(),
+                          builder: (context, likedSnapshot) {
+                            final count = likedSnapshot.hasData
+                                ? likedSnapshot.data!.length
+                                : 0;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16.0),
+                              child: _buildLibraryItem(
+                                'Liked Songs',
+                                'Playlist • $count songs',
+                                Icons.favorite,
+                                Colors.pink,
+                                isLikedSongs: true,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PlaylistDetailsScreen(
+                                            playlistName: 'Liked Songs',
+                                            subtitle: 'Your Liked Songs',
+                                            icon: Icons.favorite,
+                                            color: Colors.pink,
+                                            isLikedSongs: true,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                onMoreTap: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (context) =>
+                                        PlaylistOptionsBottomSheet(
+                                          playlistId: 'liked_songs',
+                                          playlistName: 'Liked Songs',
+                                          isLikedSongs: true,
+                                        ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      if (filteredPlaylists.isEmpty && !showLikedSongs)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              'No matching playlists found',
+                              style: TextStyle(color: Colors.white38),
+                            ),
+                          ),
+                        ),
+                      ...filteredPlaylists.map(
                         (playlist) => Padding(
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: _buildLibraryItem(
@@ -598,6 +845,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                 ),
                               );
                             },
+                            onMoreTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) =>
+                                    PlaylistOptionsBottomSheet(
+                                      playlistId: playlist['id'] as String,
+                                      playlistName: playlist['name'] as String,
+                                      isLikedSongs: false,
+                                    ),
+                              );
+                            },
+                            isPinned: playlist['isPinned'] ?? false,
                           ),
                         ),
                       ),
@@ -650,7 +910,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
     String? imageUrl,
     bool isLikedSongs = false,
     bool isDownloaded = false,
+    bool isPinned = false,
     VoidCallback? onTap,
+    VoidCallback? onMoreTap,
   }) {
     return InkWell(
       onTap: onTap,
@@ -721,13 +983,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      if (isLikedSongs)
+                      if (isLikedSongs || isPinned)
                         const Padding(
-                          padding: EdgeInsets.only(right: 4.0),
+                          padding: EdgeInsets.only(right: 6.0),
                           child: Icon(
                             Icons.push_pin,
                             color: AppTheme.primary,
-                            size: 12,
+                            size: 14,
                           ),
                         ),
                       Expanded(
@@ -746,6 +1008,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ],
               ),
             ),
+            if (onMoreTap != null)
+              IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.white54),
+                onPressed: onMoreTap,
+              ),
           ],
         ),
       ),
@@ -755,9 +1022,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _buildArtistItem(
     String name,
     String followers,
-    String imageUrl, [
+    String imageUrl, {
     String? browseId,
-  ]) {
+    bool isPinned = false,
+    VoidCallback? onMoreTap,
+  }) {
     return InkWell(
       onTap: () {
         if (browseId != null) {
@@ -769,6 +1038,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   name: name,
                   browseId: browseId,
                   artworkUrl: imageUrl,
+                  isPinned: isPinned,
                 ),
               ),
             ),
@@ -790,27 +1060,47 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  followers,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 14,
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (isPinned)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 6.0),
+                          child: Icon(
+                            Icons.push_pin,
+                            color: AppTheme.primary,
+                            size: 14,
+                          ),
+                        ),
+                      Text(
+                        followers,
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            if (onMoreTap != null)
+              IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.white54),
+                onPressed: onMoreTap,
+              ),
           ],
         ),
       ),

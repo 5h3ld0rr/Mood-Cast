@@ -37,6 +37,13 @@ class DownloadService {
       }
     }
 
+    // Sort pinned items to the top
+    songs.sort((a, b) {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return 0;
+    });
+
     downloadedSongs.value = songs;
     await _persist();
   }
@@ -157,10 +164,33 @@ class DownloadService {
       if (await file.exists()) await file.delete();
     }
 
-    downloadedSongs.value = downloadedSongs.value
-        .where((s) => s.videoId != videoId)
-        .toList();
     await _persist();
+  }
+
+  Future<void> togglePinDownload(String videoId, bool isPinned) async {
+    final songs = List<SongInfo>.from(downloadedSongs.value);
+    final index = songs.indexWhere((s) => s.videoId == videoId);
+    if (index != -1) {
+      final song = songs[index];
+      songs[index] = SongInfo(
+        title: song.title,
+        artist: song.artist,
+        coverUrl: song.coverUrl,
+        previewUrl: song.previewUrl,
+        videoId: song.videoId,
+        isPinned: !isPinned,
+      );
+
+      // Sort again after pinning
+      songs.sort((a, b) {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0;
+      });
+
+      downloadedSongs.value = songs;
+      await _persist();
+    }
   }
 
   Future<String?> getLocalPath(String videoId) async {

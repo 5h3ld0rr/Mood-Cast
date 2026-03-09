@@ -85,14 +85,19 @@ class DatabaseService {
   }
 
   // --- Playlists ---
-  Future<void> createPlaylist(String name) async {
-    if (uid == null) return;
-    await _firestore.collection('users').doc(uid).collection('playlists').add({
-      'name': name,
-      'createdAt': FieldValue.serverTimestamp(),
-      'songCount': 0,
-      'coverUrl': null,
-    });
+  Future<String?> createPlaylist(String name) async {
+    if (uid == null) return null;
+    final docRef = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('playlists')
+        .add({
+          'name': name,
+          'createdAt': FieldValue.serverTimestamp(),
+          'songCount': 0,
+          'coverUrl': null,
+        });
+    return docRef.id;
   }
 
   Future<void> deletePlaylist(String playlistId) async {
@@ -105,20 +110,57 @@ class DatabaseService {
         .delete();
   }
 
+  Future<void> renamePlaylist(String playlistId, String newName) async {
+    if (uid == null) return;
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('playlists')
+        .doc(playlistId)
+        .update({'name': newName});
+  }
+
+  Future<void> togglePinPlaylist(String playlistId, bool isPinned) async {
+    if (uid == null) return;
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('playlists')
+        .doc(playlistId)
+        .update({'isPinned': !isPinned});
+  }
+
   Stream<List<Map<String, dynamic>>> getPlaylists() {
     if (uid == null) return Stream.value([]);
     return _firestore
         .collection('users')
         .doc(uid)
         .collection('playlists')
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
+          final playlists = snapshot.docs.map((doc) {
             final data = doc.data();
             data['id'] = doc.id;
             return data;
           }).toList();
+
+          // Sort client-side to ensure documents without 'isPinned' are still included
+          playlists.sort((a, b) {
+            final aPinned = a['isPinned'] ?? false;
+            final bPinned = b['isPinned'] ?? false;
+            if (aPinned != bPinned) {
+              return aPinned ? -1 : 1;
+            }
+            // Secondary sort by createdAt if available
+            final aTime = a['createdAt'] as Timestamp?;
+            final bTime = b['createdAt'] as Timestamp?;
+            if (aTime != null && bTime != null) {
+              return bTime.compareTo(aTime);
+            }
+            return 0;
+          });
+
+          return playlists;
         });
   }
 
@@ -238,23 +280,45 @@ class DatabaseService {
     return docSnap.exists;
   }
 
+  Future<void> togglePinArtist(String browseId, bool isPinned) async {
+    if (uid == null) return;
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('followed_artists')
+        .doc(browseId)
+        .update({'isPinned': !isPinned});
+  }
+
   Stream<List<YouTubeArtistMetadata>> getFollowedArtists() {
     if (uid == null) return Stream.value([]);
     return _firestore
         .collection('users')
         .doc(uid)
         .collection('followed_artists')
-        .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
+          final artists = snapshot.docs.map((doc) {
             final data = doc.data();
             return YouTubeArtistMetadata(
               name: data['name'] ?? '',
               browseId: data['browseId'] ?? '',
               artworkUrl: data['artworkUrl'],
+              isPinned: data['isPinned'] ?? false,
             );
           }).toList();
+
+          // Sort client-side
+          artists.sort((a, b) {
+            if (a.isPinned != b.isPinned) {
+              return a.isPinned ? -1 : 1;
+            }
+            // We don't have timestamp here in the model, but we can add it if needed
+            // For now just sort by name or keep original order
+            return a.name.compareTo(b.name);
+          });
+
+          return artists;
         });
   }
 

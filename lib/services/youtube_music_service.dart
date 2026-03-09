@@ -25,6 +25,7 @@ class YouTubeArtistMetadata {
   final String? description;
   final String? artworkUrl;
   final List<YouTubeMusicMetadata>? topSongs;
+  final bool isPinned;
 
   YouTubeArtistMetadata({
     required this.browseId,
@@ -32,6 +33,7 @@ class YouTubeArtistMetadata {
     this.description,
     this.artworkUrl,
     this.topSongs,
+    this.isPinned = false,
   });
 }
 

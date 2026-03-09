@@ -13,6 +13,7 @@ class SongInfo {
   final String? coverUrl;
   final String? previewUrl;
   final String? videoId;
+  final bool isPinned;
 
   SongInfo({
     required this.title,
@@ -20,6 +21,7 @@ class SongInfo {
     this.coverUrl,
     this.previewUrl,
     this.videoId,
+    this.isPinned = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,16 +31,18 @@ class SongInfo {
       'coverUrl': coverUrl,
       'previewUrl': previewUrl,
       'videoId': videoId,
+      'isPinned': isPinned,
     };
   }
 
   factory SongInfo.fromMap(Map<String, dynamic> map) {
     return SongInfo(
-      title: map['title'] ?? 'Unknown',
-      artist: map['artist'] ?? 'Unknown',
+      title: map['title'] ?? '',
+      artist: map['artist'] ?? '',
       coverUrl: map['coverUrl'],
       previewUrl: map['previewUrl'],
       videoId: map['videoId'],
+      isPinned: map['isPinned'] ?? false,
     );
   }
 }
