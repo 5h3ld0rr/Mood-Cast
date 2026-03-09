@@ -107,6 +107,12 @@ class PlayerService {
   final ValueNotifier<Duration> duration = ValueNotifier<Duration>(
     const Duration(seconds: 1),
   );
+  final ValueNotifier<bool> isShuffled = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isLooping = ValueNotifier<bool>(false);
+
+  List<SongInfo> currentQueue = [];
+  List<SongInfo> _originalQueue = [];
+  int currentIndex = -1;
 
   PlayerService._internal() {
     _audioPlayer.positionStream.listen((p) {
@@ -129,7 +135,75 @@ class PlayerService {
       isBuffering.value =
           state == ProcessingState.loading ||
           state == ProcessingState.buffering;
+      if (state == ProcessingState.completed) {
+        skipToNext(autoPlay: true);
+      }
     });
+  }
+
+  Future<void> playQueue(List<SongInfo> queue, {int initialIndex = 0}) async {
+    if (queue.isEmpty) return;
+    _originalQueue = List.from(queue);
+    currentQueue = List.from(queue);
+
+    if (isShuffled.value) {
+      final currentSong = currentQueue[initialIndex];
+      currentQueue.shuffle();
+      currentIndex = currentQueue.indexOf(currentSong);
+    } else {
+      currentIndex = initialIndex;
+    }
+
+    await play(currentQueue[currentIndex]);
+  }
+
+  Future<void> skipToNext({bool autoPlay = false}) async {
+    if (currentQueue.isEmpty || currentIndex < 0) return;
+
+    if (autoPlay && isLooping.value) {
+      // Loop the current song
+      await play(currentQueue[currentIndex]);
+      return;
+    }
+
+    if (currentIndex < currentQueue.length - 1) {
+      currentIndex++;
+    } else {
+      if (autoPlay) return; // stop at end of playlist
+      currentIndex = 0; // manual skip back to start
+    }
+    await play(currentQueue[currentIndex]);
+  }
+
+  Future<void> skipToPrevious() async {
+    if (currentQueue.isEmpty || currentIndex < 0) return;
+    if (position.value.inSeconds > 3) {
+      await seek(0.0);
+      return;
+    }
+    if (currentIndex > 0) {
+      currentIndex--;
+    } else {
+      currentIndex = currentQueue.length - 1;
+    }
+    await play(currentQueue[currentIndex]);
+  }
+
+  void toggleShuffle() {
+    isShuffled.value = !isShuffled.value;
+    if (currentQueue.isEmpty || currentIndex < 0) return;
+
+    final currentSong = currentQueue[currentIndex];
+    if (isShuffled.value) {
+      currentQueue.shuffle();
+    } else {
+      currentQueue = List.from(_originalQueue);
+    }
+    currentIndex = currentQueue.indexOf(currentSong);
+  }
+
+  void toggleLoop() {
+    isLooping.value = !isLooping.value;
   }
 
   Future<void> play(SongInfo song) async {

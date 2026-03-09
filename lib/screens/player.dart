@@ -534,34 +534,35 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        _formatDuration(
-                                          progress *
-                                              (PlayerService()
-                                                          .currentSong
-                                                          .value
-                                                          ?.previewUrl !=
-                                                      null
-                                                  ? 30
-                                                  : 180),
-                                        ),
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 10,
-                                        ),
+                                      ValueListenableBuilder<Duration>(
+                                        valueListenable:
+                                            PlayerService().position,
+                                        builder: (context, pos, _) {
+                                          return Text(
+                                            _formatDuration(
+                                              pos.inSeconds.toDouble(),
+                                            ),
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 10,
+                                            ),
+                                          );
+                                        },
                                       ),
-                                      Text(
-                                        PlayerService()
-                                                    .currentSong
-                                                    .value
-                                                    ?.previewUrl !=
-                                                null
-                                            ? '0:30'
-                                            : '3:00',
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 10,
-                                        ),
+                                      ValueListenableBuilder<Duration>(
+                                        valueListenable:
+                                            PlayerService().duration,
+                                        builder: (context, dur, _) {
+                                          return Text(
+                                            _formatDuration(
+                                              dur.inSeconds.toDouble(),
+                                            ),
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 10,
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ],
                                   ),
@@ -573,12 +574,21 @@ class _PlayerScreenState extends State<PlayerScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.shuffle,
-                                  color: AppTheme.textMuted,
-                                ),
-                                onPressed: () {},
+                              ValueListenableBuilder<bool>(
+                                valueListenable: PlayerService().isShuffled,
+                                builder: (context, shuffled, _) {
+                                  return IconButton(
+                                    icon: Icon(
+                                      Icons.shuffle,
+                                      color: shuffled
+                                          ? AppTheme.primary
+                                          : AppTheme.textMuted,
+                                    ),
+                                    onPressed: () {
+                                      PlayerService().toggleShuffle();
+                                    },
+                                  );
+                                },
                               ),
                               Row(
                                 children: [
@@ -588,7 +598,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       color: Colors.white,
                                       size: 32,
                                     ),
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      PlayerService().skipToPrevious();
+                                    },
                                   ),
                                   const SizedBox(width: 16),
                                   GestureDetector(
@@ -647,16 +659,27 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       color: Colors.white,
                                       size: 32,
                                     ),
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      PlayerService().skipToNext();
+                                    },
                                   ),
                                 ],
                               ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.repeat,
-                                  color: AppTheme.textMuted,
-                                ),
-                                onPressed: () {},
+                              ValueListenableBuilder<bool>(
+                                valueListenable: PlayerService().isLooping,
+                                builder: (context, looping, _) {
+                                  return IconButton(
+                                    icon: Icon(
+                                      Icons.repeat,
+                                      color: looping
+                                          ? AppTheme.primary
+                                          : AppTheme.textMuted,
+                                    ),
+                                    onPressed: () {
+                                      PlayerService().toggleLoop();
+                                    },
+                                  );
+                                },
                               ),
                             ],
                           ),

@@ -115,27 +115,32 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
         final track = _tracks[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
-          child: _buildSongTile(context, track),
+          child: _buildSongTile(context, track, index),
         );
       },
     );
   }
 
-  Widget _buildSongTile(BuildContext context, YouTubeMusicMetadata track) {
+  Widget _buildSongTile(
+    BuildContext context,
+    YouTubeMusicMetadata track,
+    int index,
+  ) {
     final albumArt = track.artworkUrl;
     final artistName = track.artist;
 
     return GestureDetector(
       onTap: () {
-        PlayerService().play(
-          SongInfo(
-            title: track.title,
-            artist: artistName,
-            coverUrl: albumArt,
-            videoId: track.videoId,
+        final queue = _tracks.map((t) {
+          return SongInfo(
+            title: t.title,
+            artist: t.artist,
+            coverUrl: t.artworkUrl,
+            videoId: t.videoId,
             previewUrl: null,
-          ),
-        );
+          );
+        }).toList();
+        PlayerService().playQueue(queue, initialIndex: index);
       },
       child: Container(
         padding: const EdgeInsets.all(12),

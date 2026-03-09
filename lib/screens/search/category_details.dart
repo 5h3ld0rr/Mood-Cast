@@ -109,7 +109,9 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                         ),
                         const SizedBox(height: 16),
                         ..._tracks
-                            .map((track) => _buildSongItem(track))
+                            .asMap()
+                            .entries
+                            .map((e) => _buildSongItem(e.value, e.key))
                             .toList(),
                         if (_tracks.isEmpty)
                           const Center(
@@ -130,18 +132,19 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
     );
   }
 
-  Widget _buildSongItem(YouTubeMusicMetadata track) {
+  Widget _buildSongItem(YouTubeMusicMetadata track, int index) {
     return GestureDetector(
       onTap: () {
-        _playerService.play(
-          SongInfo(
-            title: track.title,
-            artist: track.artist,
-            coverUrl: track.artworkUrl,
-            videoId: track.videoId,
+        final queue = _tracks.map((t) {
+          return SongInfo(
+            title: t.title,
+            artist: t.artist,
+            coverUrl: t.artworkUrl,
+            videoId: t.videoId,
             previewUrl: null,
-          ),
-        );
+          );
+        }).toList();
+        _playerService.playQueue(queue, initialIndex: index);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),

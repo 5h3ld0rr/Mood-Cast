@@ -354,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               final track = _recommendations[index];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12.0),
-                                child: _buildTrackTile(context, track),
+                                child: _buildTrackTile(context, track, index),
                               );
                             },
                           ),
@@ -425,17 +425,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTrackTile(BuildContext context, YouTubeMusicMetadata track) {
+  Widget _buildTrackTile(
+    BuildContext context,
+    YouTubeMusicMetadata track,
+    int index,
+  ) {
     return GestureDetector(
       onTap: () {
-        PlayerService().play(
-          SongInfo(
-            title: track.title,
-            artist: track.artist,
-            coverUrl: track.artworkUrl,
-            videoId: track.videoId,
-          ),
-        );
+        final queue = _recommendations.map((t) {
+          return SongInfo(
+            title: t.title,
+            artist: t.artist,
+            coverUrl: t.artworkUrl,
+            videoId: t.videoId,
+            previewUrl: null,
+          );
+        }).toList();
+        PlayerService().playQueue(queue, initialIndex: index);
       },
       child: Container(
         padding: const EdgeInsets.all(12),

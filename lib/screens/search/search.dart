@@ -165,15 +165,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
         return ListTile(
           onTap: () {
-            _playerService.play(
-              SongInfo(
-                title: track.title,
-                artist: artistName,
-                coverUrl: albumArt,
-                videoId: track.videoId,
+            final queue = _searchResults.map((t) {
+              return SongInfo(
+                title: t.title,
+                artist: t.artist,
+                coverUrl: t.artworkUrl,
+                videoId: t.videoId,
                 previewUrl: null,
-              ),
-            );
+              );
+            }).toList();
+            _playerService.playQueue(queue, initialIndex: index);
           },
           contentPadding: const EdgeInsets.symmetric(vertical: 4),
           leading: Container(
