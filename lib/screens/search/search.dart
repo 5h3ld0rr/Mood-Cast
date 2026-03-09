@@ -153,22 +153,6 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     ),
                   ),
-                  if (!_isFocused)
-                    IconButton(
-                      icon: const Icon(Icons.history, color: Colors.white),
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HistoryScreen(),
-                          ),
-                        );
-                        if (result != null && result is String) {
-                          _searchController.text = result;
-                          _performSearch(result);
-                        }
-                      },
-                    ),
                 ],
               ),
             ),
