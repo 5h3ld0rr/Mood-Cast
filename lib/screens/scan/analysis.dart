@@ -244,31 +244,52 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                               // 1. Camera Preview (Full Fill - No Borders)
                               if (_isCameraInitialized && _controller != null)
                                 Positioned.fill(
-                                  child: LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      return AnimatedScale(
-                                        scale: _zoomScale,
-                                        duration: const Duration(seconds: 1),
-                                        curve: Curves.easeInOut,
-                                        child: FittedBox(
-                                          fit: BoxFit.cover,
-                                          child: SizedBox(
-                                            width: constraints.maxWidth,
-                                            height:
-                                                constraints.maxWidth /
-                                                (_controller!
-                                                            .value
-                                                            .aspectRatio >
-                                                        0
-                                                    ? _controller!
-                                                          .value
-                                                          .aspectRatio
-                                                    : 1.0),
-                                            child: CameraPreview(_controller!),
+                                  child: ClipRect(
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        // Calculate scale to fill the container perfectly
+                                        final double containerWidth =
+                                            constraints.maxWidth;
+                                        final double containerHeight =
+                                            constraints.maxHeight;
+
+                                        // Camera aspect ratio is typically width/height of the SENSOR
+                                        // In portrait, we usually need the inverse if it's not handled.
+                                        final double cameraAspectRatio =
+                                            _controller!.value.aspectRatio;
+
+                                        // Effective aspect ratio in portrait
+                                        double scale = 1.0;
+                                        final double containerAspectRatio =
+                                            containerWidth / containerHeight;
+
+                                        if (containerAspectRatio >
+                                            cameraAspectRatio) {
+                                          scale =
+                                              containerAspectRatio /
+                                              cameraAspectRatio;
+                                        } else {
+                                          scale =
+                                              cameraAspectRatio /
+                                              containerAspectRatio;
+                                        }
+
+                                        return AnimatedScale(
+                                          scale: scale * _zoomScale,
+                                          duration: const Duration(seconds: 1),
+                                          curve: Curves.easeInOut,
+                                          alignment: Alignment.center,
+                                          child: Center(
+                                            child: AspectRatio(
+                                              aspectRatio: cameraAspectRatio,
+                                              child: CameraPreview(
+                                                _controller!,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    ),
                                   ),
                                 )
                               else
