@@ -103,32 +103,48 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF080C14),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
+              child: Row(
                 children: [
                   const Text(
                     'Your Library',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
                     ),
                   ),
+                  const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white),
+                    icon: const Icon(
+                      Icons.search,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    onPressed: () {},
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white, size: 28),
                     onPressed: _showCreatePlaylistDialog,
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              // Chips for filtering
-              SingleChildScrollView(
+            ),
+            const SizedBox(height: 8),
+            // Chips for filtering
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 child: Row(
                   children: filters.map((filter) {
                     return Padding(
@@ -138,10 +154,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   }).toList(),
                 ),
               ),
-              const SizedBox(height: 32),
-              Expanded(child: _buildLibraryContent()),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white10, height: 1),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: _buildLibraryContent(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -362,87 +384,89 @@ class _LibraryScreenState extends State<LibraryScreen> {
     bool isLikedSongs = false,
     VoidCallback? onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        children: [
-          Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              color: isLikedSongs ? null : color.withValues(alpha: 0.1),
-              gradient: isLikedSongs
-                  ? const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF450af5), Color(0xFFc4efd9)],
-                    )
-                  : null,
-              borderRadius: BorderRadius.circular(4),
-              image: imageUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(imageUrl),
-                      fit: BoxFit.cover,
-                    )
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: isLikedSongs ? null : color.withValues(alpha: 0.1),
+                gradient: isLikedSongs
+                    ? const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF450af5), Color(0xFFc4efd9)],
+                      )
+                    : null,
+                borderRadius: BorderRadius.circular(4),
+                image: imageUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(imageUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: imageUrl == null
+                  ? isLikedSongs
+                        ? const Center(
+                            child: Icon(
+                              Icons.favorite,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          )
+                        : Icon(icon, color: color, size: 28)
                   : null,
             ),
-            child: imageUrl == null
-                ? isLikedSongs
-                      ? const Center(
-                          child: Icon(
-                            Icons.favorite,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        )
-                      : Icon(icon, color: color, size: 32)
-                : null,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (isLikedSongs)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 6.0),
-                        child: Icon(
-                          Icons.push_pin,
-                          color: AppTheme.primary,
-                          size: 14,
-                        ),
-                      ),
-                    Expanded(
-                      child: Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 13,
-                        ),
-                      ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      if (isLikedSongs)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 4.0),
+                          child: Icon(
+                            Icons.push_pin,
+                            color: AppTheme.primary,
+                            size: 12,
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
