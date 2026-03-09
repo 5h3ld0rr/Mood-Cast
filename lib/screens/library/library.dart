@@ -310,7 +310,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           ),
                         ),
                         const Text(
-                          'Suggested',
+                          'Suggested Artists',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -318,25 +318,44 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildArtistItem(
-                          'The Midnight',
-                          '2.4M Monthly Listeners',
-                          'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200',
-                          'UCMT9lK1v327429v45mP_fWA',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildArtistItem(
-                          'The Weeknd',
-                          '84M Monthly Listeners',
-                          'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
-                          'UC0WP5P-ufzA_azK9uy7Y0Sg',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildArtistItem(
-                          'Drake',
-                          '68M Monthly Listeners',
-                          'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=200',
-                          'UC9GoqKW6ySArL8v_tshshcg',
+                        FutureBuilder<List<YouTubeArtistMetadata>>(
+                          future: YouTubeMusicService().searchArtists(
+                            'Top Global Artists',
+                          ),
+                          builder: (context, artistSnapshot) {
+                            if (artistSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: CircularProgressIndicator(
+                                    color: AppTheme.primary,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final suggestions = artistSnapshot.data ?? [];
+                            if (suggestions.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Column(
+                              children: suggestions.take(5).map((artist) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: _buildArtistItem(
+                                    artist.name,
+                                    'Artist',
+                                    artist.artworkUrl ??
+                                        'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
+                                    artist.browseId,
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
                         ),
                       ],
                     );
@@ -885,7 +904,7 @@ class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
                         color: Colors.white70,
                       ),
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.08),
+                      fillColor: Colors.white.withValues(alpha: 0.08),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(28),
                         borderSide: BorderSide.none,
