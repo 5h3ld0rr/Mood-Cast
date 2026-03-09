@@ -22,16 +22,16 @@ class YouTubeMusicMetadata {
 class YouTubeArtistMetadata {
   final String browseId;
   final String name;
-  final String description;
+  final String? description;
   final String? artworkUrl;
-  final List<YouTubeMusicMetadata> topSongs;
+  final List<YouTubeMusicMetadata>? topSongs;
 
   YouTubeArtistMetadata({
     required this.browseId,
     required this.name,
-    required this.description,
+    this.description,
     this.artworkUrl,
-    required this.topSongs,
+    this.topSongs,
   });
 }
 
@@ -43,12 +43,7 @@ class YouTubeMusicService {
   YTMusic? _ytm;
 
   Future<void> _initialize() async {
-    if (_ytm != null) return;
-    try {
-      _ytm = await YTMusic.create();
-    } catch (e) {
-      debugPrint('Error initializing YouTube Music: $e');
-    }
+    _ytm ??= await YTMusic.create();
   }
 
   Future<List<YouTubeMusicMetadata>> searchTracks(String query) async {
@@ -57,12 +52,15 @@ class YouTubeMusicService {
 
     try {
       final results = await _ytm!.search(query, filter: SearchFilter.songs);
-      return results.map((res) {
-        final data = res as Map<String, dynamic>;
+      return results.map((result) {
+        final data = result as Map<String, dynamic>;
 
-        // Extract artist name
+        // Extract artist name - handle list of artists
         String artistName = 'Unknown Artist';
-        if (data['artists'] != null && (data['artists'] as List).isNotEmpty) {
+        if (data['artist'] != null) {
+          artistName = data['artist'];
+        } else if (data['artists'] != null &&
+            (data['artists'] as List).isNotEmpty) {
           artistName = data['artists'][0]['name'] ?? 'Unknown Artist';
         }
 
@@ -86,18 +84,37 @@ class YouTubeMusicService {
     }
   }
 
-  Future<YouTubeArtistMetadata?> searchArtist(String query) async {
+  Future<List<YouTubeArtistMetadata>> searchArtists(String query) async {
+    await _initialize();
+    if (_ytm == null) return [];
+
+    try {
+      final results = await _ytm!.search(query, filter: SearchFilter.artists);
+      return results.map((result) {
+        final data = result as Map<String, dynamic>;
+        String? thumbnail;
+        if (data['thumbnails'] != null &&
+            (data['thumbnails'] as List).isNotEmpty) {
+          thumbnail = data['thumbnails'].last['url'];
+        }
+
+        return YouTubeArtistMetadata(
+          browseId: data['browseId'] ?? '',
+          name: data['name'] ?? data['artist'] ?? 'Unknown Artist',
+          artworkUrl: thumbnail,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error searching artists: $e');
+      return [];
+    }
+  }
+
+  Future<YouTubeArtistMetadata?> getArtistDetails(String browseId) async {
     await _initialize();
     if (_ytm == null) return null;
 
     try {
-      final results = await _ytm!.search(query, filter: SearchFilter.artists);
-      if (results.isEmpty) return null;
-
-      final firstArtist = results.first as Map<String, dynamic>;
-      final browseId = firstArtist['browseId'];
-      if (browseId == null) return null;
-
       final artistData = await _ytm!.getArtist(browseId);
       final data = artistData as Map<String, dynamic>;
 
@@ -129,7 +146,7 @@ class YouTubeMusicService {
 
       return YouTubeArtistMetadata(
         browseId: browseId,
-        name: data['name'] ?? firstArtist['artist'] ?? 'Unknown Artist',
+        name: data['name'] ?? 'Unknown Artist',
         description: data['description'] ?? '',
         artworkUrl: thumbnail,
         topSongs: topSongs,
@@ -138,6 +155,13 @@ class YouTubeMusicService {
       debugPrint('Error fetching artist details: $e');
       return null;
     }
+  }
+
+  @Deprecated('Use searchArtists and getArtistDetails instead')
+  Future<YouTubeArtistMetadata?> searchArtist(String query) async {
+    final results = await searchArtists(query);
+    if (results.isEmpty) return null;
+    return await getArtistDetails(results.first.browseId);
   }
 
   Future<List<YouTubeMusicMetadata>> getSmartRecommendations({
