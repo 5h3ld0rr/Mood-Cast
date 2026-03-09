@@ -15,13 +15,29 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: primary,
       scaffoldBackgroundColor: backgroundDark,
-      textTheme: GoogleFonts.spaceGroteskTextTheme(ThemeData.dark().textTheme)
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
           .copyWith(
-            displayLarge: const TextStyle(
+            displayLarge: GoogleFonts.spaceGrotesk(
               color: textLight,
               fontWeight: FontWeight.bold,
             ),
-            titleLarge: const TextStyle(
+            displayMedium: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            displaySmall: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            headlineLarge: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            headlineMedium: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            titleLarge: GoogleFonts.spaceGrotesk(
               color: textLight,
               fontWeight: FontWeight.bold,
             ),

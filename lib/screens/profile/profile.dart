@@ -438,7 +438,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           title: const Text(
             'Audio Quality',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -477,7 +481,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           value: value,
           groupValue: currentQuality,
           activeColor: AppTheme.primary,
-          title: Text(title, style: const TextStyle(color: Colors.white)),
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           subtitle: Text(
             subtitle,
             style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),

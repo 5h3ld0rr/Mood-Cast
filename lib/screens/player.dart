@@ -7,7 +7,6 @@ import '../theme.dart';
 import '../utils/ui_utils.dart';
 import '../services/player_service.dart';
 import '../services/mood_service.dart';
-import '../widgets/song_options.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -125,16 +124,20 @@ class _PlayerScreenState extends State<PlayerScreen>
                               PopupMenuItem<String>(
                                 value: 'playlist',
                                 child: Row(
-                                  children: const [
-                                    Icon(
+                                  children: [
+                                    const Icon(
                                       Icons.playlist_add,
                                       size: 20,
                                       color: Colors.white70,
                                     ),
-                                    SizedBox(width: 12),
-                                    Text(
+                                    const SizedBox(width: 12),
+                                    const Text(
                                       'Add to Playlist',
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -142,16 +145,20 @@ class _PlayerScreenState extends State<PlayerScreen>
                               PopupMenuItem<String>(
                                 value: 'sleep',
                                 child: Row(
-                                  children: const [
-                                    Icon(
+                                  children: [
+                                    const Icon(
                                       Icons.timer_outlined,
                                       size: 20,
                                       color: Colors.white70,
                                     ),
-                                    SizedBox(width: 12),
-                                    Text(
+                                    const SizedBox(width: 12),
+                                    const Text(
                                       'Sleep Timer',
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -159,16 +166,20 @@ class _PlayerScreenState extends State<PlayerScreen>
                               PopupMenuItem<String>(
                                 value: 'share',
                                 child: Row(
-                                  children: const [
-                                    Icon(
+                                  children: [
+                                    const Icon(
                                       Icons.share_outlined,
                                       size: 20,
                                       color: Colors.white70,
                                     ),
-                                    SizedBox(width: 12),
-                                    Text(
+                                    const SizedBox(width: 12),
+                                    const Text(
                                       'Share',
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -468,28 +479,6 @@ class _PlayerScreenState extends State<PlayerScreen>
                                           ),
                                           onPressed: () {
                                             PlayerService().toggleLiked();
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.more_vert,
-                                            color: AppTheme.textMuted,
-                                          ),
-                                          onPressed: () {
-                                            final song = PlayerService()
-                                                .currentSong
-                                                .value;
-                                            if (song != null) {
-                                              showModalBottomSheet(
-                                                context: context,
-                                                backgroundColor:
-                                                    Colors.transparent,
-                                                builder: (context) =>
-                                                    SongOptionsBottomSheet(
-                                                      song: song,
-                                                    ),
-                                              );
-                                            }
                                           },
                                         ),
                                       ],
