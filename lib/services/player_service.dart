@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:http/http.dart' as http;
 import 'database_service.dart';
+import 'download_service.dart';
 
 enum AudioQuality { low, medium, high }
 
@@ -254,6 +255,18 @@ class PlayerService {
       if (targetVideoId == null || targetVideoId.isEmpty) {
         debugPrint("PlayerService: No videoId found, cannot play.");
         isBuffering.value = false;
+        return;
+      }
+
+      // 1. Check if song is downloaded
+      final localPath = await DownloadService().getLocalPath(targetVideoId);
+      if (localPath != null) {
+        debugPrint(
+          "PlayerService: Playing local file for $targetVideoId: $localPath",
+        );
+        await _audioPlayer.setAudioSource(AudioSource.file(localPath));
+        await _audioPlayer.play();
+        debugPrint("PlayerService: Offline playback started!");
         return;
       }
 

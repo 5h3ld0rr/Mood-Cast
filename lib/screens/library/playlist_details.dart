@@ -3,6 +3,7 @@ import '../../theme.dart';
 import '../../utils/ui_utils.dart';
 import '../../services/database_service.dart';
 import '../../services/player_service.dart';
+import '../../services/download_service.dart';
 import '../../widgets/song_options.dart';
 
 class PlaylistDetailsScreen extends StatefulWidget {
@@ -596,28 +597,39 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                   child: Row(
                     children: [
                       // Download Icon
-                      IconButton(
-                        onPressed: () {
-                          UIUtils.showSnackBar(
-                            context,
-                            'Downloading for offline use...',
+                      ValueListenableBuilder<Set<String>>(
+                        valueListenable: DownloadService().downloadedIds,
+                        builder: (context, downloadedIds, _) {
+                          // Check if all songs in this snapshot are downloaded
+                          // For simplicity, we just show if it's "downloading" or "downloaded"
+                          return IconButton(
+                            onPressed: () {
+                              if (songs.isEmpty) return;
+                              for (var s in songs) {
+                                DownloadService().downloadSong(s);
+                              }
+                              UIUtils.showSnackBar(
+                                context,
+                                'Starting downloads for ${songs.length} songs...',
+                              );
+                            },
+                            icon: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white38,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_downward,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
                           );
                         },
-                        icon: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white38,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_downward,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
                       ),
                       const SizedBox(width: 8),
                       const Spacer(),
@@ -852,6 +864,66 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  // Download Status Indicator
+                  if (song.videoId != null)
+                    ValueListenableBuilder<Map<String, double>>(
+                      valueListenable: DownloadService().downloadProgress,
+                      builder: (context, progressMap, _) {
+                        final progress = progressMap[song.videoId];
+                        if (progress != null) {
+                          return Row(
+                            children: [
+                              SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  value: progress,
+                                  strokeWidth: 2,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${(progress * 100).toInt()}%',
+                                style: const TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return ValueListenableBuilder<Set<String>>(
+                          valueListenable: DownloadService().downloadedIds,
+                          builder: (context, downloadedIds, _) {
+                            final isDownloaded = downloadedIds.contains(
+                              song.videoId,
+                            );
+                            if (isDownloaded) {
+                              return const Row(
+                                children: [
+                                  Icon(
+                                    Icons.download_done,
+                                    color: AppTheme.primary,
+                                    size: 14,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Downloaded',
+                                    style: TextStyle(
+                                      color: AppTheme.primary,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        );
+                      },
+                    ),
                 ],
               ),
             ),

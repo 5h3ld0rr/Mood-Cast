@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/database_service.dart';
 import '../../services/player_service.dart';
+import '../../services/youtube_music_service.dart';
 import 'playlist_details.dart';
+import 'package:mood_cast/screens/search/artist_details.dart';
+import '../../utils/ui_utils.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -16,6 +20,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
   final List<String> filters = ['Playlists', 'Artists', 'Albums', 'Downloaded'];
 
   final DatabaseService _db = DatabaseService();
+
+  // Artist search state within Library
+  String _artistSearchQuery = '';
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void _onArtistSearchChanged(String query) {
+    setState(() {
+      _artistSearchQuery = query;
+    });
+  }
 
   void _showCreatePlaylistDialog() {
     String playlistName = '';
@@ -98,6 +116,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
+  void _showArtistSearch() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const _ArtistSearchBottomSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,17 +150,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.search,
-                      color: Colors.white,
-                      size: 28,
+                  if (selectedFilter != 'Artists')
+                    IconButton(
+                      icon: const Icon(
+                        Icons.search,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: () {
+                        UIUtils.showSnackBar(
+                          context,
+                          'Use the Search tab to find everything!',
+                        );
+                      },
                     ),
-                    onPressed: () {},
-                  ),
                   IconButton(
                     icon: const Icon(Icons.add, color: Colors.white, size: 28),
-                    onPressed: _showCreatePlaylistDialog,
+                    onPressed: () {
+                      if (selectedFilter == 'Artists') {
+                        _showArtistSearch();
+                      } else {
+                        _showCreatePlaylistDialog();
+                      }
+                    },
                   ),
                 ],
               ),
@@ -172,24 +211,163 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _buildLibraryContent() {
     switch (selectedFilter) {
       case 'Artists':
-        return ListView(
+        return Column(
           children: [
-            _buildArtistItem(
-              'The Midnight',
-              '2.4M Monthly Listeners',
-              'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200',
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: TextField(
+                onChanged: _onArtistSearchChanged,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Search followed artists',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                  suffixIcon: _artistSearchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.white70),
+                          onPressed: () {
+                            setState(() {
+                              _artistSearchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildArtistItem(
-              'Neon Horizon',
-              '1.2M Monthly Listeners',
-              'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
-            ),
-            const SizedBox(height: 16),
-            _buildArtistItem(
-              'Sunshine Collective',
-              '850K Monthly Listeners',
-              'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=200',
+            Expanded(
+              child: StreamBuilder<List<YouTubeArtistMetadata>>(
+                stream: _db.getFollowedArtists(),
+                builder: (context, snapshot) {
+                  final followedArtists = snapshot.data ?? [];
+
+                  // Filter local artists list based on search query
+                  final filteredArtists = followedArtists.where((artist) {
+                    return artist.name.toLowerCase().contains(
+                      _artistSearchQuery.toLowerCase(),
+                    );
+                  }).toList();
+
+                  if (followedArtists.isEmpty &&
+                      snapshot.connectionState != ConnectionState.waiting) {
+                    return ListView(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.person_add_outlined,
+                                size: 64,
+                                color: Colors.white10,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No followed artists yet',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Follow your favorite artists to see them here.',
+                                style: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 13,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 24),
+                              ElevatedButton(
+                                onPressed: _showArtistSearch,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Add Artists',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Text(
+                          'Suggested',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildArtistItem(
+                          'The Midnight',
+                          '2.4M Monthly Listeners',
+                          'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200',
+                          'UCMT9lK1v327429v45mP_fWA',
+                        ),
+                        const SizedBox(height: 16),
+                        _buildArtistItem(
+                          'The Weeknd',
+                          '84M Monthly Listeners',
+                          'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
+                          'UC0WP5P-ufzA_azK9uy7Y0Sg',
+                        ),
+                        const SizedBox(height: 16),
+                        _buildArtistItem(
+                          'Drake',
+                          '68M Monthly Listeners',
+                          'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=200',
+                          'UC9GoqKW6ySArL8v_tshshcg',
+                        ),
+                      ],
+                    );
+                  }
+
+                  if (filteredArtists.isEmpty &&
+                      _artistSearchQuery.isNotEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No matching artists found',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    itemCount: filteredArtists.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final artist = filteredArtists[index];
+                      return _buildArtistItem(
+                        artist.name,
+                        'Artist',
+                        artist.artworkUrl ??
+                            'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
+                        artist.browseId,
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         );
@@ -230,21 +408,30 @@ class _LibraryScreenState extends State<LibraryScreen> {
           physics: const BouncingScrollPhysics(),
           children: [
             _buildLibraryItem(
-              'Offline Mix',
-              'Playlist • 50 songs',
+              'Your Downloads',
+              'Playlist • 0 songs',
               Icons.download_done,
               Colors.green,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200',
+              isDownloaded: true,
+              onTap: () {
+                UIUtils.showSnackBar(
+                  context,
+                  'Downloaded songs feature coming soon!',
+                );
+              },
             ),
             const SizedBox(height: 16),
             _buildLibraryItem(
-              'Starred Songs',
-              'Playlist • 12 songs',
-              Icons.star,
-              Colors.amber,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=200',
+              'Local Files',
+              'Songs from this device',
+              Icons.folder_open,
+              Colors.grey,
+              onTap: () {
+                UIUtils.showSnackBar(
+                  context,
+                  'Local files feature coming soon!',
+                );
+              },
             ),
           ],
         );
@@ -382,6 +569,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     Color color, {
     String? imageUrl,
     bool isLikedSongs = false,
+    bool isDownloaded = false,
     VoidCallback? onTap,
   }) {
     return InkWell(
@@ -394,12 +582,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: isLikedSongs ? null : color.withValues(alpha: 0.1),
+                color: (isLikedSongs || isDownloaded)
+                    ? null
+                    : color.withValues(alpha: 0.1),
                 gradient: isLikedSongs
                     ? const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [Color(0xFF450af5), Color(0xFFc4efd9)],
+                      )
+                    : isDownloaded
+                    ? const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF006400), Color(0xFF1DB954)],
                       )
                     : null,
                 borderRadius: BorderRadius.circular(4),
@@ -415,6 +611,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         ? const Center(
                             child: Icon(
                               Icons.favorite,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          )
+                        : isDownloaded
+                        ? const Center(
+                            child: Icon(
+                              Icons.download_done,
                               color: Colors.white,
                               size: 28,
                             ),
@@ -471,40 +675,239 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildArtistItem(String name, String followers, String imageUrl) {
-    return Row(
-      children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            image: DecorationImage(
-              image: NetworkImage(imageUrl),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+  Widget _buildArtistItem(
+    String name,
+    String followers,
+    String imageUrl, [
+    String? browseId,
+  ]) {
+    return InkWell(
+      onTap: () {
+        if (browseId != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ArtistDetailsScreen(
+                artist: YouTubeArtistMetadata(
+                  name: name,
+                  browseId: browseId,
+                  artworkUrl: imageUrl,
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              followers,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
+          );
+        } else {
+          UIUtils.showSnackBar(context, 'Artist details not available');
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  followers,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _ArtistSearchBottomSheet extends StatefulWidget {
+  const _ArtistSearchBottomSheet();
+
+  @override
+  State<_ArtistSearchBottomSheet> createState() =>
+      _ArtistSearchBottomSheetState();
+}
+
+class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
+  final YouTubeMusicService _ytmService = YouTubeMusicService();
+  final TextEditingController _controller = TextEditingController();
+  List<YouTubeArtistMetadata> _results = [];
+  bool _isLoading = false;
+  Timer? _debounce;
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (query.isNotEmpty) {
+        _searchArtists(query);
+      } else {
+        setState(() => _results = []);
+      }
+    });
+  }
+
+  Future<void> _searchArtists(String query) async {
+    setState(() => _isLoading = true);
+    try {
+      final results = await _ytmService.searchArtists(query);
+      if (mounted) {
+        setState(() {
+          _results = results;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Color(0xFF121212),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    onChanged: _onSearchChanged,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search for new artists...',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.white70,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.08),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  )
+                : _results.isEmpty && _controller.text.isNotEmpty
+                ? const Center(
+                    child: Text(
+                      'No artists found',
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _results.length,
+                    itemBuilder: (context, index) {
+                      final artist = _results[index];
+                      return ListTile(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ArtistDetailsScreen(artist: artist),
+                            ),
+                          );
+                        },
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        leading: CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.white10,
+                          backgroundImage: artist.artworkUrl != null
+                              ? NetworkImage(artist.artworkUrl!)
+                              : null,
+                          child: artist.artworkUrl == null
+                              ? const Icon(Icons.person, color: Colors.white24)
+                              : null,
+                        ),
+                        title: Text(
+                          artist.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Artist',
+                          style: TextStyle(color: Colors.white38),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white24,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
