@@ -8,6 +8,7 @@ import 'privacy_security.dart';
 import 'subscription.dart';
 import 'help_support.dart';
 import 'insights/insights.dart';
+import '../../services/player_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -203,6 +204,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               _buildDivider(),
                               _buildMenuItem(
+                                icon: Icons.high_quality,
+                                title: 'Audio Quality',
+                                trailing: ValueListenableBuilder<AudioQuality>(
+                                  valueListenable: PlayerService().audioQuality,
+                                  builder: (context, quality, _) {
+                                    String label = 'Normal';
+                                    if (quality == AudioQuality.low)
+                                      label = 'Data Saver';
+                                    if (quality == AudioQuality.high)
+                                      label = 'High Quality';
+                                    return Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          label,
+                                          style: const TextStyle(
+                                            color: AppTheme.textMuted,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          color: AppTheme.textMuted,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                onTap: _showAudioQualityDialog,
+                              ),
+                              _buildDivider(),
+                              _buildMenuItem(
                                 icon: Icons.insights,
                                 title: 'Trends & Insights',
                                 onTap: () {
@@ -350,6 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData icon,
     required String title,
     String? subtitle,
+    Widget? trailing,
     required VoidCallback onTap,
   }) {
     return ListTile(
@@ -377,7 +411,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: const TextStyle(color: AppTheme.primary, fontSize: 12),
             )
           : null,
-      trailing: const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+      trailing:
+          trailing ??
+          const Icon(Icons.chevron_right, color: AppTheme.textMuted),
     );
   }
 
@@ -387,6 +423,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
       thickness: 1,
       color: Colors.white.withValues(alpha: 0.05),
       indent: 64,
+    );
+  }
+
+  void _showAudioQualityDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.backgroundDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          title: const Text(
+            'Audio Quality',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildQualityOption(
+                AudioQuality.low,
+                'Data Saver',
+                'Lowest bitrate',
+              ),
+              _buildQualityOption(
+                AudioQuality.medium,
+                'Normal',
+                'Standard bitrate',
+              ),
+              _buildQualityOption(
+                AudioQuality.high,
+                'High Quality',
+                'Highest bitrate, uses more data',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQualityOption(
+    AudioQuality value,
+    String title,
+    String subtitle,
+  ) {
+    return ValueListenableBuilder<AudioQuality>(
+      valueListenable: PlayerService().audioQuality,
+      builder: (context, currentQuality, _) {
+        return RadioListTile<AudioQuality>(
+          value: value,
+          groupValue: currentQuality,
+          activeColor: AppTheme.primary,
+          title: Text(title, style: const TextStyle(color: Colors.white)),
+          subtitle: Text(
+            subtitle,
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+          ),
+          onChanged: (val) {
+            if (val != null) {
+              PlayerService().setAudioQuality(val);
+              Navigator.pop(context);
+            }
+          },
+        );
+      },
     );
   }
 }

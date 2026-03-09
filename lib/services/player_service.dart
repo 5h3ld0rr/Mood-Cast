@@ -3,6 +3,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:http/http.dart' as http;
 
+enum AudioQuality { low, medium, high }
+
 class SongInfo {
   final String title;
   final String artist;
@@ -25,11 +27,13 @@ class SongInfo {
 class _YouTubeStreamAudioSource extends StreamAudioSource {
   final String videoId;
   final yt.YoutubeExplode _yt;
+  final AudioQuality audioQuality;
   yt.AudioOnlyStreamInfo? _streamInfo;
 
   _YouTubeStreamAudioSource({
     required this.videoId,
     required yt.YoutubeExplode ytExplode,
+    this.audioQuality = AudioQuality.high,
   }) : _yt = ytExplode;
 
   Future<void> _initStream() async {
@@ -46,7 +50,15 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
     final webmStreams = allAudio
         .where((s) => s.container.name == 'webm')
         .toList();
-    _streamInfo = webmStreams.isNotEmpty ? webmStreams.first : allAudio.first;
+
+    final targetStreams = webmStreams.isNotEmpty ? webmStreams : allAudio;
+    if (audioQuality == AudioQuality.low) {
+      _streamInfo = targetStreams.first;
+    } else if (audioQuality == AudioQuality.high) {
+      _streamInfo = targetStreams.last;
+    } else {
+      _streamInfo = targetStreams[targetStreams.length ~/ 2];
+    }
   }
 
   @override
@@ -109,6 +121,9 @@ class PlayerService {
   );
   final ValueNotifier<bool> isShuffled = ValueNotifier<bool>(false);
   final ValueNotifier<bool> isLooping = ValueNotifier<bool>(false);
+  final ValueNotifier<AudioQuality> audioQuality = ValueNotifier<AudioQuality>(
+    AudioQuality.high,
+  );
 
   List<SongInfo> currentQueue = [];
   List<SongInfo> _originalQueue = [];
@@ -206,6 +221,10 @@ class PlayerService {
     isLooping.value = !isLooping.value;
   }
 
+  void setAudioQuality(AudioQuality quality) {
+    audioQuality.value = quality;
+  }
+
   Future<void> play(SongInfo song) async {
     currentSong.value = song;
     isLiked.value = false;
@@ -243,7 +262,11 @@ class PlayerService {
       // Using the androidVr client and StreamAudioSource avoids the 403 errors
       // and eliminates the need to download the entire file before playing.
       await _audioPlayer.setAudioSource(
-        _YouTubeStreamAudioSource(videoId: targetVideoId, ytExplode: _yt),
+        _YouTubeStreamAudioSource(
+          videoId: targetVideoId,
+          ytExplode: _yt,
+          audioQuality: audioQuality.value,
+        ),
       );
       await _audioPlayer.play();
       debugPrint("PlayerService: Playback started!");
@@ -289,4 +312,3 @@ class PlayerService {
     _audioPlayer.dispose();
   }
 }
-
