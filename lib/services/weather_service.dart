@@ -8,11 +8,13 @@ class WeatherData {
   final String condition;
   final double temperature;
   final String city;
+  final String country;
 
   WeatherData({
     required this.condition,
     required this.temperature,
     required this.city,
+    required this.country,
   });
 
   factory WeatherData.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class WeatherData {
       condition: json['weather'][0]['main'],
       temperature: (json['main']['temp'] as num).toDouble(),
       city: json['name'],
+      country: json['sys']['country'] ?? '',
     );
   }
 }
@@ -70,6 +73,7 @@ class WeatherService {
         condition: 'Rainy',
         temperature: 24.0,
         city: 'Colombo',
+        country: 'LK',
       );
       currentWeather.value = mockWeather;
       return mockWeather;
@@ -97,4 +101,3 @@ class WeatherService {
     }
   }
 }
-

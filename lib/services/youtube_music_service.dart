@@ -1,6 +1,7 @@
 import 'package:ytmusicapi_dart/enums.dart';
 import 'package:ytmusicapi_dart/ytmusicapi_dart.dart';
 import 'package:flutter/foundation.dart';
+import 'player_service.dart';
 
 class YouTubeMusicMetadata {
   final String videoId;
@@ -139,31 +140,65 @@ class YouTubeMusicService {
     }
   }
 
-  Future<List<YouTubeMusicMetadata>> getRecommendationsByMood(
-    String mood,
-  ) async {
-    // For YouTube Music, we'll map mood to a search query for now
+  Future<List<YouTubeMusicMetadata>> getSmartRecommendations({
+    required String mood,
+    required List<SongInfo> likedSongs,
+    String? country,
+  }) async {
+    // 1. If user has liked songs, prioritize similar music/recommendations
+    if (likedSongs.isNotEmpty) {
+      // Pick a random liked song to get similar music
+      final randomSong = (likedSongs..shuffle()).first;
+      final query = "${randomSong.title} ${randomSong.artist}";
+      final results = await searchTracks(query);
+      if (results.length > 3) return results;
+    }
+
+    // 2. Fallback: Search for trending music in their country or based on mood
     String query;
-    switch (mood.toLowerCase()) {
-      case 'happy':
-        query = "happy uplifting music";
-        break;
-      case 'sad':
-        query = "sad emotional songs";
-        break;
-      case 'energetic':
-        query = "upbeat energetic music workout";
-        break;
-      case 'calm':
-        query = "calm relaxing ambient music";
-        break;
-      case 'focused':
-        query = "lofi focus work study music";
-        break;
-      default:
-        query = "$mood music";
+    if (country != null && country.isNotEmpty) {
+      String countryName = _getCountryName(country);
+      query = "trending music in $countryName";
+    } else {
+      query = _getQueryForMood(mood);
     }
 
     return await searchTracks(query);
+  }
+
+  String _getCountryName(String code) {
+    final Map<String, String> countries = {
+      'LK': 'Sri Lanka',
+      'US': 'USA',
+      'IN': 'India',
+      'GB': 'UK',
+      'CA': 'Canada',
+      'AU': 'Australia',
+      'MV': 'Maldives',
+    };
+    return countries[code.toUpperCase()] ?? code;
+  }
+
+  String _getQueryForMood(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'happy':
+        return "happy uplifting music hits";
+      case 'sad':
+        return "sad emotional deep songs";
+      case 'energetic':
+        return "top upbeat energetic workout music";
+      case 'calm':
+        return "calm relaxing ambient peaceful music";
+      case 'focused':
+        return "lofi focus work study deep house";
+      default:
+        return "trending $mood music";
+    }
+  }
+
+  Future<List<YouTubeMusicMetadata>> getRecommendationsByMood(
+    String mood,
+  ) async {
+    return await searchTracks(_getQueryForMood(mood));
   }
 }

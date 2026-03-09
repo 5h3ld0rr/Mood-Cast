@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
-import '../../widgets/skeleton.dart';
 
 class ArtistDetailsScreen extends StatefulWidget {
   final YouTubeArtistMetadata artist;

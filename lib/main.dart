@@ -22,7 +22,12 @@ void main() async {
   // Pre-fetch weather in background
   WeatherService().fetchWeather().catchError((e) {
     debugPrint("Weather fetch failed: $e");
-    return WeatherData(condition: 'Unknown', temperature: 0, city: 'Unknown');
+    return WeatherData(
+      condition: 'Unknown',
+      temperature: 0,
+      city: 'Unknown',
+      country: '',
+    );
   });
 
   runApp(const MoodCastApp());
@@ -50,4 +55,3 @@ class MoodCastApp extends StatelessWidget {
     );
   }
 }
-

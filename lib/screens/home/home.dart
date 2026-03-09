@@ -7,6 +7,7 @@ import '../../widgets/skeleton.dart';
 import '../../services/player_service.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/mood_service.dart';
+import '../../services/database_service.dart';
 import '../notifications/notification_list.dart';
 import 'recommendations.dart';
 
@@ -20,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final YouTubeMusicService _ytmService = YouTubeMusicService();
   final MoodService _moodService = MoodService();
+  final DatabaseService _dbService = DatabaseService();
   List<YouTubeMusicMetadata> _recommendations = [];
   bool _isLoading = true;
 
@@ -45,9 +47,20 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final tracks = await _ytmService.getRecommendationsByMood(
-        _moodService.currentMood.value,
+      // 1. Get Liked Songs
+      final likedSongs = await _dbService.getLikedSongs().first;
+
+      // 2. Get Weather Country
+      final weather = WeatherService().currentWeather.value;
+      final country = weather?.country;
+
+      // 3. Get Smart Recommendations
+      final tracks = await _ytmService.getSmartRecommendations(
+        mood: _moodService.currentMood.value,
+        likedSongs: likedSongs,
+        country: country,
       );
+
       if (mounted) {
         setState(() {
           _recommendations = tracks.take(6).toList(); // Show top 6 on home

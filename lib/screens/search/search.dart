@@ -4,7 +4,6 @@ import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../services/search_history_service.dart';
-import 'history_screen.dart';
 import 'artist_details.dart';
 import 'category_details.dart';
 import '../../widgets/skeleton.dart';
