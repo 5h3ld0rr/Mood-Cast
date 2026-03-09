@@ -180,12 +180,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
         );
       case 'Albums':
         return ListView(
+          physics: const BouncingScrollPhysics(),
           children: [
             _buildLibraryItem(
               'Endless Summer',
               'The Midnight • 2016',
               Icons.album,
               Colors.orange,
+              imageUrl:
+                  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200',
             ),
             const SizedBox(height: 16),
             _buildLibraryItem(
@@ -193,6 +196,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
               'The Midnight • 2018',
               Icons.album,
               Colors.blue,
+              imageUrl:
+                  'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=200',
             ),
             const SizedBox(height: 16),
             _buildLibraryItem(
@@ -200,17 +205,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
               'The Midnight • 2020',
               Icons.album,
               Colors.purple,
+              imageUrl:
+                  'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200',
             ),
           ],
         );
       case 'Downloaded':
         return ListView(
+          physics: const BouncingScrollPhysics(),
           children: [
             _buildLibraryItem(
               'Offline Mix',
               'Playlist • 50 songs',
               Icons.download_done,
               Colors.green,
+              imageUrl:
+                  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200',
             ),
             const SizedBox(height: 16),
             _buildLibraryItem(
@@ -218,12 +228,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
               'Playlist • 12 songs',
               Icons.star,
               Colors.amber,
+              imageUrl:
+                  'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=200',
             ),
           ],
         );
       case 'Playlists':
       default:
         return ListView(
+          physics: const BouncingScrollPhysics(),
           children: [
             // User custom playlists
             ..._customPlaylists.map(
@@ -256,6 +269,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               'Playlist • 124 songs',
               Icons.favorite,
               Colors.pink,
+              isLikedSongs: true, // Special rendering for liked songs
               onTap: () {
                 Navigator.push(
                   context,
@@ -270,32 +284,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 );
               },
             ),
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Morning Chill',
-              'Playlist • By MoodCast',
-              Icons.wb_sunny,
-              Colors.orange,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PlaylistDetailsScreen(
-                      playlistName: 'Morning Chill',
-                      subtitle: 'Playlist • By MoodCast',
-                      icon: Icons.wb_sunny,
-                      color: Colors.orange,
-                    ),
-                  ),
-                );
-              },
-            ),
+
             const SizedBox(height: 16),
             _buildLibraryItem(
               'Deep Focus',
               'Playlist • 45 songs',
               Icons.center_focus_strong,
               Colors.blue,
+              imageUrl:
+                  'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=200',
               onTap: () {
                 Navigator.push(
                   context,
@@ -316,6 +313,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
               'History • 12 sessions',
               Icons.history,
               AppTheme.primary,
+              imageUrl:
+                  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200',
               onTap: () {
                 Navigator.push(
                   context,
@@ -345,9 +344,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.primary
-              : Colors.white.withOpacity(0.05),
+          color: isSelected ? AppTheme.primary : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
@@ -371,6 +368,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     String subtitle,
     IconData icon,
     Color color, {
+    String? imageUrl,
+    bool isLikedSongs = false,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
@@ -379,32 +378,79 @@ class _LibraryScreenState extends State<LibraryScreen> {
       child: Row(
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 68,
+            height: 68,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: isLikedSongs ? null : color.withOpacity(0.1),
+              gradient: isLikedSongs
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF450af5), Color(0xFFc4efd9)],
+                    )
+                  : null,
+              borderRadius: BorderRadius.circular(4),
+              image: imageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: Icon(icon, color: color, size: 32),
+            child: imageUrl == null
+                ? isLikedSongs
+                      ? const Center(
+                          child: Icon(
+                            Icons.favorite,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                        )
+                      : Icon(icon, color: color, size: 32)
+                : null,
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (isLikedSongs)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 6.0),
+                        child: Icon(
+                          Icons.push_pin,
+                          color: AppTheme.primary,
+                          size: 14,
+                        ),
+                      ),
+                    Expanded(
+                      child: Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -448,4 +494,3 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 }
-

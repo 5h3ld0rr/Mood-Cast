@@ -143,14 +143,6 @@ class _SearchScreenState extends State<SearchScreen> {
                         color: Colors.white.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Icon(
-                          Icons.camera_alt_outlined,
-                          color: Colors.white70,
-                          size: 22,
-                        ),
-                      ),
                     ),
                 ],
               ),

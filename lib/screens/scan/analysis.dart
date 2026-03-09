@@ -211,498 +211,477 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
+    final cameraH = screenH * 0.52; // Camera occupies top 52%
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D121C),
-      body: Stack(
+      body: Column(
         children: [
-          // Background Gradient blur
-          Positioned(
-            top: -50,
-            left: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.05),
-              ),
+          // ─── CAMERA SECTION (pinned at top, no scroll) ───
+          SizedBox(
+            height: cameraH,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                // Camera fill
+                if (_isCameraInitialized && _controller != null)
+                  Positioned.fill(
+                    child: ClipRect(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final double cameraAR =
+                              _controller!.value.aspectRatio;
+                          final double containerAR =
+                              constraints.maxWidth / constraints.maxHeight;
+                          double scale = containerAR > cameraAR
+                              ? containerAR / cameraAR
+                              : cameraAR / containerAR;
+                          return AnimatedScale(
+                            scale: scale * _zoomScale,
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.center,
+                            child: Center(
+                              child: AspectRatio(
+                                aspectRatio: cameraAR,
+                                child: CameraPreview(_controller!),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    color: const Color(0xFF0D121C),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primary,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+
+                // Dark gradient at bottom edge (blends into content below)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 80,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0xFF0D121C)],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // LIVE badge — top left
+                Positioned(
+                  top: 52,
+                  left: 16,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'LIVE AI SCAN',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Title — top center
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Text(
+                          'MoodCast AI',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Corner brackets
+                Positioned(
+                  top: 80,
+                  left: 20,
+                  child: _buildCorner(isTop: true, isLeft: true),
+                ),
+                Positioned(
+                  top: 80,
+                  right: 20,
+                  child: _buildCorner(isTop: true, isLeft: false),
+                ),
+                Positioned(
+                  bottom: 80,
+                  left: 20,
+                  child: _buildCorner(isTop: false, isLeft: true),
+                ),
+                Positioned(
+                  bottom: 80,
+                  right: 20,
+                  child: _buildCorner(isTop: false, isLeft: false),
+                ),
+
+                // Scanning line animation
+                if (_isScanning)
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 85.0, end: cameraH - 90),
+                    duration: const Duration(seconds: 2),
+                    builder: (context, value, child) {
+                      return Positioned(
+                        top: value,
+                        left: 40,
+                        right: 40,
+                        child: Container(
+                          height: 2,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                AppTheme.primary,
+                                Colors.transparent,
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary,
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
             ),
           ),
 
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text(
-                    'MoodCast AI Analysis',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+          // ─── SCROLLABLE CONTENT BELOW CAMERA ───
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
 
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
+                  // Analysis Progress / Results
+                  if (_isScanning || _detectedMood != null) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const SizedBox(height: 20),
-
-                        // The Scanning Box (Camera constrained here)
-                        Container(
-                          width: double.infinity,
-                          height: 400,
-                          decoration: BoxDecoration(
-                            color: Colors
-                                .transparent, // Background borders removed
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Stack(
-                            children: [
-                              // 1. Camera Preview (Full Fill - No Borders)
-                              if (_isCameraInitialized && _controller != null)
-                                Positioned.fill(
-                                  child: ClipRect(
-                                    child: LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        // Calculate scale to fill the container perfectly
-                                        final double containerWidth =
-                                            constraints.maxWidth;
-                                        final double containerHeight =
-                                            constraints.maxHeight;
-
-                                        // Camera aspect ratio is typically width/height of the SENSOR
-                                        // In portrait, we usually need the inverse if it's not handled.
-                                        final double cameraAspectRatio =
-                                            _controller!.value.aspectRatio;
-
-                                        // Effective aspect ratio in portrait
-                                        double scale = 1.0;
-                                        final double containerAspectRatio =
-                                            containerWidth / containerHeight;
-
-                                        if (containerAspectRatio >
-                                            cameraAspectRatio) {
-                                          scale =
-                                              containerAspectRatio /
-                                              cameraAspectRatio;
-                                        } else {
-                                          scale =
-                                              cameraAspectRatio /
-                                              containerAspectRatio;
-                                        }
-
-                                        return AnimatedScale(
-                                          scale: scale * _zoomScale,
-                                          duration: const Duration(seconds: 1),
-                                          curve: Curves.easeInOut,
-                                          alignment: Alignment.center,
-                                          child: Center(
-                                            child: AspectRatio(
-                                              aspectRatio: cameraAspectRatio,
-                                              child: CameraPreview(
-                                                _controller!,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                )
-                              else
-                                const Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppTheme.primary,
-                                  ),
-                                ),
-
-                              // 2. Corners (Positioned exactly at edges 0,0)
-                              Positioned(
-                                top: 0,
-                                left: 0,
-                                child: _buildCorner(isTop: true, isLeft: true),
-                              ),
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: _buildCorner(isTop: true, isLeft: false),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                child: _buildCorner(isTop: false, isLeft: true),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: _buildCorner(
-                                  isTop: false,
-                                  isLeft: false,
-                                ),
-                              ),
-
-                              // 3. Scanning Animation (Constrained inside box)
-                              if (_isScanning)
-                                TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: 10.0, end: 390.0),
-                                  duration: const Duration(seconds: 2),
-                                  builder: (context, value, child) {
-                                    return Positioned(
-                                      top: value,
-                                      left: 20,
-                                      right: 20,
-                                      child: Container(
-                                        height: 3,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Colors.transparent,
-                                              AppTheme.primary,
-                                              Colors.transparent,
-                                            ],
-                                          ),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: AppTheme.primary,
-                                              blurRadius: 10,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                              // 4. Indicator
-                              Positioned(
-                                bottom: 16,
-                                left: 16,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: const BoxDecoration(
-                                          color: AppTheme.primary,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      const Text(
-                                        'LIVE AI SCAN',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                        Text(
+                          _detectedMood != null
+                              ? 'Mood Detected!'
+                              : 'Analyzing Face...',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-
-                        const SizedBox(height: 30),
-
-                        // Analysis Progress / Results
-                        if (_isScanning || _detectedMood != null) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _detectedMood != null
-                                    ? 'Mood Detected!'
-                                    : 'Analyzing Face...',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                '${(_progress * 100).toInt()}%',
-                                style: const TextStyle(
-                                  color: AppTheme.primary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          LinearProgressIndicator(
-                            value: _progress,
-                            backgroundColor: Colors.white.withOpacity(0.05),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              AppTheme.primary,
-                            ),
-                            minHeight: 8,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        if (_detectedMood != null)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: AppTheme.primary.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: AppTheme.primary,
-                                  size: 28,
-                                ),
-                                const SizedBox(width: 16),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'VIBE CHECKED',
-                                      style: TextStyle(
-                                        color: AppTheme.primary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      _detectedMood!,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (_detectedMood != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 20.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          RecommendationsScreen(
-                                            mood: _detectedMood,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(
-                                  Icons.auto_awesome,
-                                  color: Colors.black,
-                                ),
-                                label: const Text(
-                                  'GENERATE VIBE PLAYLIST',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primary,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 18,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 10),
-
-                        if (!_isScanning && _detectedMood == null)
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _startScan,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                'START AI SCAN',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                        if (_detectedMood != null) ...[
-                          const SizedBox(height: 20),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppTheme.primary.withOpacity(0.1),
-                                  Colors.white.withOpacity(0.05),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  _moodEmojis[_detectedMood]!,
-                                  style: const TextStyle(fontSize: 48),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _detectedMood == 'Angry' ||
-                                          _detectedMood == 'Sad'
-                                      ? 'CHEER UP JOKE! 😂'
-                                      : 'AI INSIGHT ✨',
-                                  style: TextStyle(
-                                    color: AppTheme.primary.withOpacity(0.5),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  _getMoodContent(_detectedMood!),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    height: 1.5,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-
-                        const SizedBox(height: 30),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'OR SELECT YOUR MOOD',
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                            ),
+                        Text(
+                          '${(_progress * 100).toInt()}%',
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 15),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          child: Row(
-                            children: _moods.map((mood) {
-                              final isSelected = _detectedMood == mood;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _detectedMood = mood;
-                                      _progress = 1.0;
-                                      _isScanning = false;
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 300),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppTheme.primary
-                                          : Colors.white.withOpacity(0.05),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? AppTheme.primary
-                                            : Colors.white.withOpacity(0.1),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          _moodEmojis[mood]!,
-                                          style: const TextStyle(fontSize: 18),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          mood,
-                                          style: TextStyle(
-                                            color: isSelected
-                                                ? Colors.black
-                                                : Colors.white70,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-
-                        const SizedBox(height: 80),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    LinearProgressIndicator(
+                      value: _progress,
+                      backgroundColor: Colors.white.withOpacity(0.05),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppTheme.primary,
+                      ),
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  if (_detectedMood != null)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.primary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppTheme.primary,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'VIBE CHECKED',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                _detectedMood!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_detectedMood != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RecommendationsScreen(mood: _detectedMood),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.auto_awesome,
+                            color: Colors.black,
+                          ),
+                          label: const Text(
+                            'GENERATE VIBE PLAYLIST',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 10),
+
+                  if (!_isScanning && _detectedMood == null)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _startScan,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: const Text(
+                          'START AI SCAN',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  if (_detectedMood != null) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.primary.withOpacity(0.1),
+                            Colors.white.withOpacity(0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            _moodEmojis[_detectedMood]!,
+                            style: const TextStyle(fontSize: 48),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _detectedMood == 'Angry' || _detectedMood == 'Sad'
+                                ? 'CHEER UP JOKE! 😂'
+                                : 'AI INSIGHT ✨',
+                            style: TextStyle(
+                              color: AppTheme.primary.withOpacity(0.5),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _getMoodContent(_detectedMood!),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              height: 1.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 30),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'OR SELECT YOUR MOOD',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 15),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: _moods.map((mood) {
+                        final isSelected = _detectedMood == mood;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _detectedMood = mood;
+                                _progress = 1.0;
+                                _isScanning = false;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppTheme.primary
+                                    : Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppTheme.primary
+                                      : Colors.white.withOpacity(0.1),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _moodEmojis[mood]!,
+                                    style: const TextStyle(fontSize: 18),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    mood,
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.black
+                                          : Colors.white70,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
           ),
         ],
