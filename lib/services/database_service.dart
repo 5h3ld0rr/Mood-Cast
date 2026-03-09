@@ -257,4 +257,48 @@ class DatabaseService {
           }).toList();
         });
   }
+
+  // --- Liked Albums ---
+  Future<void> toggleLikedAlbum(YouTubeMusicMetadata album) async {
+    if (uid == null) return;
+    final docRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('liked_albums')
+        .doc(album.videoId); // videoId used to store album browseId/id
+
+    final docSnap = await docRef.get();
+    if (docSnap.exists) {
+      await docRef.delete();
+    } else {
+      await docRef.set({
+        'title': album.title,
+        'artist': album.artist,
+        'artworkUrl': album.artworkUrl,
+        'videoId': album.videoId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  Stream<List<YouTubeMusicMetadata>> getLikedAlbums() {
+    if (uid == null) return Stream.value([]);
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('liked_albums')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return YouTubeMusicMetadata(
+              videoId: data['videoId'] ?? '',
+              title: data['title'] ?? '',
+              artist: data['artist'] ?? '',
+              artworkUrl: data['artworkUrl'],
+            );
+          }).toList();
+        });
+  }
 }

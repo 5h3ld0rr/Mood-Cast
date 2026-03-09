@@ -309,7 +309,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           ),
                         ),
                         const Text(
-                          'Suggested',
+                          'Suggested Artists',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -317,25 +317,44 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildArtistItem(
-                          'The Midnight',
-                          '2.4M Monthly Listeners',
-                          'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200',
-                          'UCMT9lK1v327429v45mP_fWA',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildArtistItem(
-                          'The Weeknd',
-                          '84M Monthly Listeners',
-                          'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
-                          'UC0WP5P-ufzA_azK9uy7Y0Sg',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildArtistItem(
-                          'Drake',
-                          '68M Monthly Listeners',
-                          'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=200',
-                          'UC9GoqKW6ySArL8v_tshshcg',
+                        FutureBuilder<List<YouTubeArtistMetadata>>(
+                          future: YouTubeMusicService().searchArtists(
+                            'Top Global Artists',
+                          ),
+                          builder: (context, artistSnapshot) {
+                            if (artistSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: CircularProgressIndicator(
+                                    color: AppTheme.primary,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final suggestions = artistSnapshot.data ?? [];
+                            if (suggestions.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Column(
+                              children: suggestions.take(5).map((artist) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: _buildArtistItem(
+                                    artist.name,
+                                    'Artist',
+                                    artist.artworkUrl ??
+                                        'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200',
+                                    artist.browseId,
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
                         ),
                       ],
                     );
@@ -372,36 +391,106 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ],
         );
       case 'Albums':
-        return ListView(
-          physics: const BouncingScrollPhysics(),
-          children: [
-            _buildLibraryItem(
-              'Endless Summer',
-              'The Midnight • 2016',
-              Icons.album,
-              Colors.orange,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200',
-            ),
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Kids',
-              'The Midnight • 2018',
-              Icons.album,
-              Colors.blue,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=200',
-            ),
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Monsters',
-              'The Midnight • 2020',
-              Icons.album,
-              Colors.purple,
-              imageUrl:
-                  'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200',
-            ),
-          ],
+        return StreamBuilder<List<YouTubeMusicMetadata>>(
+          stream: _db.getLikedAlbums(),
+          builder: (context, albumSnapshot) {
+            final likedAlbums = albumSnapshot.data ?? [];
+
+            if (likedAlbums.isEmpty &&
+                albumSnapshot.connectionState != ConnectionState.waiting) {
+              return ListView(
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.album_outlined,
+                          size: 64,
+                          color: Colors.white10,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No saved albums yet',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Save albums from search to see them here.',
+                          style: TextStyle(color: Colors.white38, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Text(
+                    'Suggested Albums',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<List<YouTubeMusicMetadata>>(
+                    future: YouTubeMusicService().searchTracks(
+                      'Top Global Albums',
+                    ),
+                    builder: (context, suggestedSnapshot) {
+                      if (suggestedSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primary,
+                            strokeWidth: 2,
+                          ),
+                        );
+                      }
+
+                      final suggestions = suggestedSnapshot.data ?? [];
+                      return Column(
+                        children: suggestions.take(5).map((album) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _buildLibraryItem(
+                              album.title,
+                              album.artist,
+                              Icons.album,
+                              AppTheme.primary,
+                              imageUrl: album.artworkUrl,
+                              onTap: () {
+                                // Navigate to album details or search
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              );
+            }
+
+            return ListView.separated(
+              physics: const BouncingScrollPhysics(),
+              itemCount: likedAlbums.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                final album = likedAlbums[index];
+                return _buildLibraryItem(
+                  album.title,
+                  album.artist,
+                  Icons.album,
+                  AppTheme.primary,
+                  imageUrl: album.artworkUrl,
+                );
+              },
+            );
+          },
         );
       case 'Downloads':
         return ListView(
@@ -829,7 +918,7 @@ class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
                         color: Colors.white70,
                       ),
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.08),
+                      fillColor: Colors.white.withValues(alpha: 0.08),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(28),
                         borderSide: BorderSide.none,
