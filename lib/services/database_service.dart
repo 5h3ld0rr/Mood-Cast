@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'player_service.dart';
+import 'youtube_music_service.dart';
 
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -199,6 +200,59 @@ class DatabaseService {
               coverUrl: data['coverUrl'],
               previewUrl: data['previewUrl'],
               videoId: data['videoId'],
+            );
+          }).toList();
+        });
+  }
+
+  // --- Followed Artists ---
+  Future<void> toggleFollowArtist(YouTubeArtistMetadata artist) async {
+    if (uid == null) return;
+    final docRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('followed_artists')
+        .doc(artist.browseId);
+
+    final docSnap = await docRef.get();
+    if (docSnap.exists) {
+      await docRef.delete();
+    } else {
+      await docRef.set({
+        'name': artist.name,
+        'browseId': artist.browseId,
+        'artworkUrl': artist.artworkUrl,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  Future<bool> isArtistFollowed(String browseId) async {
+    if (uid == null) return false;
+    final docSnap = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('followed_artists')
+        .doc(browseId)
+        .get();
+    return docSnap.exists;
+  }
+
+  Stream<List<YouTubeArtistMetadata>> getFollowedArtists() {
+    if (uid == null) return Stream.value([]);
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('followed_artists')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return YouTubeArtistMetadata(
+              name: data['name'] ?? '',
+              browseId: data['browseId'] ?? '',
+              artworkUrl: data['artworkUrl'],
             );
           }).toList();
         });

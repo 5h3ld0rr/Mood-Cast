@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
+import '../../services/database_service.dart';
 
 class ArtistDetailsScreen extends StatefulWidget {
   final YouTubeArtistMetadata artist;
@@ -15,8 +16,10 @@ class ArtistDetailsScreen extends StatefulWidget {
 class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
   final PlayerService _playerService = PlayerService();
   final YouTubeMusicService _ytmService = YouTubeMusicService();
+  final DatabaseService _db = DatabaseService();
   YouTubeArtistMetadata? _fullArtist;
   bool _isLoading = false;
+  bool _isFollowed = false;
 
   @override
   void initState() {
@@ -33,17 +36,29 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
 
     setState(() => _isLoading = true);
     try {
+      final isFollowed = await _db.isArtistFollowed(widget.artist.browseId);
       final details = await _ytmService.getArtistDetails(
         widget.artist.browseId,
       );
-      if (mounted && details != null) {
+      if (mounted) {
         setState(() {
-          _fullArtist = details;
+          _isFollowed = isFollowed;
+          if (details != null) _fullArtist = details;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    final artist = _fullArtist ?? widget.artist;
+    await _db.toggleFollowArtist(artist);
+    if (mounted) {
+      setState(() {
+        _isFollowed = !_isFollowed;
+      });
     }
   }
 
@@ -103,6 +118,41 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _toggleFollow,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isFollowed
+                              ? Colors.transparent
+                              : AppTheme.primary,
+                          foregroundColor: _isFollowed
+                              ? Colors.white
+                              : Colors.black,
+                          side: _isFollowed
+                              ? const BorderSide(color: Colors.white30)
+                              : null,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: Text(_isFollowed ? 'Following' : 'Follow'),
+                      ),
+                      const SizedBox(width: 12),
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.share_outlined,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                   if (artist.description != null &&
                       artist.description!.isNotEmpty) ...[
                     Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../services/player_service.dart';
+import '../services/download_service.dart';
 import '../theme.dart';
 import '../utils/ui_utils.dart';
 
@@ -62,6 +63,47 @@ class SongOptionsBottomSheet extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               UIUtils.showSnackBar(context, 'Share feature coming soon!');
+            },
+          ),
+          ValueListenableBuilder<Set<String>>(
+            valueListenable: DownloadService().downloadedIds,
+            builder: (context, downloadedIds, _) {
+              final isDownloaded =
+                  song.videoId != null && downloadedIds.contains(song.videoId);
+              return ValueListenableBuilder<Map<String, double>>(
+                valueListenable: DownloadService().downloadProgress,
+                builder: (context, progressMap, _) {
+                  final isDownloading =
+                      song.videoId != null &&
+                      progressMap.containsKey(song.videoId);
+
+                  return _buildActionItem(
+                    context,
+                    icon: isDownloaded
+                        ? Icons.download_done
+                        : Icons.download_outlined,
+                    label: isDownloading
+                        ? 'Downloading (${(progressMap[song.videoId]! * 100).toInt()}%)'
+                        : isDownloaded
+                        ? 'Remove Download'
+                        : 'Download',
+                    iconColor: isDownloaded || isDownloading
+                        ? AppTheme.primary
+                        : Colors.white70,
+                    onTap: () async {
+                      if (isDownloading) return;
+                      if (isDownloaded) {
+                        await DownloadService().removeDownload(song.videoId!);
+                        if (context.mounted) Navigator.pop(context);
+                      } else {
+                        DownloadService().downloadSong(song);
+                        Navigator.pop(context);
+                        UIUtils.showSnackBar(context, 'Added to downloads');
+                      }
+                    },
+                  );
+                },
+              );
             },
           ),
           const SizedBox(height: 20),
