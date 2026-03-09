@@ -19,47 +19,50 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   double _progress = 0.0;
   double _zoomScale = 1.3; // Increased base zoom to ensure fill
   String? _detectedMood;
-  final List<String> _moods = [
-    'Happy',
-    'Focused',
-    'Relaxing',
-    'Energetic',
-    'Calm',
-    'Inspired',
+  final List<String> _moods = ['Happy', 'Angry', 'Sad', 'Natural'];
+
+  final Map<String, String> _moodEmojis = {
+    'Happy': '😊',
+    'Angry': '😠',
+    'Sad': '😔',
+    'Natural': '😐',
+  };
+
+  final List<String> _happyPhrases = [
+    "You look radiant! Keep that positive energy flowing throughout your day.",
+    "That's a million-dollar smile! You're lighting up the room.",
+    "Happiness looks great on you! Stay positive and keep shining.",
+    "Vibe check: 100% Pure Joy. Have an amazing day ahead!",
   ];
 
-  final Map<String, Map<String, String>> _moodPhrases = {
-    'Happy': {
-      'emoji': '😊',
-      'text':
-          'You look radiant! Keep that positive energy flowing throughout your day.',
-    },
-    'Focused': {
-      'emoji': '🎯',
-      'text':
-          'Deep concentration detected. You are in the zone to achieve greatness!',
-    },
-    'Relaxing': {
-      'emoji': '🌊',
-      'text':
-          'Vibe check: Pure chill. Time to let go of any stress and just be.',
-    },
-    'Energetic': {
-      'emoji': '⚡',
-      'text':
-          'High vibes only! Use this burst of power to crush your goals today.',
-    },
-    'Calm': {
-      'emoji': '🌿',
-      'text':
-          'Total tranquility. Your peaceful aura is exactly what the soul needs.',
-    },
-    'Inspired': {
-      'emoji': '✨',
-      'text':
-          'Creative sparks are flying! The world is waiting for your next big idea.',
-    },
-  };
+  final List<String> _naturalPhrases = [
+    "A balanced state of mind. Perfect for staying grounded and focused.",
+    "Stay calm and keep moving. You're in a great space to explore new rhythms.",
+    "The perfect neutral zone. Your mind is clear and ready for anything.",
+    "Finding your center is key. You look perfectly poised and steady.",
+  ];
+
+  final List<String> _angryJokes = [
+    "Chill bro! Don't let your anger control you. Remember, when you're angry, you look like a pufferfish! 🐡",
+    "Relax! Why so serious? If you're angry with the world, remember that it's the only place with pizza. 🍕",
+    "Feeling hot? Cool down! Did you know that anger is just one letter away from D-anger? ⚠️",
+    "Anger is like a storm, but remember, every storm runs out of rain. Stay cool! 🧊",
+  ];
+
+  final List<String> _sadJokes = [
+    "Turn that frown upside down! Why was the math book sad? Because it had too many problems. 📚",
+    "Smile! Did you know that it takes 17 muscles to smile and 43 to frown? Save energy, just smile! 😊",
+    "Don't be sad! I asked my dog what's two minus two. He said nothing. 🐕",
+    "Life is like a mirror, it smiles back when you smile at it. Give it a try! ✨",
+  ];
+
+  String _getMoodContent(String mood) {
+    if (mood == 'Angry') return (_angryJokes..shuffle()).first;
+    if (mood == 'Sad') return (_sadJokes..shuffle()).first;
+    if (mood == 'Happy') return (_happyPhrases..shuffle()).first;
+    if (mood == 'Natural') return (_naturalPhrases..shuffle()).first;
+    return "";
+  }
 
   @override
   void initState() {
@@ -505,12 +508,15 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                             child: Column(
                               children: [
                                 Text(
-                                  _moodPhrases[_detectedMood]!['emoji']!,
+                                  _moodEmojis[_detectedMood]!,
                                   style: const TextStyle(fontSize: 48),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'AI INSIGHT',
+                                  _detectedMood == 'Angry' ||
+                                          _detectedMood == 'Sad'
+                                      ? 'CHEER UP JOKE! 😂'
+                                      : 'AI INSIGHT ✨',
                                   style: TextStyle(
                                     color: AppTheme.primary.withValues(
                                       alpha: 0.5,
@@ -522,7 +528,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  _moodPhrases[_detectedMood]!['text']!,
+                                  _getMoodContent(_detectedMood!),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Colors.white,
@@ -535,6 +541,84 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                             ),
                           ),
                         ],
+
+                        const SizedBox(height: 30),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'OR SELECT YOUR MOOD',
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: _moods.map((mood) {
+                              final isSelected = _detectedMood == mood;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _detectedMood = mood;
+                                      _progress = 1.0;
+                                      _isScanning = false;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppTheme.primary
+                                          : Colors.white.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppTheme.primary
+                                            : Colors.white.withValues(
+                                                alpha: 0.1,
+                                              ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          _moodEmojis[mood]!,
+                                          style: const TextStyle(fontSize: 18),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          mood,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? Colors.black
+                                                : Colors.white70,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
 
                         const SizedBox(height: 80),
                       ],
