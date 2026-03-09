@@ -215,10 +215,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     final cameraH = screenH * 0.52; // Camera occupies top 52%
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D121C),
+      backgroundColor: const Color(0xFF080C14), // Darker, consistent background
       body: Column(
         children: [
-          // ─── CAMERA SECTION (pinned at top, no scroll) ───
+          // ─── CAMERA SECTION ───
           SizedBox(
             height: cameraH,
             width: double.infinity,
@@ -269,13 +269,13 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: 80,
+                  height: 100, // Taller gradient for smoother blend
                   child: Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0xFF0D121C)],
+                        colors: [Colors.transparent, Color(0xFF080C14)],
                       ),
                     ),
                   ),
@@ -283,36 +283,33 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
                 // LIVE badge — top left
                 Positioned(
-                  top: 52,
-                  left: 16,
+                  top: 60,
+                  left: 20,
                   child: SafeArea(
                     bottom: false,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+                        horizontal: 12,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
+                          _PulseCircle(), // New animated pulsing widget
+                          const SizedBox(width: 8),
                           const Text(
-                            'LIVE AI SCAN',
+                            'LIVE AI ANALYSIS',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 9,
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
                             ),
                           ),
                         ],
@@ -330,15 +327,15 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                     bottom: false,
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 16),
+                        padding: const EdgeInsets.only(top: 18),
                         child: Text(
-                          'MoodCast AI',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
+                          'SCANNING',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontSize: 14,
+                                letterSpacing: 4,
+                                color: Colors.white38,
+                              ),
                         ),
                       ),
                     ),
@@ -418,75 +415,103 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       children: [
                         Text(
                           _detectedMood != null
-                              ? 'Mood Detected!'
-                              : 'Analyzing Face...',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                              ? 'Mood Analyzed'
+                              : 'Scanning Features...',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(fontSize: 18),
                         ),
                         Text(
                           '${(_progress * 100).toInt()}%',
                           style: const TextStyle(
                             color: AppTheme.primary,
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            fontFamily: 'monospace',
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
-                      value: _progress,
-                      backgroundColor: Colors.white.withValues(alpha: 0.05),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppTheme.primary,
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: _progress,
+                        backgroundColor: Colors.white.withValues(alpha: 0.05),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppTheme.primary,
+                        ),
+                        minHeight: 10,
                       ),
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(5),
                     ),
                     const SizedBox(height: 20),
                   ],
 
                   if (_detectedMood != null)
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 24,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: AppTheme.primary.withValues(alpha: 0.3),
+                          color: Colors.white.withValues(alpha: 0.08),
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primary.withValues(alpha: 0.05),
+                            blurRadius: 30,
+                            spreadRadius: 0,
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.check_circle,
-                            color: AppTheme.primary,
-                            size: 28,
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.auto_awesome_rounded,
+                              color: AppTheme.primary,
+                              size: 32,
+                            ),
                           ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'VIBE CHECKED',
-                                style: TextStyle(
-                                  color: AppTheme.primary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'CURRENT STATE',
+                                  style: TextStyle(
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 2.5,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                _detectedMood!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(height: 4),
+                                Text(
+                                  _detectedMood!.toUpperCase(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: -1,
+                                      ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -583,9 +608,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 ? 'CHEER UP JOKE! 😂'
                                 : 'AI INSIGHT ✨',
                             style: TextStyle(
-                              color: AppTheme.primary.withValues(
-                                      alpha: 0.5,
-                                    ),
+                              color: AppTheme.primary.withValues(alpha: 0.5),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
@@ -647,16 +670,12 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppTheme.primary
-                                    : Colors.white.withValues(
-                                              alpha: 0.05,
-                                            ),
+                                    : Colors.white.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isSelected
                                       ? AppTheme.primary
-                                      : Colors.white.withValues(
-                                                alpha: 0.1,
-                                              ),
+                                      : Colors.white.withValues(alpha: 0.1),
                                 ),
                               ),
                               child: Row(
@@ -697,24 +716,77 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
   Widget _buildCorner({required bool isTop, required bool isLeft}) {
     return Container(
-      width: 35,
-      height: 35,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         border: Border(
           top: isTop
-              ? const BorderSide(color: AppTheme.primary, width: 3)
+              ? const BorderSide(color: AppTheme.primary, width: 2.5)
               : BorderSide.none,
           bottom: !isTop
-              ? const BorderSide(color: AppTheme.primary, width: 3)
+              ? const BorderSide(color: AppTheme.primary, width: 2.5)
               : BorderSide.none,
           left: isLeft
-              ? const BorderSide(color: AppTheme.primary, width: 3)
+              ? const BorderSide(color: AppTheme.primary, width: 2.5)
               : BorderSide.none,
           right: !isLeft
-              ? const BorderSide(color: AppTheme.primary, width: 3)
+              ? const BorderSide(color: AppTheme.primary, width: 2.5)
               : BorderSide.none,
         ),
       ),
+    );
+  }
+}
+
+class _PulseCircle extends StatefulWidget {
+  @override
+  State<_PulseCircle> createState() => _PulseCircleState();
+}
+
+class _PulseCircleState extends State<_PulseCircle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withValues(
+              alpha: 0.5 + (_pulseController.value * 0.5),
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withValues(
+                  alpha: _pulseController.value * 0.8,
+                ),
+                blurRadius: 8 * _pulseController.value,
+                spreadRadius: 2 * _pulseController.value,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

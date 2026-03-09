@@ -270,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _buildMenuItem(
                                 icon: Icons.subscriptions_outlined,
                                 title: 'Subscription',
-                                subtitle: 'Pro Plan Active',
+                                subtitle: 'Free Plan Active',
                                 onTap: () {
                                   Navigator.of(
                                     context,

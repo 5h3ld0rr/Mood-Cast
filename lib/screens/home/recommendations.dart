@@ -91,11 +91,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                 AppBar(
                   title: Text(
                     '$displayMood Vibes',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
                     ),
                   ),
                   centerTitle: false,
@@ -258,26 +256,33 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                       style: const TextStyle(
                         color: AppTheme.textMuted,
                         fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: AppTheme.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.play_arrow_rounded,
                   color: AppTheme.primary,
-                  size: 28,
+                  size: 24,
                 ),
               ),
+              const SizedBox(width: 4),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white54),
+                icon: const Icon(
+                  Icons.more_vert,
+                  color: Colors.white38,
+                  size: 20,
+                ),
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,

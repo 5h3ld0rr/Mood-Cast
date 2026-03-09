@@ -13,7 +13,7 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   String selectedFilter = 'Playlists';
-  final List<String> filters = ['Playlists', 'Artists', 'Albums', 'Downloaded'];
+  final List<String> filters = ['Playlists', 'Artists', 'Albums', 'Downloads'];
 
   final DatabaseService _db = DatabaseService();
 
@@ -203,7 +203,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           ],
         );
-      case 'Downloaded':
+      case 'Downloads':
         return ListView(
           physics: const BouncingScrollPhysics(),
           children: [
