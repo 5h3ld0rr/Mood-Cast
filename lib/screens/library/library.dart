@@ -7,6 +7,7 @@ import '../../services/youtube_music_service.dart';
 import 'playlist_details.dart';
 import 'package:mood_cast/screens/search/artist_details.dart';
 import '../../utils/ui_utils.dart';
+import '../../services/download_service.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -493,36 +494,123 @@ class _LibraryScreenState extends State<LibraryScreen> {
           },
         );
       case 'Downloads':
-        return ListView(
-          physics: const BouncingScrollPhysics(),
-          children: [
-            _buildLibraryItem(
-              'Your Downloads',
-              'Playlist • 0 songs',
-              Icons.download_done,
-              Colors.green,
-              isDownloaded: true,
-              onTap: () {
-                UIUtils.showSnackBar(
-                  context,
-                  'Downloaded songs feature coming soon!',
+        return ValueListenableBuilder<List<SongInfo>>(
+          valueListenable: DownloadService().downloadedSongs,
+          builder: (context, songs, _) {
+            if (songs.isEmpty) {
+              return ListView(
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildLibraryItem(
+                    'Your Downloads',
+                    'Playlist • 0 songs',
+                    Icons.download_done,
+                    Colors.green,
+                    isDownloaded: true,
+                    onTap: () {
+                      UIUtils.showSnackBar(context, 'No downloaded songs yet!');
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildLibraryItem(
+                    'Local Files',
+                    'Songs from this device',
+                    Icons.folder_open,
+                    Colors.grey,
+                    onTap: () {
+                      UIUtils.showSnackBar(
+                        context,
+                        'Local files feature coming soon!',
+                      );
+                    },
+                  ),
+                ],
+              );
+            }
+
+            return ListView.separated(
+              itemCount: songs.length + 1,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                if (index == songs.length) {
+                  return _buildLibraryItem(
+                    'Local Files',
+                    'Songs from this device',
+                    Icons.folder_open,
+                    Colors.grey,
+                    onTap: () {
+                      UIUtils.showSnackBar(
+                        context,
+                        'Local files feature coming soon!',
+                      );
+                    },
+                  );
+                }
+
+                final song = songs[index];
+                return InkWell(
+                  onTap: () {
+                    PlayerService().play(song);
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(4),
+                          image: song.coverUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(song.coverUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: song.coverUrl == null
+                            ? const Icon(
+                                Icons.music_note,
+                                color: Colors.white30,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              song.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              song.artist,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.download_done,
+                        color: AppTheme.primary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
                 );
               },
-            ),
-            const SizedBox(height: 16),
-            _buildLibraryItem(
-              'Local Files',
-              'Songs from this device',
-              Icons.folder_open,
-              Colors.grey,
-              onTap: () {
-                UIUtils.showSnackBar(
-                  context,
-                  'Local files feature coming soon!',
-                );
-              },
-            ),
-          ],
+            );
+          },
         );
       case 'Playlists':
       default:

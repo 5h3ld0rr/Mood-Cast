@@ -65,11 +65,12 @@ class SongOptionsBottomSheet extends StatelessWidget {
               UIUtils.showSnackBar(context, 'Share feature coming soon!');
             },
           ),
-          ValueListenableBuilder<Set<String>>(
-            valueListenable: DownloadService().downloadedIds,
-            builder: (context, downloadedIds, _) {
+          ValueListenableBuilder<List<SongInfo>>(
+            valueListenable: DownloadService().downloadedSongs,
+            builder: (context, downloadedSongs, _) {
               final isDownloaded =
-                  song.videoId != null && downloadedIds.contains(song.videoId);
+                  song.videoId != null &&
+                  downloadedSongs.any((s) => s.videoId == song.videoId);
               return ValueListenableBuilder<Map<String, double>>(
                 valueListenable: DownloadService().downloadProgress,
                 builder: (context, progressMap, _) {

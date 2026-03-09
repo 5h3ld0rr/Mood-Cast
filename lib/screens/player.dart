@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../utils/ui_utils.dart';
 import '../services/player_service.dart';
 import '../services/mood_service.dart';
+import '../services/download_service.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -468,6 +469,93 @@ class _PlayerScreenState extends State<PlayerScreen>
                                   builder: (context, liked, _) {
                                     return Row(
                                       children: [
+                                        ValueListenableBuilder<SongInfo?>(
+                                          valueListenable:
+                                              PlayerService().currentSong,
+                                          builder: (context, song, _) {
+                                            if (song == null) {
+                                              return const SizedBox.shrink();
+                                            }
+                                            return ValueListenableBuilder<
+                                              Map<String, double>
+                                            >(
+                                              valueListenable: DownloadService()
+                                                  .downloadProgress,
+                                              builder: (context, progressMap, _) {
+                                                final progress =
+                                                    progressMap[song.videoId];
+                                                final downloading =
+                                                    progress != null;
+
+                                                return ValueListenableBuilder<
+                                                  List<SongInfo>
+                                                >(
+                                                  valueListenable:
+                                                      DownloadService()
+                                                          .downloadedSongs,
+                                                  builder: (context, downloadedSongs, _) {
+                                                    final isDownloaded =
+                                                        downloadedSongs.any(
+                                                          (s) =>
+                                                              s.videoId ==
+                                                              song.videoId,
+                                                        );
+
+                                                    if (downloading) {
+                                                      return SizedBox(
+                                                        width: 24,
+                                                        height: 24,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                              value: progress,
+                                                              strokeWidth: 2,
+                                                              color: AppTheme
+                                                                  .primary,
+                                                            ),
+                                                      );
+                                                    }
+
+                                                    return IconButton(
+                                                      icon: Icon(
+                                                        isDownloaded
+                                                            ? Icons
+                                                                  .download_done
+                                                            : Icons
+                                                                  .download_for_offline_outlined,
+                                                        color: isDownloaded
+                                                            ? AppTheme.primary
+                                                            : AppTheme
+                                                                  .textMuted,
+                                                        size: 24,
+                                                      ),
+                                                      onPressed: () {
+                                                        if (isDownloaded) {
+                                                          DownloadService()
+                                                              .removeDownload(
+                                                                song.videoId!,
+                                                              );
+                                                          UIUtils.showSnackBar(
+                                                            context,
+                                                            'Download removed',
+                                                          );
+                                                        } else {
+                                                          DownloadService()
+                                                              .downloadSong(
+                                                                song,
+                                                              );
+                                                          UIUtils.showSnackBar(
+                                                            context,
+                                                            'Starting download...',
+                                                          );
+                                                        }
+                                                      },
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                        ),
                                         IconButton(
                                           icon: Icon(
                                             liked
