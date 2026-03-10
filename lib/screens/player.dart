@@ -242,7 +242,161 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ),
                     ),
 
-                    // Animation Area
+                    // Song Info Area (Now at Top)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: ValueListenableBuilder<SongInfo?>(
+                        valueListenable: PlayerService().currentSong,
+                        builder: (context, song, _) {
+                          return Column(
+                            children: [
+                              Hero(
+                                tag: 'player_art',
+                                child: CachedImage(
+                                  imageUrl: song?.coverUrl,
+                                  width: 280,
+                                  height: 280,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              Text(
+                                song?.title ?? 'Midnight Solitude',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                song?.artist ?? 'MoodCast • 432Hz Ambient',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 16),
+                              ValueListenableBuilder<bool>(
+                                valueListenable: PlayerService().isLiked,
+                                builder: (context, liked, _) {
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      ValueListenableBuilder<SongInfo?>(
+                                        valueListenable:
+                                            PlayerService().currentSong,
+                                        builder: (context, song, _) {
+                                          if (song == null) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return ValueListenableBuilder<
+                                            Map<String, double>
+                                          >(
+                                            valueListenable: DownloadService()
+                                                .downloadProgress,
+                                            builder: (context, progressMap, _) {
+                                              final progress =
+                                                  progressMap[song.videoId];
+                                              final downloading =
+                                                  progress != null;
+
+                                              return ValueListenableBuilder<
+                                                List<SongInfo>
+                                              >(
+                                                valueListenable:
+                                                    DownloadService()
+                                                        .downloadedSongs,
+                                                builder: (context, downloadedSongs, _) {
+                                                  final isDownloaded =
+                                                      downloadedSongs.any(
+                                                        (s) =>
+                                                            s.videoId ==
+                                                            song.videoId,
+                                                      );
+
+                                                  if (downloading) {
+                                                    return SizedBox(
+                                                      width: 24,
+                                                      height: 24,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            value: progress,
+                                                            strokeWidth: 2,
+                                                            color: AppTheme
+                                                                .primary,
+                                                          ),
+                                                    );
+                                                  }
+
+                                                  return IconButton(
+                                                    icon: Icon(
+                                                      isDownloaded
+                                                          ? Icons.download_done
+                                                          : Icons
+                                                                .download_for_offline_outlined,
+                                                      color: isDownloaded
+                                                          ? AppTheme.primary
+                                                          : AppTheme.textMuted,
+                                                      size: 24,
+                                                    ),
+                                                    onPressed: () {
+                                                      if (isDownloaded) {
+                                                        DownloadService()
+                                                            .removeDownload(
+                                                              song.videoId!,
+                                                            );
+                                                        UIUtils.showSnackBar(
+                                                          context,
+                                                          'Download removed',
+                                                        );
+                                                      } else {
+                                                        DownloadService()
+                                                            .downloadSong(song);
+                                                        UIUtils.showSnackBar(
+                                                          context,
+                                                          'Starting download...',
+                                                        );
+                                                      }
+                                                    },
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          liked
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: liked
+                                              ? AppTheme.primary
+                                              : AppTheme.textMuted,
+                                        ),
+                                        onPressed: () {
+                                          PlayerService().toggleLiked();
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Animation Area (Now at Bottom)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24.0),
                       child: Column(
@@ -256,9 +410,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 builder: (context, child) {
                                   return Container(
                                     width:
-                                        256 + 20 * _animationController.value,
+                                        200 + 20 * _animationController.value,
                                     height:
-                                        256 + 20 * _animationController.value,
+                                        200 + 20 * _animationController.value,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
@@ -274,8 +428,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                                 0.3 *
                                                 _animationController.value,
                                           ),
-                                          blurRadius: 40,
-                                          spreadRadius: 10,
+                                          blurRadius: 30,
+                                          spreadRadius: 5,
                                         ),
                                       ],
                                     ),
@@ -283,8 +437,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 },
                               ),
                               Container(
-                                width: 192,
-                                height: 192,
+                                width: 140,
+                                height: 140,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
@@ -296,8 +450,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 ),
                               ),
                               Container(
-                                width: 128,
-                                height: 128,
+                                width: 90,
+                                height: 90,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: AppTheme.primary,
@@ -306,7 +460,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       color: AppTheme.primary.withValues(
                                         alpha: 0.4,
                                       ),
-                                      blurRadius: 20,
+                                      blurRadius: 15,
                                     ),
                                   ],
                                 ),
@@ -316,7 +470,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     const Icon(
                                       Icons.air,
                                       color: Colors.white,
-                                      size: 40,
+                                      size: 30,
                                     ),
                                     const SizedBox(height: 4),
                                     ValueListenableBuilder<String>(
@@ -331,7 +485,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                               : 'DEEP CALM',
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontSize: 10,
+                                            fontSize: 8,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         );
@@ -342,16 +496,16 @@ class _PlayerScreenState extends State<PlayerScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 48),
+                          const SizedBox(height: 24),
                           const Text(
                             'Guided Breathing',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 24,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
@@ -360,21 +514,40 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 style: TextStyle(
                                   color: AppTheme.primary,
                                   fontWeight: FontWeight.w500,
+                                  fontSize: 12,
                                 ),
                               ),
                               SizedBox(width: 8),
-                              Text('•', style: TextStyle(color: Colors.grey)),
+                              Text(
+                                '•',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'Hold',
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
                               ),
                               SizedBox(width: 8),
-                              Text('•', style: TextStyle(color: Colors.grey)),
+                              Text(
+                                '•',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'Exhale',
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -382,187 +555,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ),
                     ),
 
+                    // Controls Area
                     Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Column(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF1E293B,
-                              ).withValues(alpha: 0.4),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.1),
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                Hero(
-                                  tag: 'player_art',
-                                  child: ValueListenableBuilder<SongInfo?>(
-                                    valueListenable:
-                                        PlayerService().currentSong,
-                                    builder: (context, song, _) {
-                                      return CachedImage(
-                                        imageUrl: song?.coverUrl,
-                                        width: 56,
-                                        height: 56,
-                                        borderRadius: BorderRadius.circular(8),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: ValueListenableBuilder<SongInfo?>(
-                                    valueListenable:
-                                        PlayerService().currentSong,
-                                    builder: (context, song, _) {
-                                      return Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            song?.title ?? 'Midnight Solitude',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            song?.artist ??
-                                                'MoodCast • 432Hz Ambient',
-                                            style: const TextStyle(
-                                              color: AppTheme.textMuted,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w400,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
-                                ),
-                                ValueListenableBuilder<bool>(
-                                  valueListenable: PlayerService().isLiked,
-                                  builder: (context, liked, _) {
-                                    return Row(
-                                      children: [
-                                        ValueListenableBuilder<SongInfo?>(
-                                          valueListenable:
-                                              PlayerService().currentSong,
-                                          builder: (context, song, _) {
-                                            if (song == null) {
-                                              return const SizedBox.shrink();
-                                            }
-                                            return ValueListenableBuilder<
-                                              Map<String, double>
-                                            >(
-                                              valueListenable: DownloadService()
-                                                  .downloadProgress,
-                                              builder: (context, progressMap, _) {
-                                                final progress =
-                                                    progressMap[song.videoId];
-                                                final downloading =
-                                                    progress != null;
-
-                                                return ValueListenableBuilder<
-                                                  List<SongInfo>
-                                                >(
-                                                  valueListenable:
-                                                      DownloadService()
-                                                          .downloadedSongs,
-                                                  builder: (context, downloadedSongs, _) {
-                                                    final isDownloaded =
-                                                        downloadedSongs.any(
-                                                          (s) =>
-                                                              s.videoId ==
-                                                              song.videoId,
-                                                        );
-
-                                                    if (downloading) {
-                                                      return SizedBox(
-                                                        width: 24,
-                                                        height: 24,
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                              value: progress,
-                                                              strokeWidth: 2,
-                                                              color: AppTheme
-                                                                  .primary,
-                                                            ),
-                                                      );
-                                                    }
-
-                                                    return IconButton(
-                                                      icon: Icon(
-                                                        isDownloaded
-                                                            ? Icons
-                                                                  .download_done
-                                                            : Icons
-                                                                  .download_for_offline_outlined,
-                                                        color: isDownloaded
-                                                            ? AppTheme.primary
-                                                            : AppTheme
-                                                                  .textMuted,
-                                                        size: 24,
-                                                      ),
-                                                      onPressed: () {
-                                                        if (isDownloaded) {
-                                                          DownloadService()
-                                                              .removeDownload(
-                                                                song.videoId!,
-                                                              );
-                                                          UIUtils.showSnackBar(
-                                                            context,
-                                                            'Download removed',
-                                                          );
-                                                        } else {
-                                                          DownloadService()
-                                                              .downloadSong(
-                                                                song,
-                                                              );
-                                                          UIUtils.showSnackBar(
-                                                            context,
-                                                            'Starting download...',
-                                                          );
-                                                        }
-                                                      },
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            liked
-                                                ? Icons.favorite
-                                                : Icons.favorite_border,
-                                            color: liked
-                                                ? AppTheme.primary
-                                                : AppTheme.textMuted,
-                                          ),
-                                          onPressed: () {
-                                            PlayerService().toggleLiked();
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
                           const SizedBox(height: 32),
                           ValueListenableBuilder<double>(
                             valueListenable: PlayerService().progress,
