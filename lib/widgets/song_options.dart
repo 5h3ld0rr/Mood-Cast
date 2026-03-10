@@ -270,16 +270,16 @@ class SongOptionsBottomSheet extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _PlaylistSelector(song: song),
+      builder: (context) => PlaylistSelector(song: song),
     );
   }
 }
 
-class _PlaylistSelector extends StatelessWidget {
+class PlaylistSelector extends StatelessWidget {
   final SongInfo song;
   final DatabaseService _db = DatabaseService();
 
-  _PlaylistSelector({required this.song});
+  PlaylistSelector({required this.song});
 
   @override
   Widget build(BuildContext context) {
@@ -324,6 +324,42 @@ class _PlaylistSelector extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               _showCreatePlaylistDialog(context);
+            },
+          ),
+          FutureBuilder<bool>(
+            future: _db.isSongLiked(song),
+            builder: (context, snapshot) {
+              final isLiked = snapshot.data ?? false;
+              return ListTile(
+                leading: Icon(
+                  isLiked ? Icons.favorite : Icons.favorite_border,
+                  color: AppTheme.primary,
+                ),
+                title: const Text(
+                  'Liked Songs',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () async {
+                  await _db.toggleLikedSong(song);
+                  // Update PlayerService if this is the current song
+                  if (PlayerService().currentSong.value?.videoId ==
+                      song.videoId) {
+                    PlayerService().isLiked.value = !isLiked;
+                  }
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    UIUtils.showSnackBar(
+                      context,
+                      isLiked
+                          ? 'Removed from Liked Songs'
+                          : 'Added to Liked Songs',
+                    );
+                  }
+                },
+              );
             },
           ),
           const Divider(color: Colors.white10),

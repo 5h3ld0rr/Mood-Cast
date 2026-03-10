@@ -9,6 +9,7 @@ import '../services/player_service.dart';
 import '../services/mood_service.dart';
 import '../services/download_service.dart';
 import '../widgets/cached_image.dart';
+import '../widgets/song_options.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -787,14 +788,14 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _showAddedToPlaylist() {
-    UIUtils.showSnackBar(
-      context,
-      'Added to your favorite playlist!',
-      icon: Icons.playlist_add_check,
-      actionIcon: Icons.rotate_left,
-      onActionPressed: () {
-        // Add undo logic here if needed
-      },
+    final song = PlayerService().currentSong.value;
+    if (song == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => PlaylistSelector(song: song),
     );
   }
 
