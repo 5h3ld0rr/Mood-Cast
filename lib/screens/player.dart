@@ -20,9 +20,8 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late AnimationController _rotationController;
 
   @override
   void initState() {
@@ -31,16 +30,11 @@ class _PlayerScreenState extends State<PlayerScreen>
       vsync: this,
       duration: const Duration(seconds: 4),
     )..repeat(reverse: true);
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 20),
-    )..repeat();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _rotationController.dispose();
     super.dispose();
   }
 
@@ -257,121 +251,14 @@ class _PlayerScreenState extends State<PlayerScreen>
                         builder: (context, song, _) {
                           return Column(
                             children: [
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  ValueListenableBuilder<bool>(
-                                    valueListenable: PlayerService().isPlaying,
-                                    builder: (context, playing, _) {
-                                      if (!playing &&
-                                          _rotationController.isAnimating) {
-                                        _rotationController.stop();
-                                      } else if (playing &&
-                                          !_rotationController.isAnimating) {
-                                        _rotationController.repeat();
-                                      }
-                                      return RotationTransition(
-                                        turns: _rotationController,
-                                        child: Container(
-                                          width: 230,
-                                          height: 230,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            gradient: SweepGradient(
-                                              colors: [
-                                                AppTheme.primary.withValues(
-                                                  alpha: 0,
-                                                ),
-                                                AppTheme.primary,
-                                                const Color(0xFF00D2FF),
-                                                AppTheme.primary,
-                                                AppTheme.primary.withValues(
-                                                  alpha: 0,
-                                                ),
-                                              ],
-                                              stops: const [
-                                                0.0,
-                                                0.4,
-                                                0.5,
-                                                0.6,
-                                                1.0,
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  AnimatedBuilder(
-                                    animation: _animationController,
-                                    builder: (context, child) {
-                                      return Container(
-                                        width:
-                                            215 +
-                                            15 * _animationController.value,
-                                        height:
-                                            215 +
-                                            15 * _animationController.value,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: AppTheme.primary.withValues(
-                                              alpha: 0.5,
-                                            ),
-                                            width: 3,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: AppTheme.primary
-                                                  .withValues(
-                                                    alpha:
-                                                        0.4 *
-                                                        _animationController
-                                                            .value,
-                                                  ),
-                                              blurRadius: 30,
-                                              spreadRadius: 8,
-                                            ),
-                                            BoxShadow(
-                                              color: const Color(0xFF00D2FF)
-                                                  .withValues(
-                                                    alpha:
-                                                        0.2 *
-                                                        _animationController
-                                                            .value,
-                                                  ),
-                                              blurRadius: 15,
-                                              spreadRadius: 2,
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  Hero(
-                                    tag: 'player_art',
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: CachedImage(
-                                        imageUrl: song?.coverUrl,
-                                        width: 200,
-                                        height: 200,
-                                        borderRadius: BorderRadius.circular(
-                                          100,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              Hero(
+                                tag: 'player_art',
+                                child: CachedImage(
+                                  imageUrl: song?.coverUrl,
+                                  width: 200,
+                                  height: 200,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                               ),
                               const SizedBox(height: 32),
                               Text(
@@ -515,15 +402,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                       child: Center(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                          child: ValueListenableBuilder<bool>(
-                            valueListenable: PlayerService().isPlaying,
-                            builder: (context, playing, _) {
-                              return MusicWaveform(
-                                color: AppTheme.primary.withValues(alpha: 0.8),
-                                count: 40,
-                                isPlaying: playing,
-                              );
-                            },
+                          child: MusicWaveform(
+                            color: AppTheme.primary.withValues(alpha: 0.8),
+                            count: 40,
                           ),
                         ),
                       ),
@@ -1185,14 +1066,7 @@ class MusicWaveform extends StatefulWidget {
   final Color color;
   final int count;
 
-  const MusicWaveform({
-    super.key,
-    required this.color,
-    this.count = 50,
-    required this.isPlaying,
-  });
-
-  final bool isPlaying;
+  const MusicWaveform({super.key, required this.color, this.count = 50});
 
   @override
   State<MusicWaveform> createState() => _MusicWaveformState();
@@ -1208,22 +1082,7 @@ class _MusicWaveformState extends State<MusicWaveform>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    );
-    if (widget.isPlaying) {
-      _controller.repeat();
-    }
-  }
-
-  @override
-  void didUpdateWidget(MusicWaveform oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isPlaying != oldWidget.isPlaying) {
-      if (widget.isPlaying) {
-        _controller.repeat();
-      } else {
-        _controller.stop();
-      }
-    }
+    )..repeat();
   }
 
   @override
