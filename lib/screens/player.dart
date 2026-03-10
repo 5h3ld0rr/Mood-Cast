@@ -254,8 +254,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 tag: 'player_art',
                                 child: CachedImage(
                                   imageUrl: song?.coverUrl,
-                                  width: 280,
-                                  height: 280,
+                                  width: 200,
+                                  height: 200,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
