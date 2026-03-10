@@ -260,35 +260,47 @@ class _PlayerScreenState extends State<PlayerScreen>
                               Stack(
                                 alignment: Alignment.center,
                                 children: [
-                                  RotationTransition(
-                                    turns: _rotationController,
-                                    child: Container(
-                                      width: 230,
-                                      height: 230,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: SweepGradient(
-                                          colors: [
-                                            AppTheme.primary.withValues(
-                                              alpha: 0,
+                                  ValueListenableBuilder<bool>(
+                                    valueListenable: PlayerService().isPlaying,
+                                    builder: (context, playing, _) {
+                                      if (!playing &&
+                                          _rotationController.isAnimating) {
+                                        _rotationController.stop();
+                                      } else if (playing &&
+                                          !_rotationController.isAnimating) {
+                                        _rotationController.repeat();
+                                      }
+                                      return RotationTransition(
+                                        turns: _rotationController,
+                                        child: Container(
+                                          width: 230,
+                                          height: 230,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            gradient: SweepGradient(
+                                              colors: [
+                                                AppTheme.primary.withValues(
+                                                  alpha: 0,
+                                                ),
+                                                AppTheme.primary,
+                                                const Color(0xFF00D2FF),
+                                                AppTheme.primary,
+                                                AppTheme.primary.withValues(
+                                                  alpha: 0,
+                                                ),
+                                              ],
+                                              stops: const [
+                                                0.0,
+                                                0.4,
+                                                0.5,
+                                                0.6,
+                                                1.0,
+                                              ],
                                             ),
-                                            AppTheme.primary,
-                                            const Color(0xFF00D2FF),
-                                            AppTheme.primary,
-                                            AppTheme.primary.withValues(
-                                              alpha: 0,
-                                            ),
-                                          ],
-                                          stops: const [
-                                            0.0,
-                                            0.4,
-                                            0.5,
-                                            0.6,
-                                            1.0,
-                                          ],
+                                          ),
                                         ),
-                                      ),
-                                    ),
+                                      );
+                                    },
                                   ),
                                   AnimatedBuilder(
                                     animation: _animationController,
@@ -503,9 +515,15 @@ class _PlayerScreenState extends State<PlayerScreen>
                       child: Center(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                          child: MusicWaveform(
-                            color: AppTheme.primary.withValues(alpha: 0.8),
-                            count: 40,
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: PlayerService().isPlaying,
+                            builder: (context, playing, _) {
+                              return MusicWaveform(
+                                color: AppTheme.primary.withValues(alpha: 0.8),
+                                count: 40,
+                                isPlaying: playing,
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -1167,7 +1185,14 @@ class MusicWaveform extends StatefulWidget {
   final Color color;
   final int count;
 
-  const MusicWaveform({super.key, required this.color, this.count = 50});
+  const MusicWaveform({
+    super.key,
+    required this.color,
+    this.count = 50,
+    required this.isPlaying,
+  });
+
+  final bool isPlaying;
 
   @override
   State<MusicWaveform> createState() => _MusicWaveformState();
@@ -1183,7 +1208,22 @@ class _MusicWaveformState extends State<MusicWaveform>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat();
+    );
+    if (widget.isPlaying) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(MusicWaveform oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPlaying != oldWidget.isPlaying) {
+      if (widget.isPlaying) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+      }
+    }
   }
 
   @override
