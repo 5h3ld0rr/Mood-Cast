@@ -326,42 +326,6 @@ class PlaylistSelector extends StatelessWidget {
               _showCreatePlaylistDialog(context);
             },
           ),
-          FutureBuilder<bool>(
-            future: _db.isSongLiked(song),
-            builder: (context, snapshot) {
-              final isLiked = snapshot.data ?? false;
-              return ListTile(
-                leading: Icon(
-                  isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: AppTheme.primary,
-                ),
-                title: const Text(
-                  'Liked Songs',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onTap: () async {
-                  await _db.toggleLikedSong(song);
-                  // Update PlayerService if this is the current song
-                  if (PlayerService().currentSong.value?.videoId ==
-                      song.videoId) {
-                    PlayerService().isLiked.value = !isLiked;
-                  }
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    UIUtils.showSnackBar(
-                      context,
-                      isLiked
-                          ? 'Removed from Liked Songs'
-                          : 'Added to Liked Songs',
-                    );
-                  }
-                },
-              );
-            },
-          ),
           const Divider(color: Colors.white10),
           Flexible(
             child: StreamBuilder<List<Map<String, dynamic>>>(
