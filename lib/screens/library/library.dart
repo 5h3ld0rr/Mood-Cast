@@ -79,8 +79,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           right: 24,
         ),
         decoration: const BoxDecoration(
-          color: Color(0xFF161B22),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          color: Color(0xFF080C14),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -422,9 +422,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             builder: (context) => Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               decoration: const BoxDecoration(
-                                color: Color(0xFF161B22),
+                                color: Color(0xFF080C14),
                                 borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(20),
+                                  top: Radius.circular(24),
                                 ),
                               ),
                               child: Column(

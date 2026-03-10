@@ -286,8 +286,8 @@ class PlaylistSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: const BoxDecoration(
-        color: Color(0xFF161B22),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: Color(0xFF080C14),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -398,8 +398,8 @@ class PlaylistSelector extends StatelessWidget {
           right: 24,
         ),
         decoration: const BoxDecoration(
-          color: Color(0xFF161B22),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          color: Color(0xFF080C14),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

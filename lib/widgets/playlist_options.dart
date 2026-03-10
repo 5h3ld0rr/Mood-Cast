@@ -152,7 +152,7 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
     showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF161B22),
+        backgroundColor: const Color(0xFF080C14),
         title: const Text(
           'Delete Playlist',
           style: TextStyle(color: Colors.white),
@@ -195,7 +195,7 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF161B22),
+        backgroundColor: const Color(0xFF080C14),
         title: const Text(
           'Rename Playlist',
           style: TextStyle(color: Colors.white),
