@@ -268,22 +268,20 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                     child: ClipRect(
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          final double cameraAR =
-                              _controller!.value.aspectRatio;
-                          final double containerAR =
-                              constraints.maxWidth / constraints.maxHeight;
-                          double scale = containerAR > cameraAR
-                              ? containerAR / cameraAR
-                              : cameraAR / containerAR;
-                          return AnimatedScale(
-                            scale: scale * _zoomScale,
-                            duration: const Duration(milliseconds: 600),
-                            curve: Curves.easeInOut,
-                            alignment: Alignment.center,
-                            child: Center(
-                              child: AspectRatio(
-                                aspectRatio: cameraAR,
-                                child: CameraPreview(_controller!),
+                          return Center(
+                            child: Transform.scale(
+                              scale: _zoomScale,
+                              child: FittedBox(
+                                fit: BoxFit.cover,
+                                child: SizedBox(
+                                  width: constraints.maxWidth,
+                                  height:
+                                      constraints.maxWidth /
+                                      (_controller!.value.aspectRatio < 1
+                                          ? _controller!.value.aspectRatio
+                                          : 1 / _controller!.value.aspectRatio),
+                                  child: CameraPreview(_controller!),
+                                ),
                               ),
                             ),
                           );
