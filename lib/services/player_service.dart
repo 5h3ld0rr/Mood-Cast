@@ -4,6 +4,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:http/http.dart' as http;
 import 'database_service.dart';
 import 'download_service.dart';
+import 'metrics_service.dart';
 
 enum AudioQuality { low, medium, high }
 
@@ -161,7 +162,23 @@ class PlayerService {
   int currentIndex = -1;
 
   PlayerService._internal() {
+    Duration lastPosition = Duration.zero;
+    Duration accumulatedPlaytime = Duration.zero;
+
     _audioPlayer.positionStream.listen((p) {
+      if (p > lastPosition) {
+        final delta = p - lastPosition;
+        if (delta.inSeconds < 5) {
+          accumulatedPlaytime += delta;
+        }
+      }
+      lastPosition = p;
+
+      if (accumulatedPlaytime.inSeconds >= 10) {
+        MetricsService.addPlaytime(accumulatedPlaytime);
+        accumulatedPlaytime = Duration.zero;
+      }
+
       position.value = p;
       final dur = _audioPlayer.duration;
       if (dur != null && dur.inMilliseconds > 0) {

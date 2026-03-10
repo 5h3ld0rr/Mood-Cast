@@ -109,11 +109,9 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        ..._tracks
-                            .asMap()
-                            .entries
-                            .map((e) => _buildSongItem(e.value, e.key))
-                            ,
+                        ..._tracks.asMap().entries.map(
+                          (e) => _buildSongItem(e.value, e.key),
+                        ),
                         if (_tracks.isEmpty)
                           const Center(
                             child: Padding(

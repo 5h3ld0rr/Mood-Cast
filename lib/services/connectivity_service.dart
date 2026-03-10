@@ -13,7 +13,9 @@ class ConnectivityService {
 
   void initialize() {
     _checkInitialConnectivity();
-    _subscription = _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
+    _subscription = _connectivity.onConnectivityChanged.listen(
+      _updateConnectionStatus,
+    );
   }
 
   Future<void> _checkInitialConnectivity() async {
@@ -23,8 +25,10 @@ class ConnectivityService {
 
   void _updateConnectionStatus(List<ConnectivityResult> results) {
     // If any result is not 'none', we consider it online
-    final bool online = results.any((result) => result != ConnectivityResult.none);
-    
+    final bool online = results.any(
+      (result) => result != ConnectivityResult.none,
+    );
+
     if (isOnline.value != online) {
       debugPrint('Connectivity Changed: ${online ? "ONLINE" : "OFFLINE"}');
       isOnline.value = online;

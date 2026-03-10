@@ -11,4 +11,3 @@ class MoodService {
     currentMood.value = mood;
   }
 }
-

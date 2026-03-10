@@ -5,6 +5,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../../theme.dart';
 import '../../services/mood_service.dart';
+import '../../services/metrics_service.dart';
 import '../home/recommendations.dart';
 
 class AnalysisScreen extends StatefulWidget {
@@ -228,6 +229,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
         _detectedMood = resultMood;
       });
       MoodService().updateMood(_detectedMood!);
+      MetricsService.incrementScans();
     } catch (e) {
       debugPrint('Error during scan: $e');
       setState(() {

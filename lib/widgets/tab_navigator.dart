@@ -20,4 +20,3 @@ class TabNavigator extends StatelessWidget {
     );
   }
 }
-

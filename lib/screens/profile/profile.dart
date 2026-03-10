@@ -11,6 +11,7 @@ import 'insights/insights.dart';
 import '../../services/player_service.dart';
 import '../../widgets/cached_image.dart';
 import '../../services/database_service.dart';
+import '../../services/metrics_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -156,9 +157,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _buildStatItem('342', 'Hours Listened'),
+                            StreamBuilder<int>(
+                              stream: MetricsService.getHoursListenedStream(),
+                              builder: (context, snapshot) {
+                                return _buildStatItem(
+                                  (snapshot.data ?? 0).toString(),
+                                  'Hours Listened',
+                                );
+                              },
+                            ),
                             _buildVerticalDivider(),
-                            _buildStatItem('89', 'Scans Completed'),
+                            StreamBuilder<int>(
+                              stream: MetricsService.getScansCompletedStream(),
+                              builder: (context, snapshot) {
+                                return _buildStatItem(
+                                  (snapshot.data ?? 0).toString(),
+                                  'Scans Completed',
+                                );
+                              },
+                            ),
                             _buildVerticalDivider(),
                             StreamBuilder<List<Map<String, dynamic>>>(
                               stream: DatabaseService().getPlaylists(),
