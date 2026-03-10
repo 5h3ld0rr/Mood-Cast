@@ -405,6 +405,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                           child: MusicWaveform(
                             color: AppTheme.primary.withValues(alpha: 0.8),
                             count: 40,
+                            isPlaying: PlayerService().isPlaying,
                           ),
                         ),
                       ),
@@ -1065,8 +1066,14 @@ class _PlayerScreenState extends State<PlayerScreen>
 class MusicWaveform extends StatefulWidget {
   final Color color;
   final int count;
+  final ValueNotifier<bool> isPlaying;
 
-  const MusicWaveform({super.key, required this.color, this.count = 50});
+  const MusicWaveform({
+    super.key,
+    required this.color,
+    required this.isPlaying,
+    this.count = 50,
+  });
 
   @override
   State<MusicWaveform> createState() => _MusicWaveformState();
@@ -1082,11 +1089,26 @@ class _MusicWaveformState extends State<MusicWaveform>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat();
+    );
+
+    if (widget.isPlaying.value) {
+      _controller.repeat();
+    }
+
+    widget.isPlaying.addListener(_handlePlaybackChange);
+  }
+
+  void _handlePlaybackChange() {
+    if (widget.isPlaying.value) {
+      _controller.repeat();
+    } else {
+      _controller.stop();
+    }
   }
 
   @override
   void dispose() {
+    widget.isPlaying.removeListener(_handlePlaybackChange);
     _controller.dispose();
     super.dispose();
   }
