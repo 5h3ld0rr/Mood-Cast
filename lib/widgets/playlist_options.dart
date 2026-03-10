@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/database_service.dart';
 import '../theme.dart';
 import '../utils/ui_utils.dart';
@@ -35,7 +36,11 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
             label: 'Share Playlist',
             onTap: () {
               Navigator.pop(context);
-              UIUtils.showSnackBar(context, 'Share feature coming soon!');
+              SharePlus.instance.share(
+                ShareParams(
+                  text: 'Check out my "$playlistName" playlist on MoodCast!',
+                ),
+              );
             },
           ),
           FutureBuilder<List<Map<String, dynamic>>>(

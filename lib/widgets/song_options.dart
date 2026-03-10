@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/database_service.dart';
 import '../services/player_service.dart';
 import '../services/download_service.dart';
@@ -91,7 +92,15 @@ class SongOptionsBottomSheet extends StatelessWidget {
               label: 'Share',
               onTap: () {
                 Navigator.pop(context);
-                UIUtils.showSnackBar(context, 'Share feature coming soon!');
+                final youtubeLink = song.videoId != null
+                    ? 'https://www.youtube.com/watch?v=${song.videoId}'
+                    : '';
+                SharePlus.instance.share(
+                  ShareParams(
+                    text:
+                        'Check out "${song.title}" by ${song.artist} on MoodCast! $youtubeLink',
+                  ),
+                );
               },
             ),
             ValueListenableBuilder<List<SongInfo>>(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
@@ -142,7 +143,14 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
                       ),
                       const SizedBox(width: 12),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          SharePlus.instance.share(
+                            ShareParams(
+                              text:
+                                  'Check out ${artist.name} on MoodCast! https://music.youtube.com/channel/${artist.browseId}',
+                            ),
+                          );
+                        },
                         icon: const Icon(
                           Icons.share_outlined,
                           color: Colors.white70,

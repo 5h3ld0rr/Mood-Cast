@@ -905,6 +905,15 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _handleShare() {
+    final song = PlayerService().currentSong.value;
+    if (song == null) return;
+
+    final shareUrl = song.videoId != null
+        ? 'https://www.youtube.com/watch?v=${song.videoId}'
+        : 'https://moodcast.ai/track';
+    final shareText =
+        'Check out ${song.title} by ${song.artist} on MoodCast! $shareUrl';
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -935,7 +944,7 @@ class _PlayerScreenState extends State<PlayerScreen>
               width: MediaQuery.of(context).size.width * 0.75,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5E66), // Matching the image color
+                color: const Color(0xFF8B5E66),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -944,10 +953,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                   // Track Image
                   AspectRatio(
                     aspectRatio: 1,
-                    child: const CachedImage(
-                      imageUrl:
-                          'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=500&q=80',
-                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                    child: CachedImage(
+                      imageUrl: song.coverUrl,
+                      borderRadius: const BorderRadius.all(Radius.circular(16)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -956,18 +964,25 @@ class _PlayerScreenState extends State<PlayerScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Midnight Solitude',
-                          style: TextStyle(
+                        Text(
+                          song.title,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'MoodCast AI • 432Hz Ambient',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        Text(
+                          song.artist,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -986,7 +1001,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                             ),
                             const SizedBox(width: 8),
                             const Text(
-                              'MoodCast AI',
+                              'MoodCast',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -1042,9 +1057,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                       'Copy link',
                       const Icon(Icons.link, color: Colors.white, size: 28),
                       Colors.grey[800]!,
-                      () => _copyToClipboard(
-                        'https://moodcast.ai/track/midnight-solitude',
-                      ),
+                      () => _copyToClipboard(shareUrl),
                     ),
                     _buildShareAction(
                       'WhatsApp',
@@ -1055,19 +1068,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ),
                       const Color(0xFF25D366),
                       () => _launchURL(
-                        'https://wa.me/?text=Listening to Midnight Solitude on MoodCast AI! https://moodcast.ai/track/midnight-solitude',
-                      ),
-                    ),
-                    _buildShareAction(
-                      'Status',
-                      const FaIcon(
-                        FontAwesomeIcons.circleNotch,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      const Color(0xFF25D366),
-                      () => _launchURL(
-                        'whatsapp://send?text=Check out this vibe: https://moodcast.ai/track/midnight-solitude',
+                        'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
                       ),
                     ),
                     _buildShareAction(
@@ -1075,7 +1076,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                       const Icon(Icons.message, color: Colors.white, size: 28),
                       const Color(0xFF007AFF),
                       () => _launchURL(
-                        'sms:?body=Listen to this with me: https://moodcast.ai/track/midnight-solitude',
+                        'sms:?body=${Uri.encodeComponent(shareText)}',
                       ),
                     ),
                     _buildShareAction(
@@ -1087,18 +1088,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ),
                       const Color(0xFF1877F2),
                       () => _launchURL(
-                        'https://www.facebook.com/sharer/sharer.php?u=https://moodcast.ai/track/midnight-solitude',
+                        'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(shareUrl)}',
                       ),
-                    ),
-                    _buildShareAction(
-                      'TikTok',
-                      const FaIcon(
-                        FontAwesomeIcons.tiktok,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      Colors.black,
-                      () => _launchURL('https://www.tiktok.com/'),
                     ),
                     _buildShareAction(
                       'More',
@@ -1108,7 +1099,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                         size: 28,
                       ),
                       Colors.grey[700]!,
-                      () => _handleGeneralShare(),
+                      () => _handleGeneralShare(song),
                     ),
                   ],
                 ),
@@ -1149,12 +1140,18 @@ class _PlayerScreenState extends State<PlayerScreen>
     }
   }
 
-  Future<void> _handleGeneralShare() async {
+  Future<void> _handleGeneralShare(SongInfo song) async {
+    final shareUrl = song.videoId != null
+        ? 'https://www.youtube.com/watch?v=${song.videoId}'
+        : 'https://moodcast.ai/track';
     try {
       debugPrint('Opening system share dialog...');
-      await Share.share(
-        'Check out Midnight Solitude on MoodCast AI! https://moodcast.ai/track/midnight-solitude',
-        subject: 'Shared from MoodCast AI',
+      await SharePlus.instance.share(
+        ShareParams(
+          text:
+              'Check out ${song.title} by ${song.artist} on MoodCast! $shareUrl',
+          subject: 'Shared from MoodCast',
+        ),
       );
     } catch (e) {
       debugPrint('Error sharing: $e');
