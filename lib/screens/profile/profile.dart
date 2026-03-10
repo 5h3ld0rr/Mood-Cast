@@ -210,10 +210,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   valueListenable: PlayerService().audioQuality,
                                   builder: (context, quality, _) {
                                     String label = 'Normal';
-                                    if (quality == AudioQuality.low)
+                                    if (quality == AudioQuality.low) {
                                       label = 'Data Saver';
-                                    if (quality == AudioQuality.high)
+                                    }
+                                    if (quality == AudioQuality.high) {
                                       label = 'High Quality';
+                                    }
                                     return Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [

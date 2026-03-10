@@ -476,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: 56,
               height: 56,
               child: CachedImage(

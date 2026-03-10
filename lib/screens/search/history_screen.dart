@@ -55,7 +55,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             )
           : ListView.separated(
               itemCount: _history.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const Divider(color: Colors.white12, height: 1),
               itemBuilder: (context, index) {
                 final term = _history[index];

@@ -156,8 +156,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   }
 
   void _startScan() async {
-    if (_isScanning || _controller == null || !_controller!.value.isInitialized)
+    if (_isScanning || _controller == null || !_controller!.value.isInitialized) {
       return;
+    }
 
     setState(() {
       _isScanning = true;

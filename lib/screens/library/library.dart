@@ -634,7 +634,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               },
                               child: Row(
                                 children: [
-                                  Container(
+                                  SizedBox(
                                     width: 56,
                                     height: 56,
                                     child: CachedImage(
@@ -1051,7 +1051,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: 64,
               height: 64,
               child: CachedImage(

@@ -118,7 +118,7 @@ class YouTubeMusicService {
 
     try {
       final artistData = await _ytm!.getArtist(browseId);
-      final data = artistData as Map<String, dynamic>;
+      final data = artistData;
 
       String? thumbnail;
       if (data['thumbnails'] != null &&

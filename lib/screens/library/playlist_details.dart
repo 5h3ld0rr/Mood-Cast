@@ -1047,7 +1047,7 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
   final List<YouTubeMusicMetadata> _searchResults = [];
   bool _isSearching = false;
   Timer? _debounce;
-  String _searchQuery = '';
+  final String _searchQuery = '';
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce?.cancel();

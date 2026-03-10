@@ -8,7 +8,7 @@ void main() async {
   final results = await ytm.search('ed sheeran', filter: SearchFilter.artists);
   final f = File('test_output.txt');
   if (results.isNotEmpty) {
-    f.writeAsStringSync(jsonEncode(results.first) + '\n');
+    f.writeAsStringSync('${jsonEncode(results.first)}\n');
     f.writeAsStringSync('---\n', mode: FileMode.append);
     final browseId = results.first['browseId'];
     if (browseId != null) {

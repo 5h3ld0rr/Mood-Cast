@@ -113,7 +113,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                             .asMap()
                             .entries
                             .map((e) => _buildSongItem(e.value, e.key))
-                            .toList(),
+                            ,
                         if (_tracks.isEmpty)
                           const Center(
                             child: Padding(
