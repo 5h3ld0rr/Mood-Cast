@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../../theme.dart';
 import '../../services/mood_service.dart';
@@ -23,6 +24,14 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   double _zoomScale = 1.3; // Increased base zoom to ensure fill
   String? _detectedMood;
   final List<String> _moods = ['Happy', 'Angry', 'Sad', 'Natural'];
+
+  final FaceDetector _faceDetector = FaceDetector(
+    options: FaceDetectorOptions(
+      enableClassification: true,
+      enableTracking: true,
+      performanceMode: FaceDetectorMode.accurate,
+    ),
+  );
 
   final Map<String, String> _moodEmojis = {
     'Happy': '😊',
@@ -156,7 +165,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   }
 
   void _startScan() async {
-    if (_isScanning || _controller == null || !_controller!.value.isInitialized) {
+    if (_isScanning ||
+        _controller == null ||
+        !_controller!.value.isInitialized) {
       return;
     }
 
@@ -169,19 +180,44 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
     try {
       // 1. Take a picture for analysis
-      await _controller!.takePicture();
+      final XFile image = await _controller!.takePicture();
 
       // 2. Simulate progress for UI feel
-      for (int i = 0; i <= 60; i += 5) {
+      for (int i = 0; i <= 40; i += 5) {
         await Future.delayed(const Duration(milliseconds: 50));
         setState(() => _progress = i / 100);
       }
 
-      // 3. Pick a random mood (simplified since ML Kit is removed)
-      final resultMood = (_moods..shuffle()).first;
+      // 3. Real Mood Detection using ML Kit
+      final inputImage = InputImage.fromFilePath(image.path);
+      final faces = await _faceDetector.processImage(inputImage);
 
-      // 5. Complete progress
-      for (int i = 65; i <= 100; i += 10) {
+      String resultMood = 'Natural'; // Default
+
+      if (faces.isNotEmpty) {
+        final face = faces.first;
+        final smileProb = face.smilingProbability ?? 0.0;
+        final leftEyeOpenProb = face.leftEyeOpenProbability ?? 1.0;
+        final rightEyeOpenProb = face.rightEyeOpenProbability ?? 1.0;
+        final avgEyesOpen = (leftEyeOpenProb + rightEyeOpenProb) / 2;
+
+        debugPrint("ML Kit Analysis: Smile=$smileProb, EyesOpen=$avgEyesOpen");
+
+        if (smileProb > 0.4) {
+          resultMood = 'Happy';
+        } else if (smileProb < 0.1 && avgEyesOpen < 0.4) {
+          resultMood = 'Sad';
+        } else if (smileProb < 0.1 && avgEyesOpen > 0.8) {
+          resultMood = 'Angry';
+        } else {
+          resultMood = 'Natural';
+        }
+      } else {
+        resultMood = 'Natural';
+      }
+
+      // 4. Continue progress simulation
+      for (int i = 45; i <= 100; i += 10) {
         await Future.delayed(const Duration(milliseconds: 50));
         setState(() => _progress = i / 100);
       }
@@ -197,7 +233,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
       setState(() {
         _isScanning = false;
         _zoomScale = 1.3;
-        _detectedMood = 'Calm';
+        _detectedMood = 'Natural';
       });
     }
   }
@@ -206,6 +242,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     widget.activeNotifier.removeListener(_handleActiveChange);
+    _faceDetector.close();
     _disposeCamera();
     super.dispose();
   }
@@ -520,37 +557,68 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                   if (_detectedMood != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 20.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    RecommendationsScreen(mood: _detectedMood),
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RecommendationsScreen(
+                                      mood: _detectedMood,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.auto_awesome,
+                                color: Colors.black,
                               ),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.auto_awesome,
-                            color: Colors.black,
-                          ),
-                          label: const Text(
-                            'GENERATE VIBE PLAYLIST',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                              label: const Text(
+                                'GENERATE VIBE PLAYLIST',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                          const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _detectedMood = null;
+                                _progress = 0.0;
+                              });
+                            },
+                            icon: const Icon(
+                              Icons.refresh_rounded,
+                              color: Colors.white70,
+                            ),
+                            label: const Text(
+                              'SCAN AGAIN',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
 
