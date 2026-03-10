@@ -13,6 +13,7 @@ class SongInfo {
   final String? coverUrl;
   final String? previewUrl;
   final String? videoId;
+  final String? localPath;
   final bool isPinned;
 
   SongInfo({
@@ -21,6 +22,7 @@ class SongInfo {
     this.coverUrl,
     this.previewUrl,
     this.videoId,
+    this.localPath,
     this.isPinned = false,
   });
 
@@ -31,6 +33,7 @@ class SongInfo {
       'coverUrl': coverUrl,
       'previewUrl': previewUrl,
       'videoId': videoId,
+      'localPath': localPath,
       'isPinned': isPinned,
     };
   }
@@ -42,6 +45,7 @@ class SongInfo {
       coverUrl: map['coverUrl'],
       previewUrl: map['previewUrl'],
       videoId: map['videoId'],
+      localPath: map['localPath'],
       isPinned: map['isPinned'] ?? false,
     );
   }
@@ -262,6 +266,17 @@ class PlayerService {
 
     try {
       await _audioPlayer.stop();
+
+      // 0. Check if it's a direct local file (not from YouTube)
+      if (song.localPath != null && song.localPath!.isNotEmpty) {
+        debugPrint(
+          "PlayerService: Playing direct local file: ${song.localPath}",
+        );
+        await _audioPlayer.setAudioSource(AudioSource.file(song.localPath!));
+        await _audioPlayer.play();
+        debugPrint("PlayerService: Direct local playback started!");
+        return;
+      }
 
       String? targetVideoId = song.videoId;
 

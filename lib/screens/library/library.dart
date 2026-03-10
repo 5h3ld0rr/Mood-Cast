@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../theme.dart';
 import '../../services/database_service.dart';
 import '../../services/player_service.dart';
@@ -144,6 +145,54 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickAndPlayLocalFiles() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+        allowMultiple: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final List<SongInfo> localSongs = [];
+        for (var file in result.files) {
+          if (file.path != null) {
+            final fileName = file.name;
+            // Try to separate artist and title if the filename follows "Artist - Title" pattern
+            String title = fileName;
+            String artist = 'Local Artist';
+
+            if (fileName.contains(' - ')) {
+              final parts = fileName.split(' - ');
+              artist = parts[0];
+              title = parts[1].replaceAll(RegExp(r'\.(mp3|m4a|wav|flac)$'), '');
+            } else {
+              title = fileName.replaceAll(RegExp(r'\.(mp3|m4a|wav|flac)$'), '');
+            }
+
+            localSongs.add(
+              SongInfo(title: title, artist: artist, localPath: file.path),
+            );
+          }
+        }
+
+        if (localSongs.isNotEmpty) {
+          if (context.mounted) {
+            UIUtils.showSnackBar(
+              context,
+              'Added ${localSongs.length} local files to queue',
+            );
+          }
+          await PlayerService().playQueue(localSongs);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking files: $e');
+      if (context.mounted) {
+        UIUtils.showSnackBar(context, 'Error picking files: $e');
+      }
+    }
   }
 
   void _showArtistSearch() {
@@ -595,12 +644,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               'Songs from this device',
                               Icons.folder_open,
                               Colors.grey,
-                              onTap: () {
-                                UIUtils.showSnackBar(
-                                  context,
-                                  'Local files feature coming soon!',
-                                );
-                              },
+                              onTap: _pickAndPlayLocalFiles,
                             ),
                           ],
                         )
@@ -618,12 +662,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                 'Songs from this device',
                                 Icons.folder_open,
                                 Colors.grey,
-                                onTap: () {
-                                  UIUtils.showSnackBar(
-                                    context,
-                                    'Local files feature coming soon!',
-                                  );
-                                },
+                                onTap: _pickAndPlayLocalFiles,
                               );
                             }
 
