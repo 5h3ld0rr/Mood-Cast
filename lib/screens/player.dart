@@ -427,10 +427,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             song?.title ?? 'Midnight Solitude',
                                             style: const TextStyle(
                                               color: Colors.white,
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: -0.5,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
                                             ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
@@ -438,9 +439,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                                                 'MoodCast • 432Hz Ambient',
                                             style: const TextStyle(
                                               color: AppTheme.textMuted,
-                                              fontSize: 16,
+                                              fontSize: 14,
                                               fontWeight: FontWeight.w400,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
                                       );
