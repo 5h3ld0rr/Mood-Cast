@@ -10,6 +10,7 @@ import 'help_support.dart';
 import 'insights/insights.dart';
 import '../../services/player_service.dart';
 import '../../widgets/cached_image.dart';
+import '../../services/database_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -156,18 +157,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildStatItem('342', 'Hours Listened'),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white24,
-                            ),
+                            _buildVerticalDivider(),
                             _buildStatItem('89', 'Scans Completed'),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white24,
+                            _buildVerticalDivider(),
+                            StreamBuilder<List<Map<String, dynamic>>>(
+                              stream: DatabaseService().getPlaylists(),
+                              builder: (context, snapshot) {
+                                final count = snapshot.data?.length ?? 0;
+                                return _buildStatItem(
+                                  count.toString(),
+                                  'Playlists',
+                                );
+                              },
                             ),
-                            _buildStatItem('12', 'Playlists'),
                           ],
                         ),
                         const SizedBox(height: 40),
@@ -357,27 +359,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildVerticalDivider() {
+    return Container(
+      width: 1,
+      height: 32,
+      color: Colors.white.withValues(alpha: 0.1),
+    );
+  }
+
   Widget _buildStatItem(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF94A3B8), // Slate-400
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
