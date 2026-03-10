@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -19,8 +20,9 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
+  late AnimationController _rotationController;
 
   @override
   void initState() {
@@ -29,11 +31,16 @@ class _PlayerScreenState extends State<PlayerScreen>
       vsync: this,
       duration: const Duration(seconds: 4),
     )..repeat(reverse: true);
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20),
+    )..repeat();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _rotationController.dispose();
     super.dispose();
   }
 
@@ -250,14 +257,109 @@ class _PlayerScreenState extends State<PlayerScreen>
                         builder: (context, song, _) {
                           return Column(
                             children: [
-                              Hero(
-                                tag: 'player_art',
-                                child: CachedImage(
-                                  imageUrl: song?.coverUrl,
-                                  width: 200,
-                                  height: 200,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  RotationTransition(
+                                    turns: _rotationController,
+                                    child: Container(
+                                      width: 230,
+                                      height: 230,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: SweepGradient(
+                                          colors: [
+                                            AppTheme.primary.withValues(
+                                              alpha: 0,
+                                            ),
+                                            AppTheme.primary,
+                                            const Color(0xFF00D2FF),
+                                            AppTheme.primary,
+                                            AppTheme.primary.withValues(
+                                              alpha: 0,
+                                            ),
+                                          ],
+                                          stops: const [
+                                            0.0,
+                                            0.4,
+                                            0.5,
+                                            0.6,
+                                            1.0,
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  AnimatedBuilder(
+                                    animation: _animationController,
+                                    builder: (context, child) {
+                                      return Container(
+                                        width:
+                                            215 +
+                                            15 * _animationController.value,
+                                        height:
+                                            215 +
+                                            15 * _animationController.value,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppTheme.primary.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                            width: 3,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppTheme.primary
+                                                  .withValues(
+                                                    alpha:
+                                                        0.4 *
+                                                        _animationController
+                                                            .value,
+                                                  ),
+                                              blurRadius: 30,
+                                              spreadRadius: 8,
+                                            ),
+                                            BoxShadow(
+                                              color: const Color(0xFF00D2FF)
+                                                  .withValues(
+                                                    alpha:
+                                                        0.2 *
+                                                        _animationController
+                                                            .value,
+                                                  ),
+                                              blurRadius: 15,
+                                              spreadRadius: 2,
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  Hero(
+                                    tag: 'player_art',
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: CachedImage(
+                                        imageUrl: song?.coverUrl,
+                                        width: 200,
+                                        height: 200,
+                                        borderRadius: BorderRadius.circular(
+                                          100,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 32),
                               Text(
@@ -396,162 +498,16 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ),
                     ),
 
-                    // Animation Area (Now at Bottom)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              AnimatedBuilder(
-                                animation: _animationController,
-                                builder: (context, child) {
-                                  return Container(
-                                    width:
-                                        200 + 20 * _animationController.value,
-                                    height:
-                                        200 + 20 * _animationController.value,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppTheme.primary.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        width: 2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.primary.withValues(
-                                            alpha:
-                                                0.3 *
-                                                _animationController.value,
-                                          ),
-                                          blurRadius: 30,
-                                          spreadRadius: 5,
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                              Container(
-                                width: 140,
-                                height: 140,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppTheme.primary.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                width: 90,
-                                height: 90,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppTheme.primary,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primary.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      blurRadius: 15,
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.air,
-                                      color: Colors.white,
-                                      size: 30,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    ValueListenableBuilder<String>(
-                                      valueListenable:
-                                          MoodService().currentMood,
-                                      builder: (context, mood, _) {
-                                        return Text(
-                                          mood == 'Focused'
-                                              ? 'WORK MODE'
-                                              : mood == 'Energetic'
-                                              ? 'HYPE UP'
-                                              : 'DEEP CALM',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                    // Animation Area (Waveform)
+                    Expanded(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                          child: MusicWaveform(
+                            color: AppTheme.primary.withValues(alpha: 0.8),
+                            count: 40,
                           ),
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Guided Breathing',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Text(
-                                'Inhale',
-                                style: TextStyle(
-                                  color: AppTheme.primary,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                '•',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Hold',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                '•',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Exhale',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
 
@@ -1205,4 +1161,105 @@ class _PlayerScreenState extends State<PlayerScreen>
       ),
     );
   }
+}
+
+class MusicWaveform extends StatefulWidget {
+  final Color color;
+  final int count;
+
+  const MusicWaveform({super.key, required this.color, this.count = 50});
+
+  @override
+  State<MusicWaveform> createState() => _MusicWaveformState();
+}
+
+class _MusicWaveformState extends State<MusicWaveform>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          size: const Size(double.infinity, 60),
+          painter: WaveformPainter(
+            animationValue: _controller.value,
+            color: widget.color,
+            count: widget.count,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class WaveformPainter extends CustomPainter {
+  final double animationValue;
+  final Color color;
+  final int count;
+
+  WaveformPainter({
+    required this.animationValue,
+    required this.color,
+    required this.count,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+
+    final double width = size.width;
+    final double height = size.height;
+    final double spacing = width / count;
+
+    for (int i = 0; i < count; i++) {
+      // Create a wave effect that moves from left to right
+      // We use sine waves with different frequencies and phases
+      final double x = i * spacing + spacing / 2;
+
+      // Calculate height based on index and animation value
+      // Center bars are taller, ends are shorter
+      final double distFromCenter = (i - count / 2).abs() / (count / 2);
+      final double baseHeight = (1.0 - distFromCenter * 0.7) * height;
+
+      // Add animation variation
+      final double variation =
+          0.4 * math.sin(animationValue * 2 * math.pi + i * 0.2) +
+          0.3 * math.sin(animationValue * 4 * math.pi + i * 0.5);
+
+      final double barHeight = (baseHeight * (0.4 + 0.6 * variation)).clamp(
+        4.0,
+        height,
+      );
+
+      canvas.drawLine(
+        Offset(x, height / 2 - barHeight / 2),
+        Offset(x, height / 2 + barHeight / 2),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(WaveformPainter oldDelegate) => true;
 }
