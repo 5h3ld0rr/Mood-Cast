@@ -229,7 +229,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
         _detectedMood = resultMood;
       });
       MoodService().updateMood(_detectedMood!);
-      MetricsService.incrementScans();
+      MetricsService.saveMoodScan(_detectedMood!);
     } catch (e) {
       debugPrint('Error during scan: $e');
       setState(() {

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../theme.dart';
+import '../../../services/metrics_service.dart';
+import 'package:intl/intl.dart';
 import 'recent_sessions.dart';
 
 class InsightsScreen extends StatefulWidget {
@@ -10,332 +13,275 @@ class InsightsScreen extends StatefulWidget {
 }
 
 class _InsightsScreenState extends State<InsightsScreen> {
-  Map<String, dynamic> _getTabData(String tab) {
-    switch (tab) {
-      case 'Day':
-        return {
-          'positive': '85%',
-          'calm': '30%',
-          'joy': '55%',
-          'focus': '10%',
-          'other': '5%',
-          'avg': '7.2',
-          'bars': [0.6, 0.7, 0.8, 0.6, 0.7, 0.9, 0.8],
-        };
-      case 'Month':
-        return {
-          'positive': '68%',
-          'calm': '50%',
-          'joy': '18%',
-          'focus': '20%',
-          'other': '12%',
-          'avg': '6.4',
-          'bars': [0.5, 0.6, 0.5, 0.7, 0.6, 0.5, 0.6],
-        };
-      case 'Week':
-      default:
-        return {
-          'positive': '72%',
-          'calm': '45%',
-          'joy': '27%',
-          'focus': '18%',
-          'other': '10%',
-          'avg': '6.8',
-          'bars': [0.4, 0.65, 0.85, 0.55, 0.45, 0.75, 0.5],
-        };
+  final Map<String, String> _moodEmojis = {
+    'Happy': '😊',
+    'Angry': '😠',
+    'Sad': '😔',
+    'Natural': '😐',
+  };
+
+  final Map<String, Color> _moodColors = {
+    'Happy': Colors.tealAccent,
+    'Angry': Colors.redAccent,
+    'Sad': Colors.blueAccent,
+    'Natural': AppTheme.primary,
+  };
+
+  Map<String, dynamic> _calculateStats(List<Map<String, dynamic>> history, String range) {
+    if (history.isEmpty) {
+      return {
+        'positive': '0%',
+        'breakdown': {'Natural': 100},
+        'avg': '0.0',
+        'bars': List.generate(7, (_) => 0.1),
+        'recent': <Map<String, dynamic>>[],
+      };
     }
+
+    final now = DateTime.now();
+    List<Map<String, dynamic>> filtered = history;
+    
+    if (range == 'Day') {
+      filtered = history.where((m) {
+        final ts = m['timestamp'] as Timestamp?;
+        if (ts == null) return false;
+        return now.difference(ts.toDate()).inHours < 24;
+      }).toList();
+    } else if (range == 'Week') {
+      filtered = history.where((m) {
+        final ts = m['timestamp'] as Timestamp?;
+        if (ts == null) return false;
+        return now.difference(ts.toDate()).inDays < 7;
+      }).toList();
+    }
+
+    if (filtered.isEmpty) filtered = history.take(10).toList();
+
+    // Mood Breakdown
+    Map<String, int> counts = {};
+    for (var m in filtered) {
+      final mood = m['mood'] as String;
+      counts[mood] = (counts[mood] ?? 0) + 1;
+    }
+
+    int total = filtered.length;
+    int positiveCount = (counts['Happy'] ?? 0);
+    String positivePercent = total > 0 ? '${((positiveCount / total) * 100).toInt()}%' : '0%';
+
+    // Intensity calculation
+    double sumIntensity = 0;
+    for (var m in filtered) {
+      final mood = m['mood'];
+      if (mood == 'Happy') sumIntensity += 0.9;
+      else if (mood == 'Natural') sumIntensity += 0.6;
+      else if (mood == 'Angry') sumIntensity += 0.8;
+      else if (mood == 'Sad') sumIntensity += 0.3;
+    }
+    double avg = total > 0 ? sumIntensity / total : 0.0;
+
+    // Last 7 days intensity bars
+    List<double> bars = List.generate(7, (index) {
+      final day = now.subtract(Duration(days: 6 - index));
+      final dayMoods = history.where((m) {
+        final ts = m['timestamp'] as Timestamp?;
+        if (ts == null) return false;
+        final date = ts.toDate();
+        return date.year == day.year && date.month == day.month && date.day == day.day;
+      }).toList();
+
+      if (dayMoods.isEmpty) return 0.1;
+      double dSum = 0;
+      for (var m in dayMoods) {
+        final mood = m['mood'];
+        if (mood == 'Happy') dSum += 0.9;
+        else if (mood == 'Natural') dSum += 0.6;
+        else if (mood == 'Angry') dSum += 0.8;
+        else if (mood == 'Sad') dSum += 0.3;
+      }
+      return (dSum / dayMoods.length).clamp(0.1, 1.0);
+    });
+
+    return {
+      'positive': positivePercent,
+      'breakdown': counts,
+      'avg': (avg * 10).toStringAsFixed(1),
+      'bars': bars,
+      'recent': history.take(5).toList(),
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      initialIndex: 1, // Default to 'Week'
-      child: Scaffold(
-        backgroundColor: const Color(0xFF080C14),
-        body: Stack(
-          children: [
-            // Gradients
-            Positioned(
-              top: -100,
-              right: -100,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [Color(0xFF1A3A5F), Colors.transparent],
-                    stops: [0.0, 0.5],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -100,
-              left: -100,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [Color(0xFF0D1526), Colors.transparent],
-                    stops: [0.0, 0.5],
-                  ),
-                ),
-              ),
-            ),
-
-            SafeArea(
-              child: Column(
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 12.0,
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: MetricsService.getMoodHistoryStream(),
+      builder: (context, snapshot) {
+        final history = snapshot.data ?? [];
+        
+        return DefaultTabController(
+          length: 3,
+          initialIndex: 1,
+          child: Scaffold(
+            backgroundColor: const Color(0xFF080C14),
+            body: Stack(
+              children: [
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [Color(0xFF1A3A5F), Colors.transparent],
+                        stops: [0.0, 0.5],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+                  ),
+                ),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
                           children: [
                             IconButton(
-                              icon: const Icon(
-                                Icons.arrow_back_ios_new,
-                                color: Colors.white,
-                                size: 24,
-                              ),
+                              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
                               onPressed: () => Navigator.pop(context),
                             ),
-                            const SizedBox(width: 4),
                             const Text(
                               'Trends & Insights',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
-                        Row(
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                        ),
+                        child: TabBar(
+                          indicatorColor: AppTheme.primary,
+                          labelColor: AppTheme.primary,
+                          unselectedLabelColor: AppTheme.textMuted,
+                          dividerColor: Colors.transparent,
+                          tabs: const [Tab(text: 'Day'), Tab(text: 'Week'), Tab(text: 'Month')],
+                        ),
+                      ),
+                      Expanded(
+                        child: TabBarView(
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.calendar_month,
-                                color: AppTheme.textMuted,
-                              ),
-                              onPressed: () {},
-                            ),
+                            _buildInsightsContent(history, 'Day'),
+                            _buildInsightsContent(history, 'Week'),
+                            _buildInsightsContent(history, 'Month'),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-
-                  // Navigation Tabs
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
                       ),
-                    ),
-                    child: TabBar(
-                      indicatorColor: AppTheme.primary,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: AppTheme.primary,
-                      unselectedLabelColor: AppTheme.textMuted,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                      dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(text: 'Day'),
-                        Tab(text: 'Week'),
-                        Tab(text: 'Month'),
-                      ],
-                    ),
+                    ],
                   ),
-
-                  // Swipable Content
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        _buildInsightsContent('Day'),
-                        _buildInsightsContent('Week'),
-                        _buildInsightsContent('Month'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInsightsContent(String tabType) {
-    final tabData = _getTabData(tabType);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Mood Breakdown
-          const Text(
-            'Mood Breakdown',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.cardBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
-            child: Column(
-              children: [
-                // Chart Placeholder
-                Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.primary, width: 14),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          tabData['positive'],
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text(
-                          'POSITIVE',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _buildLegendItem(
-                            'Calm',
-                            tabData['calm'],
-                            AppTheme.primary,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildLegendItem(
-                            'Joy',
-                            tabData['joy'],
-                            Colors.tealAccent,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _buildLegendItem(
-                            'Focus',
-                            tabData['focus'],
-                            Colors.amberAccent,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildLegendItem(
-                            'Other',
-                            tabData['other'],
-                            Colors.grey,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+        );
+      },
+    );
+  }
 
-          // Emotional Intensity
+  Widget _buildInsightsContent(List<Map<String, dynamic>> history, String tabType) {
+    final stats = _calculateStats(history, tabType);
+    final breakdown = stats['breakdown'] as Map<String, int>;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Mood Breakdown', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            ),
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 140,
+                      height: 140,
+                      child: CircularProgressIndicator(
+                        value: double.tryParse(stats['positive'].replaceAll('%', ''))! / 100,
+                        strokeWidth: 12,
+                        backgroundColor: Colors.white.withValues(alpha: 0.05),
+                        valueColor: const AlwaysStoppedAnimation(Colors.tealAccent),
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        Text(stats['positive'], style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                        const Text('POSITIVE', style: TextStyle(color: AppTheme.textMuted, fontSize: 10, letterSpacing: 1)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                Wrap(
+                  spacing: 20,
+                  runSpacing: 12,
+                  children: _moodEmojis.keys.map((mood) {
+                    final count = breakdown[mood] ?? 0;
+                    return Container(
+                      width: (MediaQuery.of(context).size.width - 100) / 2,
+                      child: Row(
+                        children: [
+                          Container(width: 8, height: 8, decoration: BoxDecoration(color: _moodColors[mood], shape: BoxShape.circle)),
+                          const SizedBox(width: 8),
+                          Text(mood, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                          const Spacer(),
+                          Text(count.toString(), style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'Emotional Intensity',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Avg: ${tabData['avg']}',
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              const Text('Emotional Intensity', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Avg: ${stats['avg']}/10', style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Container(
-            height: 150,
-            padding: const EdgeInsets.all(20),
+            height: 160,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: (tabData['bars'] as List<double>)
-                  .map((bar) => _buildBar(bar))
-                  .toList(),
+              children: (stats['bars'] as List<double>).map((val) => _buildBar(val)).toList(),
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Recent Sessions
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Recent Sessions',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              const Text('Recent History', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -355,147 +301,60 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-
-          _buildSessionTile(
-            'Deep Relaxation',
-            'Today • 10:30 AM',
-            '15m',
-            Icons.sentiment_very_satisfied,
-            Colors.tealAccent,
-          ),
-          const SizedBox(height: 12),
-          _buildSessionTile(
-            'Morning Flow',
-            'Yesterday • 08:15 AM',
-            '20m',
-            Icons.self_improvement,
-            AppTheme.primary,
-          ),
-          const SizedBox(height: 12),
-          _buildSessionTile(
-            'Work Sprint',
-            '24 Oct • 02:45 PM',
-            '45m',
-            Icons.bolt,
-            Colors.amberAccent,
-          ),
+          const SizedBox(height: 16),
+          ... (stats['recent'] as List).map((m) {
+            final mood = m['mood'] as String;
+            final ts = m['timestamp'] as Timestamp?;
+            final dateStr = ts != null ? DateFormat('MMM dd, hh:mm a').format(ts.toDate()) : 'Recent';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildSessionTile(mood, dateStr, _moodEmojis[mood]!, _moodColors[mood]!),
+            );
+          }),
           const SizedBox(height: 100),
         ],
       ),
     );
   }
 
-  Widget _buildLegendItem(String label, String value, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBar(double heightFactor) {
     return Container(
-      width: 20,
+      width: 14,
+      height: 100 * heightFactor,
       decoration: BoxDecoration(
-        color: AppTheme.primary.withValues(alpha: 0.8),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-      ),
-      child: FractionallySizedBox(
-        heightFactor: heightFactor,
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppTheme.primary,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-          ),
+        gradient: LinearGradient(
+          colors: [AppTheme.primary.withValues(alpha: 0.3), AppTheme.primary],
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
         ),
+        borderRadius: BorderRadius.circular(4),
       ),
     );
   }
 
-  Widget _buildSessionTile(
-    String title,
-    String subtitle,
-    String trailing,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildSessionTile(String title, String subtitle, String emoji, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 24)),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
+                Text(subtitle, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
               ],
             ),
           ),
-          Text(
-            trailing,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
+          Icon(Icons.chevron_right, color: Colors.white.withValues(alpha: 0.2)),
         ],
       ),
     );

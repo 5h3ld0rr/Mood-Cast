@@ -12,6 +12,38 @@ class MetricsService {
   }
 
   // Scans
+  static Future<void> saveMoodScan(String mood) async {
+    final docRef = _userDoc;
+    if (docRef == null) return;
+
+    // Increment counter
+    await docRef.set({
+      'scans_completed': FieldValue.increment(1),
+    }, SetOptions(merge: true));
+
+    // Save to history
+    await docRef.collection('mood_history').add({
+      'mood': mood,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Stream<List<Map<String, dynamic>>> getMoodHistoryStream() {
+    final docRef = _userDoc;
+    if (docRef == null) return Stream.value([]);
+    return docRef
+        .collection('mood_history')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
   static Future<void> incrementScans() async {
     final docRef = _userDoc;
     if (docRef == null) return;
