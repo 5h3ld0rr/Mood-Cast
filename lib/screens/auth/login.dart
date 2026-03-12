@@ -98,8 +98,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final moodTheme = AppTheme.getThemeForMood('Sad');
     return Theme(
-      data: AppTheme.getThemeForMood('Natural'),
+      data: moodTheme,
       child: Scaffold(
         backgroundColor: AppTheme.backgroundDeep, // from tailwind HTML #020617
         body: Stack(
@@ -115,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppTheme.primary.withValues(alpha: 0.15),
+                      moodTheme.primaryColor.withValues(alpha: 0.15),
                       Colors.transparent,
                     ],
                     stops: const [0.0, 0.7],
@@ -133,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppTheme.primary.withValues(alpha: 0.1),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       Colors.transparent,
                     ],
                     stops: const [0.0, 0.7],
@@ -158,26 +159,26 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: AppTheme.primary.withValues(alpha: 0.2),
+                          color: moodTheme.primaryColor.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primary.withValues(alpha: 0.4),
+                              color: moodTheme.primaryColor.withValues(alpha: 0.4),
                               blurRadius: 20,
                               spreadRadius: 0,
                             ),
                           ],
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.music_note,
-                          color: AppTheme.primary,
+                          color: moodTheme.primaryColor,
                           size: 40,
                         ),
                       ),
                       const SizedBox(height: 24),
                       Text(
                         'MoodCast',
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        style: moodTheme.textTheme.displayLarge?.copyWith(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
@@ -187,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Music for every mood',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: moodTheme.textTheme.bodyMedium?.copyWith(
                           fontSize: 18,
                           color: AppTheme.textMuted,
                         ),
@@ -243,10 +244,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   GestureDetector(
                                     onTap: _isLoading ? null : _resetPassword,
-                                    child: const Text(
+                                    child: Text(
                                       'Forgot?',
                                       style: TextStyle(
-                                        color: AppTheme.primary,
+                                        color: moodTheme.primaryColor,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -446,10 +447,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               'Sign up',
                               style: TextStyle(
-                                color: AppTheme.primary,
+                                color: moodTheme.primaryColor,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),

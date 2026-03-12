@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/mood_service.dart';
 import '../theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MoodBackground extends StatefulWidget {
   final Widget child;
@@ -36,9 +37,12 @@ class _MoodBackgroundState extends State<MoodBackground>
     return ValueListenableBuilder<String>(
       valueListenable: MoodService().currentMood,
       builder: (context, mood, _) {
-        final primaryColor = AppTheme.moodColors[mood] ?? AppTheme.primary;
+        // Force 'Sad' (Blue/Black) mood for Auth/Splash screens if no user is logged in
+        final activeMood = FirebaseAuth.instance.currentUser == null ? 'Sad' : mood;
+        
+        final primaryColor = AppTheme.moodColors[activeMood] ?? AppTheme.primary;
         final bgColor =
-            AppTheme.moodBackgrounds[mood] ?? AppTheme.backgroundDark;
+            AppTheme.moodBackgrounds[activeMood] ?? AppTheme.backgroundDark;
 
         return Stack(
           children: [
@@ -63,7 +67,7 @@ class _MoodBackgroundState extends State<MoodBackground>
                       color: primaryColor.withValues(alpha: 0.15),
                       size: 500,
                     ),
-                    if (mood == 'Angry') ...[
+                    if (activeMood == 'Angry') ...[
                       _buildGlowWidget(
                         top: 200 * _animation.value,
                         left: 100 * _animation.value,
@@ -71,7 +75,7 @@ class _MoodBackgroundState extends State<MoodBackground>
                         size: 300,
                       ),
                     ],
-                    if (mood == 'Happy') ...[
+                    if (activeMood == 'Happy') ...[
                       _buildGlowWidget(
                         bottom: 0,
                         right: 0,
@@ -86,7 +90,7 @@ class _MoodBackgroundState extends State<MoodBackground>
 
             // The actual app content
             // We wrap it in a Theme to provide mood colors to all components
-            Theme(data: AppTheme.getThemeForMood(mood), child: widget.child),
+            Theme(data: AppTheme.getThemeForMood(activeMood), child: widget.child),
           ],
         );
       },

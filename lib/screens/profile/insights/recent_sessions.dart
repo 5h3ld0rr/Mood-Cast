@@ -16,7 +16,7 @@ class RecentSessionsScreen extends StatelessWidget {
       'Natural': '😐',
     };
 
-    final Map<String, Color> _moodColors = {
+    final Map<String, Color> moodColors = {
       'Happy': Colors.purpleAccent,
       'Angry': Colors.redAccent,
       'Sad': Colors.blueAccent,
@@ -74,7 +74,7 @@ class RecentSessionsScreen extends StatelessWidget {
                     mood,
                     dateStr,
                     moodEmojis[mood] ?? '👤',
-                    _moodColors[mood] ?? Colors.white,
+                    moodColors[mood] ?? Colors.white,
                   ),
                 );
               },
