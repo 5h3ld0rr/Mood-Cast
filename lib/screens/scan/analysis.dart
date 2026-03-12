@@ -23,7 +23,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   double _progress = 0.0;
   double _zoomScale = 1.3; // Increased base zoom to ensure fill
   String? _detectedMood;
-  final List<String> _moods = ['Happy', 'Angry', 'Sad', 'Natural'];
+
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(
@@ -697,82 +697,6 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       ),
                     ),
                   ],
-
-                  const SizedBox(height: 30),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'OR SELECT YOUR MOOD',
-                      style: TextStyle(
-                        color: Colors.white38,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      children: _moods.map((mood) {
-                        final isSelected = _detectedMood == mood;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _detectedMood = mood;
-                                _progress = 1.0;
-                                _isScanning = false;
-                              });
-                              MoodService().updateMood(mood);
-                              MetricsService.saveMoodScan(mood);
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Theme.of(context).primaryColor
-                                    : Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Theme.of(context).primaryColor
-                                      : Colors.white.withValues(alpha: 0.1),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    _moodEmojis[mood]!,
-                                    style: const TextStyle(fontSize: 18),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    mood,
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.black
-                                          : Colors.white70,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
 
                   const SizedBox(height: 80),
                 ],
