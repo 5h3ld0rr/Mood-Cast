@@ -729,6 +729,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 _isScanning = false;
                               });
                               MoodService().updateMood(mood);
+                              MetricsService.saveMoodScan(mood);
                             },
                             borderRadius: BorderRadius.circular(20),
                             child: AnimatedContainer(

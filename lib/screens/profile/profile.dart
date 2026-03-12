@@ -140,7 +140,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           builder: (context, snapshot) {
                             return _buildStatItem(
                               (snapshot.data ?? 0).toString(),
-                              'Scans Completed',
+                              'Scans Done',
+                            );
+                          },
+                        ),
+                        _buildVerticalDivider(),
+                        StreamBuilder<int>(
+                          stream: MetricsService.getStreakStream(),
+                          builder: (context, snapshot) {
+                            return _buildStatItem(
+                              '${snapshot.data ?? 0}🔥',
+                              'Streak',
                             );
                           },
                         ),
@@ -157,7 +167,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
+
+                    // Streak Badges
+                    StreamBuilder<List<String>>(
+                      stream: MetricsService.getStreakBadgesStream(),
+                      builder: (context, snapshot) {
+                        final badges = snapshot.data ?? [];
+                        if (badges.isEmpty) return const SizedBox.shrink();
+                        return Column(
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              children: badges.map((badge) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    badge,
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      },
+                    ),
 
                     // Menu Items
                     Container(

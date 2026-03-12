@@ -235,6 +235,69 @@ class _InsightsScreenState extends State<InsightsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Streak Info
+          StreamBuilder<int>(
+            stream: MetricsService.getStreakStream(),
+            builder: (context, snapshot) {
+              final streak = snapshot.data ?? 0;
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Text('🔥', style: TextStyle(fontSize: 24)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$streak Day Streak',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            streak > 0 
+                              ? 'You\'re on fire! Keep it up.' 
+                              : 'Start your streak today!',
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodyMedium?.color ?? AppTheme.textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           const Text(
             'Mood Breakdown',
             style: TextStyle(

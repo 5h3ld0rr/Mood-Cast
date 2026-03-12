@@ -16,9 +16,36 @@ class MetricsService {
     final docRef = _userDoc;
     if (docRef == null) return;
 
-    // Increment counter
+    // 1. Update Streak
+    final userSnap = await docRef.get();
+    final userData = userSnap.data() as Map<String, dynamic>?;
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    int currentStreak = userData?['current_streak'] ?? 0;
+    final lastStreakTimestamp = userData?['last_streak_date'] as Timestamp?;
+    
+    if (lastStreakTimestamp != null) {
+      final lastDate = lastStreakTimestamp.toDate();
+      final lastStreakDate = DateTime(lastDate.year, lastDate.month, lastDate.day);
+      final difference = today.difference(lastStreakDate).inDays;
+      
+      if (difference == 1) {
+        currentStreak++;
+      } else if (difference > 1) {
+        currentStreak = 1;
+      }
+      // If difference is 0, same day, streak stays same
+    } else {
+      currentStreak = 1;
+    }
+
+    // 2. Update stats and history
     await docRef.set({
       'scans_completed': FieldValue.increment(1),
+      'current_streak': currentStreak,
+      'last_streak_date': Timestamp.fromDate(today),
     }, SetOptions(merge: true));
 
     // Save to history
@@ -95,5 +122,40 @@ class MetricsService {
     final data = doc.data() as Map<String, dynamic>?;
     final seconds = (data?['playtime_seconds'] as num?)?.toInt() ?? 0;
     return seconds ~/ 3600;
+  }
+
+  static Stream<int> getStreakStream() {
+    final docRef = _userDoc;
+    if (docRef == null) return Stream.value(0);
+    return docRef.snapshots().map((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+
+      // Check if streak is still valid (scanned today or yesterday)
+      final lastStreakTimestamp = data?['last_streak_date'] as Timestamp?;
+      if (lastStreakTimestamp != null) {
+        final lastDate = lastStreakTimestamp.toDate();
+        final lastStreakDate =
+            DateTime(lastDate.year, lastDate.month, lastDate.day);
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final difference = today.difference(lastStreakDate).inDays;
+
+        if (difference > 1) return 0; // Streak broken
+      } else {
+        return 0;
+      }
+
+      return (data?['current_streak'] as num?)?.toInt() ?? 0;
+    });
+  }
+
+  static Stream<List<String>> getStreakBadgesStream() {
+    return getStreakStream().map((streak) {
+      List<String> badges = [];
+      if (streak >= 3) badges.add('3 Day Streak 🔥');
+      if (streak >= 7) badges.add('7 Day Streak ✨');
+      if (streak >= 30) badges.add('30 Day Legend 🏆');
+      return badges;
+    });
   }
 }
