@@ -9,7 +9,7 @@ class HelpSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       body: Stack(
         children: [
           // Background Glows
@@ -19,10 +19,10 @@ class HelpSupportScreen extends StatelessWidget {
             child: Container(
               width: 400,
               height: 400,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Color(0xFF1A3A5F), Colors.transparent],
+                  colors: [Theme.of(context).primaryColor.withValues(alpha: 0.3), Colors.transparent],
                   stops: [0.0, 0.5],
                 ),
               ),
@@ -34,10 +34,10 @@ class HelpSupportScreen extends StatelessWidget {
             child: Container(
               width: 400,
               height: 400,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Color(0xFF0D1526), Colors.transparent],
+                  colors: [Theme.of(context).primaryColor.withValues(alpha: 0.1), Colors.transparent],
                   stops: [0.0, 0.5],
                 ),
               ),
@@ -78,30 +78,34 @@ class HelpSupportScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader('Frequently Asked Questions'),
+                        _buildSectionHeader(context, 'Frequently Asked Questions'),
                         const SizedBox(height: 16),
                         _buildFaqItem(
+                          context,
                           question: 'How does MoodCast analyze my mood?',
                           answer:
                               'MoodCast uses advanced AI to analyze the acoustic properties of the music you listen to, the time of day, and your previous listening history to determine your current state of mind.',
                         ),
                         const SizedBox(height: 12),
                         _buildFaqItem(
+                          context,
                           question: 'How do I cancel my subscription?',
                           answer:
                               'To cancel or manage your subscription, please visit your account settings in the Google Play Store or Apple App Store, depending on your device.',
                         ),
                         const SizedBox(height: 12),
                         _buildFaqItem(
+                          context,
                           question: 'Can I use MoodCast offline?',
                           answer:
                               'Offline listening is currently available exclusively for users subscribed to our Premium plans (Monthly Pro or Yearly Pro).',
                         ),
                         const SizedBox(height: 32),
 
-                        _buildSectionHeader('Contact Us'),
+                        _buildSectionHeader(context, 'Contact Us'),
                         const SizedBox(height: 16),
                         _buildContactOption(
+                          context,
                           icon: Icons.email_outlined,
                           title: 'Email Support',
                           subtitle: 'support@moodcast.app',
@@ -126,6 +130,7 @@ class HelpSupportScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         _buildContactOption(
+                          context,
                           icon: Icons.chat_bubble_outline,
                           title: 'Live Chat',
                           subtitle: 'Available 9 AM - 5 PM EST',
@@ -144,14 +149,14 @@ class HelpSupportScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(
+                                  color: Theme.of(context).primaryColor.withValues(
                                     alpha: 0.1,
                                   ),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.audiotrack,
-                                  color: AppTheme.primary,
+                                  color: Theme.of(context).primaryColor,
                                   size: 64,
                                 ),
                               ),
@@ -165,10 +170,10 @@ class HelpSupportScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Version 1.0.0',
                                 style: TextStyle(
-                                  color: AppTheme.primary,
+                                  color: Theme.of(context).primaryColor,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -189,18 +194,18 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Text(
       title,
-      style: const TextStyle(
-        color: AppTheme.primary,
+      style: TextStyle(
+        color: Theme.of(context).primaryColor,
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
     );
   }
 
-  Widget _buildFaqItem({required String question, required String answer}) {
+  Widget _buildFaqItem(BuildContext context, {required String question, required String answer}) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
@@ -210,7 +215,7 @@ class HelpSupportScreen extends StatelessWidget {
       child: Theme(
         data: ThemeData(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          iconColor: AppTheme.primary,
+          iconColor: Theme.of(context).primaryColor,
           collapsedIconColor: Colors.white,
           title: Text(
             question,
@@ -242,7 +247,8 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContactOption({
+  Widget _buildContactOption(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -263,10 +269,10 @@ class HelpSupportScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppTheme.primary, size: 28),
+              child: Icon(icon, color: Theme.of(context).primaryColor, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(

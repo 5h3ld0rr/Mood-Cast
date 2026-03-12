@@ -20,11 +20,11 @@ class RecentSessionsScreen extends StatelessWidget {
       'Happy': Colors.tealAccent,
       'Angry': Colors.redAccent,
       'Sad': Colors.blueAccent,
-      'Natural': AppTheme.primary,
+      'Natural': Theme.of(context).primaryColor,
     };
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         title: const Text(
           'Recent History',

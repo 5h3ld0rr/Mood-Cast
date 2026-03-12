@@ -10,8 +10,10 @@ import '../../services/mood_service.dart';
 import '../../services/database_service.dart';
 import '../notifications/notification_list.dart';
 import 'recommendations.dart';
+import 'discover_artists.dart';
 import '../../widgets/cached_image.dart';
 import '../../services/connectivity_service.dart';
+import '../search/artist_details.dart' as artist_details;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final MoodService _moodService = MoodService();
   final DatabaseService _dbService = DatabaseService();
   List<YouTubeMusicMetadata> _recommendations = [];
+  List<YouTubeArtistMetadata> _suggestedArtists = [];
   bool _isLoading = true;
+  bool _isArtistsLoading = true;
 
   @override
   void initState() {
@@ -56,7 +60,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchRecommendations() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _isArtistsLoading = true;
+    });
 
     try {
       // 1. Get Liked Songs
@@ -73,10 +80,16 @@ class _HomeScreenState extends State<HomeScreen> {
         country: country,
       );
 
+      // 4. Get Recommended Artists
+      final artistQuery = _getArtistQueryForMood(_moodService.currentMood.value);
+      final artists = await _ytmService.searchArtists(artistQuery);
+
       if (mounted) {
         setState(() {
-          _recommendations = tracks.take(6).toList(); // Show top 6 on home
+          _recommendations = tracks.take(6).toList();
+          _suggestedArtists = artists.take(8).toList();
           _isLoading = false;
+          _isArtistsLoading = false;
         });
       }
     } catch (e) {
@@ -299,36 +312,63 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 32),
 
-                        // Recommended Section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Recommended for you',
-                              style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyMedium?.color ??
-                                    AppTheme.textMuted,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                        // Suggested Artists Section
+                        _buildSectionHeader(
+                          context,
+                          'Artists You Might Like',
+                          onSeeAll: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DiscoverArtistsScreen(
+                                  mood: _moodService.currentMood.value,
+                                  initialArtists: _suggestedArtists,
+                                ),
                               ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => RecommendationsScreen(
-                                      mood: _moodService.currentMood.value,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 120,
+                          child: _isArtistsLoading
+                              ? ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: 5,
+                                  itemBuilder: (context, index) => Container(
+                                    width: 100,
+                                    margin: const EdgeInsets.only(right: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white10,
+                                      shape: BoxShape.circle,
                                     ),
                                   ),
-                                );
-                              },
-                              child: Text(
-                                'See All',
-                                style: TextStyle(color: Theme.of(context).primaryColor),
+                                )
+                              : ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: _suggestedArtists.length,
+                                  itemBuilder: (context, index) {
+                                    final artist = _suggestedArtists[index];
+                                    return _buildArtistItem(context, artist);
+                                  },
+                                ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Recommended Section
+                        _buildSectionHeader(
+                          context,
+                          'Recommended for you',
+                          onSeeAll: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => RecommendationsScreen(
+                                  mood: _moodService.currentMood.value,
+                                ),
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 8),
 
@@ -423,6 +463,112 @@ class _HomeScreenState extends State<HomeScreen> {
         style: TextStyle(
           color: Colors.white.withValues(alpha: 0.8),
           fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  String _getArtistQueryForMood(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'happy':
+        return 'Uplifting Pop Artists';
+      case 'sad':
+        return 'Soulful Indie Artists';
+      case 'energetic':
+        return 'Electronic Dance Artists';
+      case 'calm':
+        return 'Ambient Piano Artists';
+      case 'focused':
+        return 'Lo-Fi Chill Artists';
+      case 'relaxing':
+        return 'Acoustic Folk Artists';
+      case 'inspired':
+        return 'Cinematic Instrumental Artists';
+      case 'angry':
+        return 'Alternative Rock Bands';
+      default:
+        return 'Top Global Artists';
+    }
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title,
+      {VoidCallback? onSeeAll}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium?.color ??
+                AppTheme.textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        if (onSeeAll != null)
+          TextButton(
+            onPressed: onSeeAll,
+            child: Text(
+              'See All',
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontSize: 12,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildArtistItem(BuildContext context, YouTubeArtistMetadata artist) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                artist_details.ArtistDetailsScreen(artist: artist),
+          ),
+        );
+      },
+      child: Container(
+        width: 100,
+        margin: const EdgeInsets.only(right: 16),
+        child: Column(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: CachedImage(
+                imageUrl: artist.artworkUrl,
+                isCircle: true,
+                errorWidget: const Icon(Icons.person, color: Colors.white24),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              artist.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

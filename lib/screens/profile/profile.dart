@@ -217,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppTheme.cardBg,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Column(
@@ -400,7 +400,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: 1,
       height: 32,
-      color: Colors.white.withValues(alpha: 0.1),
+      color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
     );
   }
 
@@ -411,8 +411,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).primaryColor,
               fontSize: 28,
               fontWeight: FontWeight.bold,
               letterSpacing: -0.5,
@@ -476,7 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Divider(
       height: 1,
       thickness: 1,
-      color: Colors.white.withValues(alpha: 0.05),
+      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
       indent: 64,
     );
   }
@@ -489,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: Theme.of(context).canvasColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            side: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
           ),
           title: const Text(
             'Audio Quality',

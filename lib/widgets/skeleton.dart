@@ -17,8 +17,8 @@ class Skeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.white.withValues(alpha: 0.05),
-      highlightColor: Colors.white.withValues(alpha: 0.1),
+      baseColor: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+      highlightColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
       child: Container(
         height: height,
         width: width,
