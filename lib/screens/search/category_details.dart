@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../widgets/skeleton.dart';
@@ -52,7 +53,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).canvasColor,
+      backgroundColor: const Color(0xFF080C14),
       appBar: AppBar(
         title: Text(
           widget.categoryName,
@@ -79,7 +80,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           widget.categoryColor.withValues(alpha: 0.4),
-                          Theme.of(context).canvasColor,
+                          const Color(0xFF080C14),
                         ],
                       ),
                     ),
@@ -179,17 +180,17 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                     track.artist,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
                       fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
+            const Icon(
               Icons.play_circle_fill,
-              color: Theme.of(context).primaryColor,
+              color: AppTheme.primary,
               size: 30,
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../theme.dart';
 import '../../../services/metrics_service.dart';
 import 'package:intl/intl.dart';
 import 'recent_sessions.dart';
@@ -17,6 +18,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
     'Angry': '😠',
     'Sad': '😔',
     'Natural': '😐',
+  };
+
+  final Map<String, Color> _moodColors = {
+    'Happy': Colors.tealAccent,
+    'Angry': Colors.redAccent,
+    'Sad': Colors.blueAccent,
+    'Natural': AppTheme.primary,
   };
 
   Map<String, dynamic> _calculateStats(
@@ -119,13 +127,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, Color> _moodColors = {
-      'Happy': Colors.tealAccent,
-      'Angry': Colors.redAccent,
-      'Sad': Colors.blueAccent,
-      'Natural': Theme.of(context).primaryColor,
-    };
-
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: MetricsService.getMoodHistoryStream(),
       builder: (context, snapshot) {
@@ -135,7 +136,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           length: 3,
           initialIndex: 1,
           child: Scaffold(
-            backgroundColor: Theme.of(context).canvasColor,
+            backgroundColor: const Color(0xFF080C14),
             body: Stack(
               children: [
                 Positioned(
@@ -191,11 +192,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           ),
                         ),
                         child: TabBar(
-                          indicatorColor: Theme.of(context).primaryColor,
-                          labelColor: Theme.of(context).primaryColor,
-                          unselectedLabelColor: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color,
+                          indicatorColor: AppTheme.primary,
+                          labelColor: AppTheme.primary,
+                          unselectedLabelColor: AppTheme.textMuted,
                           dividerColor: Colors.transparent,
                           tabs: const [
                             Tab(text: 'Day'),
@@ -207,13 +206,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       Expanded(
                         child: TabBarView(
                           children: [
-                            _buildInsightsContent(history, 'Day', _moodColors),
-                            _buildInsightsContent(history, 'Week', _moodColors),
-                            _buildInsightsContent(
-                              history,
-                              'Month',
-                              _moodColors,
-                            ),
+                            _buildInsightsContent(history, 'Day'),
+                            _buildInsightsContent(history, 'Week'),
+                            _buildInsightsContent(history, 'Month'),
                           ],
                         ),
                       ),
@@ -231,7 +226,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
   Widget _buildInsightsContent(
     List<Map<String, dynamic>> history,
     String tabType,
-    Map<String, Color> moodColors,
   ) {
     final stats = _calculateStats(history, tabType);
     final breakdown = stats['breakdown'] as Map<String, int>;
@@ -253,7 +247,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
+              color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
@@ -288,12 +282,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(
+                        const Text(
                           'POSITIVE',
                           style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.color,
+                            color: AppTheme.textMuted,
                             fontSize: 10,
                             letterSpacing: 1,
                           ),
@@ -316,7 +308,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             width: 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: moodColors[mood],
+                              color: _moodColors[mood],
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -331,10 +323,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           const Spacer(),
                           Text(
                             count.toString(),
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.color,
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
@@ -362,8 +352,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ),
               Text(
                 'Avg: ${stats['avg']}/10',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
+                style: const TextStyle(
+                  color: AppTheme.primary,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -375,7 +365,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             height: 160,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
+              color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
@@ -408,10 +398,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     ),
                   );
                 },
-                child: Text(
+                child: const Text(
                   'See all',
                   style: TextStyle(
-                    color: Theme.of(context).primaryColor,
+                    color: AppTheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -431,7 +421,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 mood,
                 dateStr,
                 _moodEmojis[mood]!,
-                moodColors[mood]!,
+                _moodColors[mood]!,
               ),
             );
           }),
@@ -447,10 +437,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       height: 100 * heightFactor,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Theme.of(context).primaryColor.withValues(alpha: 0.3),
-            Theme.of(context).primaryColor,
-          ],
+          colors: [AppTheme.primary.withValues(alpha: 0.3), AppTheme.primary],
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
         ),
@@ -468,7 +455,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -491,8 +478,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
                     fontSize: 12,
                   ),
                 ),

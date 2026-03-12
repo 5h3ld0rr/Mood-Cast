@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../services/search_history_service.dart';
@@ -333,7 +334,9 @@ class _SearchScreenState extends State<SearchScreen> {
       future: _searchHistoryService.getHistory(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(
+            child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+          );
         }
         final history = snapshot.data ?? [];
         if (history.isEmpty) {
@@ -541,7 +544,8 @@ class _SearchScreenState extends State<SearchScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color,
+                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                    AppTheme.textMuted,
                 fontSize: 12,
               ),
             ),
@@ -601,7 +605,8 @@ class _SearchScreenState extends State<SearchScreen> {
         subtitle: Text(
           'Artist',
           style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color,
+            color: Theme.of(context).textTheme.bodyMedium?.color ??
+                AppTheme.textMuted,
             fontSize: 12,
           ),
         ),
@@ -635,7 +640,8 @@ class _SearchScreenState extends State<SearchScreen> {
             Text(
               'Check your connection to search for music.',
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color,
+                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                    AppTheme.textMuted,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,

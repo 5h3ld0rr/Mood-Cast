@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../theme.dart';
 import 'auth/login.dart';
 import 'main_screen.dart';
 import '../services/weather_service.dart';
@@ -119,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).canvasColor,
+      backgroundColor: const Color(0xFF080C14),
       body: Stack(
         children: [
           // Background Glow Top Right
@@ -175,30 +176,29 @@ class _SplashScreenState extends State<SplashScreen>
                               child: Container(
                                 padding: const EdgeInsets.all(28),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).primaryColor.withValues(alpha: 0.1),
+                                  color: AppTheme.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(36),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Theme.of(context).primaryColor
-                                          .withValues(
-                                            alpha: 0.4 * _pulseAnimation.value,
-                                          ),
+                                      color: AppTheme.primary.withValues(
+                                        alpha: 0.4 * _pulseAnimation.value,
+                                      ),
                                       blurRadius: 60 * _pulseAnimation.value,
                                       spreadRadius: -10,
                                     ),
                                   ],
                                   border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).primaryColor.withValues(alpha: 0.3),
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.3,
+                                    ),
                                     width: 2,
                                   ),
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.music_note,
-                                  color: Theme.of(context).primaryColor,
+                                  color: AppTheme.primary,
                                   size: 80,
                                 ),
                               ),
@@ -218,12 +218,10 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                         const SizedBox(height: 16),
                         // Subtitle
-                        Text(
+                        const Text(
                           'Your adaptive emotional soundscape',
                           style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.color,
+                            color: AppTheme.textMuted,
                             fontSize: 16,
                             letterSpacing: 0.5,
                             fontWeight: FontWeight.w500,

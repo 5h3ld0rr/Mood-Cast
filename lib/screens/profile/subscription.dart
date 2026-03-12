@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme.dart';
 import 'payment_method.dart';
 
 class SubscriptionScreen extends StatelessWidget {
@@ -7,9 +8,41 @@ class SubscriptionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).canvasColor,
+      backgroundColor: const Color(0xFF080C14),
       body: Stack(
         children: [
+          // Background Glows
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0xFF1A3A5F), Colors.transparent],
+                  stops: [0.0, 0.5],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -100,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0xFF0D1526), Colors.transparent],
+                  stops: [0.0, 0.5],
+                ),
+              ),
+            ),
+          ),
+
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,11 +152,11 @@ class SubscriptionScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isCurrent
-              ? Theme.of(context).primaryColor.withValues(alpha: 0.5)
+              ? AppTheme.primary.withValues(alpha: 0.5)
               : Colors.white.withValues(alpha: 0.1),
           width: isCurrent ? 2 : 1,
         ),
@@ -132,7 +165,7 @@ class SubscriptionScreen extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                  AppTheme.primary.withValues(alpha: 0.15),
                   Colors.transparent,
                 ],
               )
@@ -160,16 +193,14 @@ class SubscriptionScreen extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isCurrent
-                        ? Theme.of(context).primaryColor.withValues(alpha: 0.2)
-                        : Theme.of(context).primaryColor,
+                        ? AppTheme.primary.withValues(alpha: 0.2)
+                        : AppTheme.primary,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     badgeText,
                     style: TextStyle(
-                      color: isCurrent
-                          ? Theme.of(context).primaryColor
-                          : Colors.white,
+                      color: isCurrent ? AppTheme.primary : Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -180,8 +211,8 @@ class SubscriptionScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             price,
-            style: TextStyle(
-              color: Theme.of(context).primaryColor,
+            style: const TextStyle(
+              color: AppTheme.primary,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -192,16 +223,16 @@ class SubscriptionScreen extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle_outline,
-                    color: Theme.of(context).primaryColor,
+                    color: AppTheme.primary,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     feature,
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
                       fontSize: 14,
                     ),
                   ),
@@ -228,7 +259,7 @@ class SubscriptionScreen extends StatelessWidget {
                       );
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: Colors.white.withValues(alpha: 0.05),
                 disabledForegroundColor: Colors.white54,

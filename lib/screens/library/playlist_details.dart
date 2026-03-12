@@ -142,14 +142,14 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppTheme.primary : Colors.white54,
+              color: isSelected ? Theme.of(context).primaryColor : Colors.white54,
               size: 22,
             ),
             const SizedBox(width: 16),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? AppTheme.primary : Colors.white,
+                color: isSelected ? Theme.of(context).primaryColor : Colors.white,
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
@@ -161,7 +161,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppTheme.primary : Colors.white24,
+                  color: isSelected ? Theme.of(context).primaryColor : Colors.white24,
                   width: 2,
                 ),
               ),
@@ -170,8 +170,8 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                       child: Container(
                         width: 10,
                         height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primary,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -377,7 +377,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                             icon: Icon(
                               Icons.shuffle,
                               color: isShuffled
-                                  ? AppTheme.primary
+                                  ? Theme.of(context).primaryColor
                                   : Colors.white54,
                               size: 28,
                             ),
@@ -403,8 +403,8 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                           child: Ink(
                             width: 56,
                             height: 56,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primary,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -427,9 +427,11 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
             stream: _db.getPlaylistSongs(widget.playlistId!),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
+                return SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 );
               }
@@ -697,7 +699,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                             icon: Icon(
                               Icons.shuffle,
                               color: isShuffled
-                                  ? AppTheme.primary
+                                  ? Theme.of(context).primaryColor
                                   : Colors.white54,
                               size: 28,
                             ),
@@ -719,8 +721,8 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                           child: Ink(
                             width: 56,
                             height: 56,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primary,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(

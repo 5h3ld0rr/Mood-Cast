@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../services/database_service.dart';
@@ -69,9 +70,7 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
       return Scaffold(
         backgroundColor: Theme.of(context).canvasColor,
         body: Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor,
-          ),
+          child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
         ),
       );
     }
@@ -192,10 +191,14 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
             ),
           ),
           if (topSongs.isEmpty && _isLoading)
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Center(child: CircularProgressIndicator()),
+                padding: const EdgeInsets.all(32.0),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
               ),
             )
           else
@@ -225,7 +228,8 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
                   subtitle: Text(
                     track.artist,
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                      color: Theme.of(context).textTheme.bodyMedium?.color ??
+                          AppTheme.textMuted,
                       fontSize: 12,
                     ),
                   ),

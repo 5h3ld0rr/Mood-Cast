@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../theme.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final String planTitle;
@@ -37,10 +38,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor,
-          ),
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: AppTheme.primary),
         ),
       );
 
@@ -56,7 +55,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).canvasColor,
+        backgroundColor: AppTheme.backgroundDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Icon(
           Icons.check_circle_outline,
@@ -78,9 +77,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             Text(
               'You are now subscribed to ${widget.planTitle}.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
+              style: const TextStyle(color: AppTheme.textMuted),
             ),
           ],
         ),
@@ -91,9 +88,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               Navigator.of(context).pop(); // Back to subscription
               Navigator.of(context).pop(); // Back to profile or home
             },
-            child: Text(
+            child: const Text(
               'Great!',
-              style: TextStyle(color: Theme.of(context).primaryColor),
+              style: TextStyle(color: AppTheme.primary),
             ),
           ),
         ],
@@ -104,7 +101,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).canvasColor,
+      backgroundColor: const Color(0xFF080C14),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -233,7 +230,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 child: ElevatedButton(
                   onPressed: _processPayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
+                    backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -360,12 +357,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         height: 60,
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-              : Theme.of(context).cardColor,
+              ? AppTheme.primary.withValues(alpha: 0.1)
+              : AppTheme.cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? Theme.of(context).primaryColor
+                ? AppTheme.primary
                 : Colors.white.withValues(alpha: 0.1),
             width: isSelected ? 2 : 1,
           ),
@@ -377,9 +374,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             errorBuilder: (context, error, stackTrace) => Text(
               type,
               style: TextStyle(
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.white,
+                color: isSelected ? AppTheme.primary : Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -404,10 +399,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -422,7 +414,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             hintText: hint,
             hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             filled: true,
-            fillColor: Theme.of(context).cardColor,
+            fillColor: AppTheme.cardBg,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

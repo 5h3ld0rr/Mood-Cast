@@ -23,15 +23,15 @@ class SongOptionsBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF080C14),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).canvasColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             const Divider(color: Colors.white10),
             _buildActionItem(
               context,
@@ -122,7 +122,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
                         icon: Icons.download_outlined,
                         label:
                             'Downloading (${(progressMap[song.videoId]! * 100).toInt()}%)',
-                        iconColor: AppTheme.primary,
+                        iconColor: Theme.of(context).primaryColor,
                         onTap: () {
                           // Do nothing while downloading
                         },
@@ -142,7 +142,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
                             label: downloadedSong.isPinned
                                 ? 'Unpin from Downloads'
                                 : 'Pin to Downloads',
-                            iconColor: AppTheme.primary,
+                            iconColor: Theme.of(context).primaryColor,
                             onTap: () async {
                               await DownloadService().togglePinDownload(
                                 song.videoId!,
@@ -203,7 +203,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: Row(
@@ -238,8 +238,9 @@ class SongOptionsBottomSheet extends StatelessWidget {
                   song.artist,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        AppTheme.textMuted,
                     fontSize: 14,
                   ),
                 ),
@@ -285,9 +286,9 @@ class PlaylistSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF080C14),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).canvasColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -312,7 +313,7 @@ class PlaylistSelector extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Icon(Icons.add, color: AppTheme.primary),
+              child: Icon(Icons.add, color: Theme.of(context).primaryColor),
             ),
             title: const Text(
               'New Playlist',
@@ -332,8 +333,9 @@ class PlaylistSelector extends StatelessWidget {
               stream: _db.getPlaylists(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  return Center(
+                    child: CircularProgressIndicator(
+                        color: Theme.of(context).primaryColor),
                   );
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -356,9 +358,9 @@ class PlaylistSelector extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final playlist = playlists[index];
                     return ListTile(
-                      leading: const Icon(
+                      leading: Icon(
                         Icons.queue_music,
-                        color: AppTheme.primary,
+                        color: Theme.of(context).primaryColor,
                       ),
                       title: Text(
                         playlist['name'],
@@ -397,9 +399,9 @@ class PlaylistSelector extends StatelessWidget {
           left: 24,
           right: 24,
         ),
-        decoration: const BoxDecoration(
-          color: Color(0xFF080C14),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).canvasColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -422,11 +424,11 @@ class PlaylistSelector extends StatelessWidget {
                 hintStyle: const TextStyle(color: Colors.white38),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    color: AppTheme.primary.withValues(alpha: 0.5),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
                   ),
                 ),
-                focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppTheme.primary),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
                 ),
               ),
               onChanged: (value) => playlistName = value,
@@ -460,7 +462,7 @@ class PlaylistSelector extends StatelessWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.black,
                   ),
                   child: const Text('CREATE'),

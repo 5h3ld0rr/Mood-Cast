@@ -21,14 +21,14 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF080C14),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).canvasColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           const Divider(color: Colors.white10),
           _buildActionItem(
             context,
@@ -93,7 +93,7 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: Row(
@@ -105,7 +105,7 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
               color: Colors.white10,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.queue_music, color: AppTheme.primary),
+            child: Icon(Icons.queue_music, color: Theme.of(context).primaryColor),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -122,9 +122,13 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Text(
+                Text(
                   'Playlist Options',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        AppTheme.textMuted,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -152,7 +156,7 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
     showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF080C14),
+        backgroundColor: Theme.of(context).canvasColor,
         title: const Text(
           'Delete Playlist',
           style: TextStyle(color: Colors.white),
@@ -195,7 +199,7 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF080C14),
+        backgroundColor: Theme.of(context).canvasColor,
         title: const Text(
           'Rename Playlist',
           style: TextStyle(color: Colors.white),
@@ -208,11 +212,11 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
             hintStyle: const TextStyle(color: Colors.white38),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(
-                color: AppTheme.primary.withValues(alpha: 0.5),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
               ),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppTheme.primary),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
             ),
           ),
           onChanged: (value) => newName = value,
@@ -238,9 +242,9 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
               }
               Navigator.pop(context);
             },
-            child: const Text(
+            child: Text(
               'SAVE',
-              style: TextStyle(color: AppTheme.primary),
+              style: TextStyle(color: Theme.of(context).primaryColor),
             ),
           ),
         ],

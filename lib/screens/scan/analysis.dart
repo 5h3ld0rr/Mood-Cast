@@ -255,7 +255,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     final cameraH = screenH * 0.52; // Camera occupies top 52%
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14), // Darker, consistent background
+      backgroundColor: Theme.of(context).canvasColor,
       body: Column(
         children: [
           // ─── CAMERA SECTION ───
@@ -293,7 +293,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                   )
                 else
                   Container(
-                    color: const Color(0xFF0D121C),
+                    color: Theme.of(context).canvasColor,
                     child: Center(
                       child: CircularProgressIndicator(
                         color: Theme.of(context).primaryColor,
@@ -309,11 +309,11 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                   right: 0,
                   height: 100, // Taller gradient for smoother blend
                   child: Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0xFF080C14)],
+                        colors: [Colors.transparent, Theme.of(context).canvasColor],
                       ),
                     ),
                   ),
@@ -334,9 +334,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withValues(alpha: 0.3),
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -386,22 +384,22 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                 Positioned(
                   top: 80,
                   left: 20,
-                  child: _buildCorner(isTop: true, isLeft: true),
+                  child: _buildCorner(context, isTop: true, isLeft: true),
                 ),
                 Positioned(
                   top: 80,
                   right: 20,
-                  child: _buildCorner(isTop: true, isLeft: false),
+                  child: _buildCorner(context, isTop: true, isLeft: false),
                 ),
                 Positioned(
                   bottom: 80,
                   left: 20,
-                  child: _buildCorner(isTop: false, isLeft: true),
+                  child: _buildCorner(context, isTop: false, isLeft: true),
                 ),
                 Positioned(
                   bottom: 80,
                   right: 20,
-                  child: _buildCorner(isTop: false, isLeft: false),
+                  child: _buildCorner(context, isTop: false, isLeft: false),
                 ),
 
                 // Scanning line animation
@@ -502,7 +500,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withValues(alpha: 0.05),
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
                             blurRadius: 30,
                             spreadRadius: 0,
                           ),
@@ -513,12 +511,12 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.auto_awesome_rounded,
-                              color: AppTheme.primary,
+                              color: Theme.of(context).primaryColor,
                               size: 32,
                             ),
                           ),
@@ -530,7 +528,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 Text(
                                   'CURRENT STATE',
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: Theme.of(context).primaryColor.withValues(
+                                      alpha: 0.6,
+                                    ),
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 2.5,
@@ -630,7 +630,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       child: ElevatedButton(
                         onPressed: _startScan,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
+                          backgroundColor: Theme.of(context).primaryColor,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
@@ -654,7 +654,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.primary.withValues(alpha: 0.1),
+                            Theme.of(context).primaryColor.withValues(alpha: 0.1),
                             Colors.white.withValues(alpha: 0.05),
                           ],
                           begin: Alignment.topLeft,
@@ -677,7 +677,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 ? 'CHEER UP JOKE! 😂'
                                 : 'AI INSIGHT ✨',
                             style: TextStyle(
-                              color: AppTheme.primary.withValues(alpha: 0.5),
+                              color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
@@ -783,7 +783,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     );
   }
 
-  Widget _buildCorner({required bool isTop, required bool isLeft}) {
+  Widget _buildCorner(BuildContext context, {required bool isTop, required bool isLeft}) {
     return Container(
       width: 40,
       height: 40,
@@ -840,13 +840,13 @@ class _PulseCircleState extends State<_PulseCircle>
           width: 8,
           height: 8,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(
+            color: Theme.of(context).primaryColor.withValues(
               alpha: 0.5 + (_pulseController.value * 0.5),
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withValues(
+                color: Theme.of(context).primaryColor.withValues(
                   alpha: _pulseController.value * 0.8,
                 ),
                 blurRadius: 8 * _pulseController.value,
