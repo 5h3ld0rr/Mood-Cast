@@ -20,11 +20,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
     'Natural': '😐',
   };
 
-  final Map<String, Color> _moodColors = {
-    'Happy': Colors.tealAccent,
+  Map<String, Color> _getMoodColors(BuildContext context) => {
+    'Happy': Colors.purpleAccent,
     'Angry': Colors.redAccent,
     'Sad': Colors.blueAccent,
-    'Natural': AppTheme.primary,
+    'Natural': Theme.of(context).primaryColor,
   };
 
   Map<String, dynamic> _calculateStats(
@@ -136,7 +136,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           length: 3,
           initialIndex: 1,
           child: Scaffold(
-            backgroundColor: const Color(0xFF080C14),
+            backgroundColor: Theme.of(context).canvasColor,
             body: Stack(
               children: [
                 Positioned(
@@ -145,10 +145,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   child: Container(
                     width: 400,
                     height: 400,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        colors: [Color(0xFF1A3A5F), Colors.transparent],
+                        colors: [Theme.of(context).primaryColor.withValues(alpha: 0.3), Colors.transparent],
                         stops: [0.0, 0.5],
                       ),
                     ),
@@ -192,8 +192,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           ),
                         ),
                         child: TabBar(
-                          indicatorColor: AppTheme.primary,
-                          labelColor: AppTheme.primary,
+                          indicatorColor: Theme.of(context).primaryColor,
+                          labelColor: Theme.of(context).primaryColor,
                           unselectedLabelColor: AppTheme.textMuted,
                           dividerColor: Colors.transparent,
                           tabs: const [
@@ -235,69 +235,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Streak Info
-          StreamBuilder<int>(
-            stream: MetricsService.getStreakStream(),
-            builder: (context, snapshot) {
-              final streak = snapshot.data ?? 0;
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                      Theme.of(context).primaryColor.withValues(alpha: 0.05),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text('🔥', style: TextStyle(fontSize: 24)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$streak Day Streak',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            streak > 0 
-                              ? 'You\'re on fire! Keep it up.' 
-                              : 'Start your streak today!',
-                            style: TextStyle(
-                              color: Theme.of(context).textTheme.bodyMedium?.color ?? AppTheme.textMuted,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+
           const Text(
             'Mood Breakdown',
             style: TextStyle(
@@ -312,7 +250,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
             ),
             child: Column(
               children: [
@@ -330,8 +268,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             100,
                         strokeWidth: 12,
                         backgroundColor: Colors.white.withValues(alpha: 0.05),
-                        valueColor: const AlwaysStoppedAnimation(
-                          Colors.tealAccent,
+                        valueColor: AlwaysStoppedAnimation(
+                          Theme.of(context).primaryColor,
                         ),
                       ),
                     ),
@@ -371,7 +309,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             width: 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: _moodColors[mood],
+                              color: _getMoodColors(context)[mood],
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -415,8 +353,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ),
               Text(
                 'Avg: ${stats['avg']}/10',
-                style: const TextStyle(
-                  color: AppTheme.primary,
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -430,7 +368,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -461,10 +399,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'See all',
                   style: TextStyle(
-                    color: AppTheme.primary,
+                    color: Theme.of(context).primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -484,7 +422,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 mood,
                 dateStr,
                 _moodEmojis[mood]!,
-                _moodColors[mood]!,
+                _getMoodColors(context)[mood]!,
               ),
             );
           }),
@@ -500,7 +438,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       height: 100 * heightFactor,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primary.withValues(alpha: 0.3), AppTheme.primary],
+          colors: [Theme.of(context).primaryColor.withValues(alpha: 0.3), Theme.of(context).primaryColor],
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
         ),
@@ -520,7 +458,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [

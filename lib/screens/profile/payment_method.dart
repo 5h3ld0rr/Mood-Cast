@@ -38,8 +38,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(color: AppTheme.primary),
+        builder: (context) => Center(
+          child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
         ),
       );
 
@@ -55,7 +55,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).canvasColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Icon(
           Icons.check_circle_outline,
@@ -88,9 +88,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               Navigator.of(context).pop(); // Back to subscription
               Navigator.of(context).pop(); // Back to profile or home
             },
-            child: const Text(
+            child: Text(
               'Great!',
-              style: TextStyle(color: AppTheme.primary),
+              style: TextStyle(color: Theme.of(context).primaryColor),
             ),
           ),
         ],
@@ -101,7 +101,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -230,7 +230,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 child: ElevatedButton(
                   onPressed: _processPayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -357,12 +357,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         height: 60,
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withValues(alpha: 0.1)
+              ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
               : AppTheme.cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppTheme.primary
+                ? Theme.of(context).primaryColor
                 : Colors.white.withValues(alpha: 0.1),
             width: isSelected ? 2 : 1,
           ),
@@ -374,7 +374,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             errorBuilder: (context, error, stackTrace) => Text(
               type,
               style: TextStyle(
-                color: isSelected ? AppTheme.primary : Colors.white,
+                color: isSelected ? Theme.of(context).primaryColor : Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),

@@ -75,7 +75,7 @@ class _MoodBackgroundState extends State<MoodBackground>
                       _buildGlowWidget(
                         bottom: 0,
                         right: 0,
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: Colors.deepPurple.withValues(alpha: 0.1),
                         size: 350,
                       ),
                     ],
