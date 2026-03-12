@@ -12,7 +12,7 @@ class AppTheme {
 
   static Map<String, Color> get moodColors => {
     'Happy': const Color(0xFFA855F7), // Purple
-    'Sad': const Color(0xFF4A90E2), // Blue
+    'Sad': const Color(0xFF3B82F6), // Vibrant Blue (Tailwind Blue-500)
     'Angry': const Color(0xFFFF3B30), // Red
     'Natural': primary, // Emerald Green
   };

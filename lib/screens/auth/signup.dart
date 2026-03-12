@@ -70,26 +70,29 @@ class _SignupScreenState extends State<SignupScreen> {
         await showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppTheme.backgroundDark,
-            title: const Text(
-              'Verify your email',
-              style: TextStyle(color: Colors.white),
-            ),
-            content: Text(
-              'A verification email has been sent to $email. Please check your inbox and verify your account before logging in.',
-              style: const TextStyle(color: AppTheme.textMuted),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(color: AppTheme.primary),
-                ),
+          builder: (context) {
+            final moodTheme = AppTheme.getThemeForMood('Sad');
+            return AlertDialog(
+              backgroundColor: AppTheme.backgroundDark,
+              title: const Text(
+                'Verify your email',
+                style: TextStyle(color: Colors.white),
               ),
-            ],
-          ),
+              content: Text(
+                'A verification email has been sent to $email. Please check your inbox and verify your account before logging in.',
+                style: const TextStyle(color: AppTheme.textMuted),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(color: moodTheme.primaryColor),
+                  ),
+                ),
+              ],
+            );
+          },
         );
 
         // Sign out NOW, after they've seen the message
@@ -125,8 +128,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final moodTheme = AppTheme.getThemeForMood('Sad');
     return Theme(
-      data: AppTheme.getThemeForMood('Natural'),
+      data: moodTheme,
       child: Scaffold(
         backgroundColor: AppTheme.backgroundDeep,
         body: Stack(
@@ -142,7 +146,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppTheme.primary.withValues(alpha: 0.15),
+                      moodTheme.primaryColor.withValues(alpha: 0.15),
                       Colors.transparent,
                     ],
                     stops: const [0.0, 0.7],
@@ -164,7 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     children: [
                       Text(
                         'Create Account',
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        style: moodTheme.textTheme.displayLarge?.copyWith(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
@@ -174,14 +178,14 @@ class _SignupScreenState extends State<SignupScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Join us to unlock the full experience.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: moodTheme.textTheme.bodyMedium?.copyWith(
                           fontSize: 16,
                           color: AppTheme.textMuted,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 48),
-  
+
                       Container(
                         constraints: const BoxConstraints(maxWidth: 400),
                         child: Column(
@@ -389,7 +393,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                       const SizedBox(height: 48),
-  
+
                       // Footer
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -405,10 +409,10 @@ class _SignupScreenState extends State<SignupScreen> {
                             onTap: () {
                               Navigator.of(context).pop();
                             },
-                            child: const Text(
+                            child: Text(
                               'Log In',
                               style: TextStyle(
-                                color: AppTheme.primary,
+                                color: moodTheme.primaryColor,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),

@@ -119,122 +119,127 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
-      body: Stack(
-        children: [
-          // Background Glow Top Right
-          Positioned(
-            top: -150,
-            right: -150,
-            child: Container(
-              width: 500,
-              height: 500,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF1A3A5F), Colors.transparent],
-                  stops: [0.0, 0.6],
+    return Theme(
+      data: AppTheme.getThemeForMood('Sad'),
+      child: Scaffold(
+        backgroundColor: const Color(0xFF080C14),
+        body: Stack(
+          children: [
+            // Background Glow Top Right
+            Positioned(
+              top: -150,
+              right: -150,
+              child: Container(
+                width: 500,
+                height: 500,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0xFF1A3A5F), Colors.transparent],
+                    stops: [0.0, 0.6],
+                  ),
                 ),
               ),
             ),
-          ),
-          // Background Glow Bottom Left
-          Positioned(
-            bottom: -150,
-            left: -150,
-            child: Container(
-              width: 500,
-              height: 500,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF0D1526), Colors.transparent],
-                  stops: [0.0, 0.6],
+            // Background Glow Bottom Left
+            Positioned(
+              bottom: -150,
+              left: -150,
+              child: Container(
+                width: 500,
+                height: 500,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0xFF0D1526), Colors.transparent],
+                    stops: [0.0, 0.6],
+                  ),
                 ),
               ),
             ),
-          ),
-          // Centered Animated Content
-          Center(
-            child: FadeTransition(
-              opacity: _opacityAnimation,
-              child: AnimatedBuilder(
-                animation: _scaleAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // App Logo with glowing shadow and infinite pulse
-                        AnimatedBuilder(
-                          animation: _pulseAnimation,
-                          builder: (context, child) {
-                            return Transform.scale(
-                              scale: _pulseAnimation.value,
-                              child: Container(
-                                padding: const EdgeInsets.all(28),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(36),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppTheme.primary.withValues(
-                                        alpha: 0.4 * _pulseAnimation.value,
+            // Centered Animated Content
+            Center(
+              child: FadeTransition(
+                opacity: _opacityAnimation,
+                child: AnimatedBuilder(
+                  animation: _scaleAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _scaleAnimation.value,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // App Logo with glowing shadow and infinite pulse
+                          AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (context, child) {
+                              return Transform.scale(
+                                scale: _pulseAnimation.value,
+                                child: Container(
+                                  padding: const EdgeInsets.all(28),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(36),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Theme.of(context).primaryColor
+                                            .withValues(
+                                              alpha:
+                                                  0.4 * _pulseAnimation.value,
+                                            ),
+                                        blurRadius: 60 * _pulseAnimation.value,
+                                        spreadRadius: -10,
                                       ),
-                                      blurRadius: 60 * _pulseAnimation.value,
-                                      spreadRadius: -10,
+                                    ],
+                                    border: Border.all(
+                                      color: Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.3),
+                                      width: 2,
                                     ),
-                                  ],
-                                  border: Border.all(
-                                    color: AppTheme.primary.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    width: 2,
+                                  ),
+                                  child: Icon(
+                                    Icons.music_note,
+                                    color: Theme.of(context).primaryColor,
+                                    size: 80,
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.music_note,
-                                  color: AppTheme.primary,
-                                  size: 80,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 48),
-                        // App Name
-                        const Text(
-                          'MoodCast',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
+                              );
+                            },
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Subtitle
-                        const Text(
-                          'Your adaptive emotional soundscape',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 16,
-                            letterSpacing: 0.5,
-                            fontWeight: FontWeight.w500,
+                          const SizedBox(height: 48),
+                          // App Name
+                          const Text(
+                            'MoodCast',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                          const SizedBox(height: 16),
+                          // Subtitle
+                          const Text(
+                            'Your adaptive emotional soundscape',
+                            style: TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 16,
+                              letterSpacing: 0.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

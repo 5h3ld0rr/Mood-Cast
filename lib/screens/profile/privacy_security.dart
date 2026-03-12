@@ -83,7 +83,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     );
                   },
                   activeThumbColor: Theme.of(context).primaryColor,
-                  activeColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                  activeTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                 ),
               ),
               _buildDivider(),
@@ -101,7 +101,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     );
                   },
                   activeThumbColor: Theme.of(context).primaryColor,
-                  activeColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                  activeTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                 ),
               ),
             ]),
