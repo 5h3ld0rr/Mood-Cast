@@ -85,7 +85,7 @@ class DatabaseService {
   }
 
   // --- Playlists ---
-  Future<String?> createPlaylist(String name) async {
+  Future<String?> createPlaylist(String name, {bool isPublic = false}) async {
     if (uid == null) return null;
     final docRef = await _firestore
         .collection('users')
@@ -96,6 +96,8 @@ class DatabaseService {
           'createdAt': FieldValue.serverTimestamp(),
           'songCount': 0,
           'coverUrl': null,
+          'isPublic': isPublic,
+          'creatorId': uid,
         });
     return docRef.id;
   }
@@ -130,6 +132,16 @@ class DatabaseService {
         .update({'isPinned': !isPinned});
   }
 
+  Future<void> togglePlaylistPrivacy(String playlistId, bool isPublic) async {
+    if (uid == null) return;
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('playlists')
+        .doc(playlistId)
+        .update({'isPublic': !isPublic});
+  }
+
   Stream<List<Map<String, dynamic>>> getPlaylists() {
     if (uid == null) return Stream.value([]);
     return _firestore
@@ -162,6 +174,35 @@ class DatabaseService {
 
           return playlists;
         });
+  }
+
+  Future<List<Map<String, dynamic>>> searchPublicPlaylists(String query) async {
+    try {
+      final snapshot = await _firestore
+          .collectionGroup('playlists')
+          .where('isPublic', isEqualTo: true)
+          .get();
+
+      final playlists = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        // Get the creator's user ID from doc reference since collectionGroup returns docs from anywhere
+        data['creatorId'] = doc.reference.parent.parent?.id; 
+        return data;
+      }).toList();
+
+      if (query.isEmpty) return playlists;
+
+      // Filter locally due to Firestore's text search limitations
+      final lowerQuery = query.toLowerCase();
+      return playlists.where((p) {
+        final name = p['name']?.toString().toLowerCase() ?? '';
+        return name.contains(lowerQuery);
+      }).toList();
+    } catch (e) {
+      print('Error searching public playlists: $e');
+      return [];
+    }
   }
 
   Future<void> addSongToPlaylist(String playlistId, SongInfo song) async {

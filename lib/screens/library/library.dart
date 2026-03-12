@@ -68,80 +68,92 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   void _showCreatePlaylistDialog() {
     String playlistName = '';
+    bool isPublic = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 24,
-          left: 24,
-          right: 24,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).canvasColor.withValues(alpha: 0.98),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'New Playlist',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              autofocus: true,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Give your playlist a name',
-                hintStyle: const TextStyle(color: Colors.white38),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  ),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            top: 24,
+            left: 24,
+            right: 24,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).canvasColor.withValues(alpha: 0.98),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'New Playlist',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              onChanged: (value) => playlistName = value,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'CANCEL',
-                    style: TextStyle(color: Colors.white60),
+              const SizedBox(height: 16),
+              TextField(
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Give your playlist a name',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
                   ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (playlistName.isNotEmpty) {
-                      await _db.createPlaylist(playlistName);
-                      if (context.mounted) Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.black,
+                onChanged: (value) => playlistName = value,
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Public Playlist', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Anyone can find this playlist through search', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                value: isPublic,
+                activeThumbColor: Theme.of(context).primaryColor,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) => setModalState(() => isPublic = val),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'CANCEL',
+                      style: TextStyle(color: Colors.white60),
+                    ),
                   ),
-                  child: const Text('CREATE'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-          ],
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (playlistName.isNotEmpty) {
+                        await _db.createPlaylist(playlistName, isPublic: isPublic);
+                        if (context.mounted) Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: const Text('CREATE'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -867,7 +879,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: _buildLibraryItem(
                             playlist['name'] as String,
-                            'Playlist • ${playlist['songCount']} songs',
+                            '${(playlist['isPublic'] == true) ? 'Public' : 'Private'} Playlist • ${playlist['songCount']} songs',
                             Icons.queue_music,
                             Theme.of(context).primaryColor,
                             imageUrl: playlist['coverUrl'],
@@ -878,10 +890,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                   builder: (context) => PlaylistDetailsScreen(
                                     playlistName: playlist['name'] as String,
                                     subtitle:
-                                        'Playlist • ${playlist['songCount']} songs',
+                                        '${(playlist['isPublic'] == true) ? 'Public' : 'Private'} Playlist • ${playlist['songCount']} songs',
                                     icon: Icons.queue_music,
                                     color: Theme.of(context).primaryColor,
                                     playlistId: playlist['id'] as String,
+                                    isPublic: playlist['isPublic'] ?? false,
                                   ),
                                 ),
                               );

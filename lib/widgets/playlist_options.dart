@@ -51,21 +51,42 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
                 orElse: () => {},
               );
               final isPinned = pl?['isPinned'] ?? false;
+              final isPublic = pl?['isPublic'] ?? false;
 
-              return _buildActionItem(
-                context,
-                icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                label: isPinned ? 'Unpin Playlist' : 'Pin Playlist',
-                onTap: () async {
-                  await _db.togglePinPlaylist(playlistId, isPinned);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    UIUtils.showSnackBar(
+              return Column(
+                children: [
+                  _buildActionItem(
+                    context,
+                    icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                    label: isPinned ? 'Unpin Playlist' : 'Pin Playlist',
+                    onTap: () async {
+                      await _db.togglePinPlaylist(playlistId, isPinned);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        UIUtils.showSnackBar(
+                          context,
+                          isPinned ? 'Playlist unpinned' : 'Playlist pinned',
+                        );
+                      }
+                    },
+                  ),
+                  if (!isLikedSongs)
+                    _buildActionItem(
                       context,
-                      isPinned ? 'Playlist unpinned' : 'Playlist pinned',
-                    );
-                  }
-                },
+                      icon: isPublic ? Icons.public_off : Icons.public,
+                      label: isPublic ? 'Make Private' : 'Make Public',
+                      onTap: () async {
+                        await _db.togglePlaylistPrivacy(playlistId, isPublic);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          UIUtils.showSnackBar(
+                            context,
+                            isPublic ? 'Playlist is now private' : 'Playlist is now public',
+                          );
+                        }
+                      },
+                    ),
+                ]
               );
             },
           ),

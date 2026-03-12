@@ -366,6 +366,10 @@ class PlaylistSelector extends StatelessWidget {
                         playlist['name'],
                         style: const TextStyle(color: Colors.white),
                       ),
+                      subtitle: Text(
+                        '${(playlist['isPublic'] == true) ? 'Public' : 'Private'} Playlist • ${playlist['songCount']} songs',
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
                       onTap: () {
                         _db.addSongToPlaylist(playlist['id'], song);
                         Navigator.pop(context);
@@ -388,88 +392,100 @@ class PlaylistSelector extends StatelessWidget {
 
   void _showCreatePlaylistDialog(BuildContext context) {
     String playlistName = '';
+    bool isPublic = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          top: 24,
-          left: 24,
-          right: 24,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).canvasColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'New Playlist',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              autofocus: true,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Give your playlist a name',
-                hintStyle: const TextStyle(color: Colors.white38),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  ),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            top: 24,
+            left: 24,
+            right: 24,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).canvasColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'New Playlist',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              onChanged: (value) => playlistName = value,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'CANCEL',
-                    style: TextStyle(color: Colors.white60),
+              const SizedBox(height: 16),
+              TextField(
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Give your playlist a name',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
                   ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (playlistName.isNotEmpty) {
-                      final playlistId = await _db.createPlaylist(playlistName);
-                      if (playlistId != null) {
-                        await _db.addSongToPlaylist(playlistId, song);
-                      }
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        UIUtils.showSnackBar(
-                          context,
-                          'Added to new playlist "$playlistName"',
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.black,
+                onChanged: (value) => playlistName = value,
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Public Playlist', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Anyone can find this playlist through search', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                value: isPublic,
+                activeThumbColor: Theme.of(context).primaryColor,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) => setModalState(() => isPublic = val),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'CANCEL',
+                      style: TextStyle(color: Colors.white60),
+                    ),
                   ),
-                  child: const Text('CREATE'),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (playlistName.isNotEmpty) {
+                        final playlistId = await _db.createPlaylist(playlistName, isPublic: isPublic);
+                        if (playlistId != null) {
+                          await _db.addSongToPlaylist(playlistId, song);
+                        }
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          UIUtils.showSnackBar(
+                            context,
+                            'Added to new playlist "$playlistName"',
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: const Text('CREATE'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -9,14 +9,14 @@ class RecentSessionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, String> _moodEmojis = {
+    final Map<String, String> moodEmojis = {
       'Happy': '😊',
       'Angry': '😠',
       'Sad': '😔',
       'Natural': '😐',
     };
 
-    final Map<String, Color> _moodColors = {
+    final Map<String, Color> moodColors = {
       'Happy': Colors.tealAccent,
       'Angry': Colors.redAccent,
       'Sad': Colors.blueAccent,
@@ -72,8 +72,8 @@ class RecentSessionsScreen extends StatelessWidget {
                   child: _buildSessionTile(
                     mood,
                     dateStr,
-                    _moodEmojis[mood] ?? '👤',
-                    _moodColors[mood] ?? Colors.white,
+                    moodEmojis[mood] ?? '👤',
+                    moodColors[mood] ?? Colors.white,
                   ),
                 );
               },

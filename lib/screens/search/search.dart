@@ -6,6 +6,8 @@ import '../../services/player_service.dart';
 import '../../services/search_history_service.dart';
 import 'artist_details.dart';
 import 'category_details.dart';
+import '../library/playlist_details.dart';
+import '../../services/database_service.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/song_options.dart';
 import '../../widgets/cached_image.dart';
@@ -23,9 +25,11 @@ class _SearchScreenState extends State<SearchScreen> {
   final YouTubeMusicService _ytmService = YouTubeMusicService();
   final PlayerService _playerService = PlayerService();
   final SearchHistoryService _searchHistoryService = SearchHistoryService();
+  final DatabaseService _dbService = DatabaseService();
 
   List<YouTubeMusicMetadata> _searchResults = [];
   List<YouTubeArtistMetadata> _artistResults = [];
+  List<Map<String, dynamic>> _playlistResults = [];
   bool _isLoading = false;
   Timer? _debounce;
   bool _isFocused = false;
@@ -138,12 +142,12 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       // Fetch both tracks and artist details concurrently
       final tracksFuture = _ytmService.searchTracks(query);
-      final artistsFuture = _ytmService.searchArtists(
-        query,
-      ); // Changed to searchArtists
+      final artistsFuture = _ytmService.searchArtists(query);
+      final playlistsFuture = _dbService.searchPublicPlaylists(query);
 
       final results = await tracksFuture;
-      final artists = await artistsFuture; // Changed to artists
+      final artists = await artistsFuture;
+      final playlists = await playlistsFuture;
 
       if (mounted) {
         // filter artists based on matching similar to how we filter songs
@@ -155,6 +159,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _searchResults = results;
           // Only take the first matched artist as a "Top Result"
           _artistResults = matchedArtists.take(1).toList();
+          _playlistResults = playlists; // all matched playlists
           _isLoading = false;
           // Save the successful query to history only if requested (e.g., pressed Enter)
           if (saveToHistory) {
@@ -266,7 +271,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 builder: (context, isOnline, _) {
                   if (!isOnline &&
                       _searchResults.isEmpty &&
-                      _artistResults.isEmpty) {
+                      _artistResults.isEmpty &&
+                      _playlistResults.isEmpty) {
                     return _buildOfflineState();
                   }
 
@@ -471,7 +477,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSearchResults() {
-    if (_searchResults.isEmpty && _artistResults.isEmpty && !_isLoading) {
+    if (_searchResults.isEmpty && _artistResults.isEmpty && _playlistResults.isEmpty && !_isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -491,7 +497,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    final int itemCount = _searchResults.length + _artistResults.length;
+    final int itemCount = _searchResults.length + _artistResults.length + _playlistResults.length;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -501,8 +507,13 @@ class _SearchScreenState extends State<SearchScreen> {
         if (index < _artistResults.length) {
           return _buildArtistCard(_artistResults[index]);
         }
+        
+        final playlistIndex = index - _artistResults.length;
+        if (playlistIndex < _playlistResults.length) {
+          return _buildPlaylistCard(_playlistResults[playlistIndex]);
+        }
 
-        final itemIndex = index - _artistResults.length;
+        final itemIndex = playlistIndex - _playlistResults.length;
         final track = _searchResults[itemIndex];
         final albumArt = track.artworkUrl;
         final artistName = track.artist;
@@ -604,6 +615,75 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         subtitle: Text(
           'Artist',
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium?.color ??
+                AppTheme.textMuted,
+            fontSize: 12,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white24),
+      ),
+    );
+  }
+
+  Widget _buildPlaylistCard(Map<String, dynamic> playlist) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PlaylistDetailsScreen(
+                playlistId: playlist['id'],
+                playlistName: playlist['name'] ?? 'Playlist',
+                isPublic: playlist['isPublic'] ?? false,
+                subtitle: '${(playlist['isPublic'] == true) ? 'Public Playlist' : 'Playlist'} • ${playlist['songCount'] ?? 0} songs',
+                icon: Icons.queue_music,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          );
+        },
+        contentPadding: EdgeInsets.zero,
+        leading: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: Colors.white10,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: playlist['coverUrl'] != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.network(
+                    playlist['coverUrl'],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Icon(
+                      Icons.queue_music,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                )
+              : Icon(
+                  Icons.queue_music,
+                  color: Theme.of(context).primaryColor,
+                ),
+        ),
+        title: Text(
+          playlist['name'] ?? 'Playlist',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          '${(playlist['isPublic'] == true) ? 'Public Playlist' : 'Playlist'} • ${playlist['songCount'] ?? 0} songs',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: Theme.of(context).textTheme.bodyMedium?.color ??
                 AppTheme.textMuted,

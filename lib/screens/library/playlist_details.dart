@@ -17,6 +17,7 @@ class PlaylistDetailsScreen extends StatefulWidget {
   final Color color;
   final String? playlistId;
   final bool isLikedSongs;
+  final bool isPublic;
 
   const PlaylistDetailsScreen({
     super.key,
@@ -26,6 +27,7 @@ class PlaylistDetailsScreen extends StatefulWidget {
     required this.color,
     this.playlistId,
     this.isLikedSongs = false,
+    this.isPublic = false,
   });
 
   @override
