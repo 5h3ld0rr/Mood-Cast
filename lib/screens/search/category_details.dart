@@ -53,13 +53,13 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         title: Text(
           widget.categoryName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: widget.categoryColor.withValues(alpha: 0.2),
+        backgroundColor: widget.categoryColor.withValues(alpha: 0.1),
         elevation: 0,
       ),
       body: _isLoading
@@ -79,8 +79,8 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          widget.categoryColor.withValues(alpha: 0.4),
-                          const Color(0xFF080C14),
+                          widget.categoryColor.withValues(alpha: 0.2),
+                          Theme.of(context).canvasColor,
                         ],
                       ),
                     ),
@@ -188,9 +188,9 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen> {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.play_circle_fill,
-              color: AppTheme.primary,
+              color: Theme.of(context).primaryColor,
               size: 30,
             ),
           ],

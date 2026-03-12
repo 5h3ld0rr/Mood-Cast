@@ -57,7 +57,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     final displayMood = widget.mood ?? 'Personalized';
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDeep,
+      backgroundColor: Theme.of(context).canvasColor,
       body: Stack(
         children: [
           // Background Blobs for premium feel

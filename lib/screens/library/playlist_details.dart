@@ -86,9 +86,9 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
       ),
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF080C14),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).canvasColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -194,7 +194,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
     final Color dominantColor = widget.color;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -204,7 +204,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
             pinned: true,
             stretch: true,
             elevation: 0,
-            backgroundColor: const Color(0xFF080C14),
+            backgroundColor: Theme.of(context).canvasColor,
             leading: IconButton(
               icon: const Icon(
                 Icons.arrow_back_ios_new,
@@ -253,9 +253,9 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          dominantColor.withValues(alpha: 0.8),
-                          dominantColor.withValues(alpha: 0.2),
-                          const Color(0xFF080C14),
+                          dominantColor.withOpacity(0.8),
+                          dominantColor.withOpacity(0.2),
+                          Theme.of(context).canvasColor,
                         ],
                       ),
                     ),
@@ -273,11 +273,11 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                             width: 160,
                             height: 160,
                             decoration: BoxDecoration(
-                              color: dominantColor.withValues(alpha: 0.2),
+                              color: dominantColor.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(4),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.5),
+                                  color: Colors.black.withOpacity(0.5),
                                   blurRadius: 30,
                                   offset: const Offset(0, 10),
                                 ),
@@ -513,7 +513,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
     final Color dominantColor = const Color(0xFF3F51B5);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       body: StreamBuilder<List<SongInfo>>(
         stream: _db.getLikedSongs(),
         builder: (context, snapshot) {
@@ -527,7 +527,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                 pinned: true,
                 stretch: true,
                 elevation: 0,
-                backgroundColor: const Color(0xFF080C14),
+                backgroundColor: Theme.of(context).canvasColor,
                 leading: IconButton(
                   icon: const Icon(
                     Icons.arrow_back_ios_new,
@@ -575,9 +575,9 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              dominantColor.withValues(alpha: 0.8),
-                              dominantColor.withValues(alpha: 0.2),
-                              const Color(0xFF080C14),
+                              dominantColor.withOpacity(0.8),
+                              dominantColor.withOpacity(0.2),
+                              Theme.of(context).canvasColor,
                             ],
                           ),
                         ),
@@ -593,12 +593,12 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                                 width: 160,
                                 height: 160,
                                 decoration: BoxDecoration(
-                                  color: dominantColor.withValues(alpha: 0.2),
+                                  color: dominantColor.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(4),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.5,
+                                      color: Colors.black.withOpacity(
+                                        0.5,
                                       ),
                                       blurRadius: 30,
                                       offset: const Offset(0, 10),
@@ -785,7 +785,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: Colors.white.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TextField(
@@ -836,7 +836,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: Colors.white.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
@@ -966,14 +966,14 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                                 child: CircularProgressIndicator(
                                   value: progress,
                                   strokeWidth: 2,
-                                  color: AppTheme.primary,
+                                  color: Theme.of(context).primaryColor,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 '${(progress * 100).toInt()}%',
-                                style: const TextStyle(
-                                  color: AppTheme.primary,
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
                                   fontSize: 10,
                                 ),
                               ),
@@ -987,18 +987,18 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                               (s) => s.videoId == song.videoId,
                             );
                             if (isDownloaded) {
-                              return const Row(
+                              return Row(
                                 children: [
                                   Icon(
                                     Icons.download_done,
-                                    color: AppTheme.primary,
+                                    color: Theme.of(context).primaryColor,
                                     size: 14,
                                   ),
                                   SizedBox(width: 4),
                                   Text(
                                     'Downloaded',
                                     style: TextStyle(
-                                      color: AppTheme.primary,
+                                      color: Theme.of(context).primaryColor,
                                       fontSize: 10,
                                     ),
                                   ),
@@ -1088,9 +1088,9 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
-        color: Color(0xFF080C14),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).canvasColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -1123,8 +1123,8 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
           ),
           Expanded(
             child: _isSearching
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.primary),
+                ? Center(
+                    child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
                   )
                 : _searchResults.isEmpty && _searchQuery.isNotEmpty
                 ? const Center(
@@ -1163,9 +1163,9 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
                           style: const TextStyle(color: AppTheme.textMuted),
                         ),
                         trailing: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.add_circle_outline,
-                            color: AppTheme.primary,
+                            color: Theme.of(context).primaryColor,
                           ),
                           onPressed: () {
                             if (widget.playlistId != null) {
