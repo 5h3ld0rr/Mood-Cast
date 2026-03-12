@@ -117,8 +117,10 @@ class _MainScreenState extends State<MainScreen> {
                 backgroundColor: Colors.transparent,
                 type: BottomNavigationBarType.fixed,
                 elevation: 0,
-                selectedItemColor: AppTheme.primary,
-                unselectedItemColor: AppTheme.textMuted,
+                selectedItemColor: Theme.of(context).primaryColor,
+                unselectedItemColor:
+                    Theme.of(context).textTheme.bodyMedium?.color ??
+                    AppTheme.textMuted,
                 selectedFontSize: 12,
                 unselectedFontSize: 12,
                 selectedLabelStyle: const TextStyle(

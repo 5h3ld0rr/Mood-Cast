@@ -12,9 +12,9 @@ class AppTheme {
 
   static Map<String, Color> get moodColors => {
     'Happy': const Color(0xFFFFD700), // Gold
-    'Sad': const Color(0xFF4A90E2),   // Blue
+    'Sad': const Color(0xFF4A90E2), // Blue
     'Angry': const Color(0xFFFF3B30), // Red
-    'Natural': primary,                // Default Blue
+    'Natural': primary, // Default Blue
   };
 
   static Map<String, Color> get moodBackgrounds => {
@@ -31,18 +31,38 @@ class AppTheme {
     return ThemeData(
       brightness: Brightness.dark,
       primaryColor: primaryColor,
-      scaffoldBackgroundColor: Colors.transparent, // Allow global background to show
+      scaffoldBackgroundColor:
+          Colors.transparent, // Allow global background to show
       canvasColor: bgColor,
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-        displayLarge: GoogleFonts.spaceGrotesk(color: textLight, fontWeight: FontWeight.bold),
-        displayMedium: GoogleFonts.spaceGrotesk(color: textLight, fontWeight: FontWeight.bold),
-        displaySmall: GoogleFonts.spaceGrotesk(color: textLight, fontWeight: FontWeight.bold),
-        headlineLarge: GoogleFonts.spaceGrotesk(color: textLight, fontWeight: FontWeight.bold),
-        headlineMedium: GoogleFonts.spaceGrotesk(color: textLight, fontWeight: FontWeight.bold),
-        titleLarge: GoogleFonts.spaceGrotesk(color: textLight, fontWeight: FontWeight.bold),
-        bodyLarge: const TextStyle(color: textLight),
-        bodyMedium: const TextStyle(color: textMuted),
-      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
+          .copyWith(
+            displayLarge: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            displayMedium: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            displaySmall: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            headlineLarge: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            headlineMedium: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            titleLarge: GoogleFonts.spaceGrotesk(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+            ),
+            bodyLarge: const TextStyle(color: textLight),
+            bodyMedium: const TextStyle(color: textMuted),
+          ),
       colorScheme: ColorScheme.dark(
         primary: primaryColor,
         surface: cardBg,
@@ -53,7 +73,9 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 8,
           shadowColor: primaryColor.withValues(alpha: 0.4),
         ),
@@ -61,14 +83,20 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.03),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.5), width: 2),
+          borderSide: BorderSide(
+            color: primaryColor.withValues(alpha: 0.5),
+            width: 2,
+          ),
         ),
         labelStyle: const TextStyle(color: textMuted),
         hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),

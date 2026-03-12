@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../utils/ui_utils.dart';
 
@@ -22,7 +21,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -82,7 +81,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           : 'Data collection disabled',
                     );
                   },
-                  activeThumbColor: AppTheme.primary,
+                  activeThumbColor: Theme.of(context).primaryColor,
                 ),
               ),
               _buildDivider(),
@@ -99,7 +98,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                           : 'Personalized ads disabled',
                     );
                   },
-                  activeThumbColor: AppTheme.primary,
+                  activeThumbColor: Theme.of(context).primaryColor,
                 ),
               ),
             ]),
@@ -126,8 +125,8 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
-        color: AppTheme.primary,
+      style: TextStyle(
+        color: Theme.of(context).primaryColor,
         fontSize: 12,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.5,
@@ -138,7 +137,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
   Widget _buildSettingsContainer(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -160,10 +159,10 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withValues(alpha: 0.1),
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: AppTheme.primary, size: 24),
+        child: Icon(icon, color: Theme.of(context).primaryColor, size: 24),
       ),
       title: Text(
         title,
@@ -184,7 +183,10 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
           : null,
       trailing:
           trailing ??
-          const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+          Icon(
+            Icons.chevron_right,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
     );
   }
 
@@ -201,7 +203,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).canvasColor,
         title: const Text(
           'Delete Account',
           style: TextStyle(color: Colors.white),

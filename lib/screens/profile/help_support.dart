@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../theme.dart';
 import '../../utils/ui_utils.dart';
 
 class HelpSupportScreen extends StatelessWidget {
@@ -9,7 +8,7 @@ class HelpSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       body: Stack(
         children: [
           // Background Glows
@@ -78,30 +77,37 @@ class HelpSupportScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader('Frequently Asked Questions'),
+                        _buildSectionHeader(
+                          'Frequently Asked Questions',
+                          context,
+                        ),
                         const SizedBox(height: 16),
                         _buildFaqItem(
+                          context: context,
                           question: 'How does MoodCast analyze my mood?',
                           answer:
                               'MoodCast uses advanced AI to analyze the acoustic properties of the music you listen to, the time of day, and your previous listening history to determine your current state of mind.',
                         ),
                         const SizedBox(height: 12),
                         _buildFaqItem(
+                          context: context,
                           question: 'How do I cancel my subscription?',
                           answer:
                               'To cancel or manage your subscription, please visit your account settings in the Google Play Store or Apple App Store, depending on your device.',
                         ),
                         const SizedBox(height: 12),
                         _buildFaqItem(
+                          context: context,
                           question: 'Can I use MoodCast offline?',
                           answer:
                               'Offline listening is currently available exclusively for users subscribed to our Premium plans (Monthly Pro or Yearly Pro).',
                         ),
                         const SizedBox(height: 32),
 
-                        _buildSectionHeader('Contact Us'),
+                        _buildSectionHeader('Contact Us', context),
                         const SizedBox(height: 16),
                         _buildContactOption(
+                          context: context,
                           icon: Icons.email_outlined,
                           title: 'Email Support',
                           subtitle: 'support@moodcast.app',
@@ -126,6 +132,7 @@ class HelpSupportScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         _buildContactOption(
+                          context: context,
                           icon: Icons.chat_bubble_outline,
                           title: 'Live Chat',
                           subtitle: 'Available 9 AM - 5 PM EST',
@@ -144,14 +151,14 @@ class HelpSupportScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(
-                                    alpha: 0.1,
-                                  ),
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.audiotrack,
-                                  color: AppTheme.primary,
+                                  color: Theme.of(context).primaryColor,
                                   size: 64,
                                 ),
                               ),
@@ -165,10 +172,10 @@ class HelpSupportScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Version 1.0.0',
                                 style: TextStyle(
-                                  color: AppTheme.primary,
+                                  color: Theme.of(context).primaryColor,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -189,28 +196,32 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
-        color: AppTheme.primary,
+      style: TextStyle(
+        color: Theme.of(context).primaryColor,
         fontSize: 18,
         fontWeight: FontWeight.bold,
       ),
     );
   }
 
-  Widget _buildFaqItem({required String question, required String answer}) {
+  Widget _buildFaqItem({
+    required BuildContext context,
+    required String question,
+    required String answer,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Theme(
         data: ThemeData(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          iconColor: AppTheme.primary,
+          iconColor: Theme.of(context).primaryColor,
           collapsedIconColor: Colors.white,
           title: Text(
             question,
@@ -229,8 +240,8 @@ class HelpSupportScreen extends StatelessWidget {
               ),
               child: Text(
                 answer,
-                style: const TextStyle(
-                  color: AppTheme.textMuted,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                   fontSize: 14,
                   height: 1.5,
                 ),
@@ -243,6 +254,7 @@ class HelpSupportScreen extends StatelessWidget {
   }
 
   Widget _buildContactOption({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -254,7 +266,7 @@ class HelpSupportScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.cardBg,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
@@ -263,10 +275,14 @@ class HelpSupportScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppTheme.primary, size: 28),
+              child: Icon(
+                icon,
+                color: Theme.of(context).primaryColor,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -284,15 +300,18 @@ class HelpSupportScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+            Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
           ],
         ),
       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/weather_service.dart';
 import '../../widgets/skeleton.dart';
@@ -108,7 +107,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -138,8 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const NotificationListScreen(),
+                          builder: (context) => const NotificationListScreen(),
                         ),
                       );
                     },
@@ -148,219 +148,224 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-                // Scrollable Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StreamBuilder<User?>(
+                      stream: AuthService().userChanges,
+                      builder: (context, snapshot) {
+                        final user = snapshot.data ?? AuthService().currentUser;
+                        final name =
+                            user?.displayName?.split(' ').first ?? 'User';
+
+                        final hour = DateTime.now().hour;
+                        String timeGreeting = 'Good Morning';
+                        if (hour >= 12 && hour < 17) {
+                          timeGreeting = 'Good Afternoon';
+                        } else if (hour >= 17) {
+                          timeGreeting = 'Good Evening';
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$timeGreeting, $name',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 4),
+                    Text(
+                      'How are you feeling today?',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Current Mood Card
+                    Stack(
                       children: [
-                        StreamBuilder<User?>(
-                          stream: AuthService().userChanges,
-                          builder: (context, snapshot) {
-                            final user =
-                                snapshot.data ?? AuthService().currentUser;
-                            final name =
-                                user?.displayName?.split(' ').first ?? 'User';
-
-                            final hour = DateTime.now().hour;
-                            String timeGreeting = 'Good Morning';
-                            if (hour >= 12 && hour < 17) {
-                              timeGreeting = 'Good Afternoon';
-                            } else if (hour >= 17) {
-                              timeGreeting = 'Good Evening';
-                            }
-
-                            return Column(
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.15),
+                                Colors.white.withValues(alpha: 0.05),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                ValueListenableBuilder<String>(
+                                  valueListenable: _moodService.currentMood,
+                                  builder: (context, mood, _) {
+                                    return Text(
+                                      'CURRENT MOOD',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 8),
                                 Text(
-                                  '$timeGreeting, $name',
+                                  _moodService.currentMood.value,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 32,
+                                    fontSize: 36,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: -1,
                                   ),
+                                ),
+                                const SizedBox(height: 16),
+                                ValueListenableBuilder<String>(
+                                  valueListenable: _moodService.currentMood,
+                                  builder: (context, mood, _) {
+                                    final tags = _getMoodTags(mood);
+                                    return Row(
+                                      children: tags.map((tag) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 8.0,
+                                          ),
+                                          child: _buildTag(tag),
+                                        );
+                                      }).toList(),
+                                    );
+                                  },
                                 ),
                               ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'How are you feeling today?',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 16,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-
-                        // Current Mood Card
-                        Stack(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(28),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    AppTheme.primary.withValues(alpha: 0.15),
-                                    Colors.white.withValues(alpha: 0.05),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.1),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ValueListenableBuilder<String>(
-                                      valueListenable: _moodService.currentMood,
-                                      builder: (context, mood, _) {
-                                        return Text(
-                                          'CURRENT MOOD',
-                                          style: TextStyle(
-                                            color: Theme.of(context).primaryColor,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.5,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _moodService.currentMood.value,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ValueListenableBuilder<String>(
-                                      valueListenable: _moodService.currentMood,
-                                      builder: (context, mood, _) {
-                                        final tags = _getMoodTags(mood);
-                                        return Row(
-                                          children: tags.map((tag) {
-                                            return Padding(
-                                              padding: const EdgeInsets.only(
-                                                right: 8.0,
-                                              ),
-                                              child: _buildTag(tag),
-                                            );
-                                          }).toList(),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 24,
-                              right: 24,
-                              child: ValueListenableBuilder<WeatherData?>(
-                                valueListenable:
-                                    WeatherService().currentWeather,
-                                builder: (context, weather, _) {
-                                  if (weather == null) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return Icon(
-                                    _getWeatherIcon(weather.condition),
-                                    color: Theme.of(context).primaryColor.withValues(
-                                      alpha: 0.8,
-                                    ),
-                                    size: 32,
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Recommended Section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Recommended for You',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => RecommendationsScreen(
-                                      mood: _moodService.currentMood.value,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'See All',
-                                style: TextStyle(color: Theme.of(context).primaryColor),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        if (_isLoading)
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: 6,
-                            itemBuilder: (context, index) =>
-                                const TrackSkeleton(),
-                          )
-                        else if (_recommendations.isEmpty)
-                          const Center(
-                            child: Text(
-                              'No music recommendations found.',
-                              style: TextStyle(color: AppTheme.textMuted),
-                            ),
-                          )
-                        else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _recommendations.length,
-                            itemBuilder: (context, index) {
-                              final track = _recommendations[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12.0),
-                                child: _buildTrackTile(context, track, index),
+                        Positioned(
+                          top: 24,
+                          right: 24,
+                          child: ValueListenableBuilder<WeatherData?>(
+                            valueListenable: WeatherService().currentWeather,
+                            builder: (context, weather, _) {
+                              if (weather == null) {
+                                return const SizedBox.shrink();
+                              }
+                              return Icon(
+                                _getWeatherIcon(weather.condition),
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.8),
+                                size: 32,
                               );
                             },
                           ),
-
-                        const SizedBox(height: 100),
+                        ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 32),
+
+                    // Recommended Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Recommended for You',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => RecommendationsScreen(
+                                  mood: _moodService.currentMood.value,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'See All',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    if (_isLoading)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: 6,
+                        itemBuilder: (context, index) => const TrackSkeleton(),
+                      )
+                    else if (_recommendations.isEmpty)
+                      Center(
+                        child: Text(
+                          'No music recommendations found.',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _recommendations.length,
+                        itemBuilder: (context, index) {
+                          final track = _recommendations[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: _buildTrackTile(context, track, index),
+                          );
+                        },
+                      ),
+
+                    const SizedBox(height: 100),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -471,17 +476,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     track.artist,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.play_circle_fill,
-              color: AppTheme.primary,
+              color: Theme.of(context).primaryColor,
               size: 40,
             ),
           ],

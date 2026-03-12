@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../../utils/ui_utils.dart';
 import '../../widgets/cached_image.dart';
@@ -64,7 +63,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -114,7 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           height: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: AppTheme.primary, width: 2),
+            border: Border.all(color: Theme.of(context).primaryColor, width: 2),
           ),
           child: CachedImage(
             imageUrl: photoUrl.isNotEmpty ? photoUrl : null,
@@ -133,8 +132,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           right: 0,
           child: Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: AppTheme.primary,
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
@@ -164,7 +163,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.cardBg,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
@@ -174,7 +173,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-              prefixIcon: Icon(icon, color: AppTheme.primary),
+              prefixIcon: Icon(icon, color: Theme.of(context).primaryColor),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(20),
             ),
@@ -192,7 +191,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _saveProfile,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primary,
+          backgroundColor: Theme.of(context).primaryColor,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

@@ -294,9 +294,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                 else
                   Container(
                     color: const Color(0xFF0D121C),
-                    child: const Center(
+                    child: Center(
                       child: CircularProgressIndicator(
-                        color: AppTheme.primary,
+                        color: Theme.of(context).primaryColor,
                         strokeWidth: 2,
                       ),
                     ),
@@ -334,7 +334,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: AppTheme.primary.withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -414,17 +416,17 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         right: 40,
                         child: Container(
                           height: 2,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
-                                AppTheme.primary,
+                                Theme.of(context).primaryColor,
                                 Colors.transparent,
                               ],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primary,
+                                color: Theme.of(context).primaryColor,
                                 blurRadius: 10,
                               ),
                             ],
@@ -461,8 +463,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         ),
                         Text(
                           '${(_progress * 100).toInt()}%',
-                          style: const TextStyle(
-                            color: AppTheme.primary,
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'monospace',
@@ -476,8 +478,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       child: LinearProgressIndicator(
                         value: _progress,
                         backgroundColor: Colors.white.withValues(alpha: 0.05),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppTheme.primary,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor,
                         ),
                         minHeight: 10,
                       ),
@@ -528,9 +530,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 Text(
                                   'CURRENT STATE',
                                   style: TextStyle(
-                                    color: AppTheme.primary.withValues(
-                                      alpha: 0.6,
-                                    ),
+                                    color: Colors.black,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 2.5,
@@ -584,7 +584,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
+                                backgroundColor: Theme.of(context).primaryColor,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 18,
                                 ),
@@ -738,12 +738,12 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                               ),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppTheme.primary
+                                    ? Theme.of(context).primaryColor
                                     : Colors.white.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isSelected
-                                      ? AppTheme.primary
+                                      ? Theme.of(context).primaryColor
                                       : Colors.white.withValues(alpha: 0.1),
                                 ),
                               ),
@@ -790,16 +790,16 @@ class _AnalysisScreenState extends State<AnalysisScreen>
       decoration: BoxDecoration(
         border: Border(
           top: isTop
-              ? const BorderSide(color: AppTheme.primary, width: 2.5)
+              ? BorderSide(color: Theme.of(context).primaryColor, width: 2.5)
               : BorderSide.none,
           bottom: !isTop
-              ? const BorderSide(color: AppTheme.primary, width: 2.5)
+              ? BorderSide(color: Theme.of(context).primaryColor, width: 2.5)
               : BorderSide.none,
           left: isLeft
-              ? const BorderSide(color: AppTheme.primary, width: 2.5)
+              ? BorderSide(color: Theme.of(context).primaryColor, width: 2.5)
               : BorderSide.none,
           right: !isLeft
-              ? const BorderSide(color: AppTheme.primary, width: 2.5)
+              ? BorderSide(color: Theme.of(context).primaryColor, width: 2.5)
               : BorderSide.none,
         ),
       ),

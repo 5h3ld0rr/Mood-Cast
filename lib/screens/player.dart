@@ -48,11 +48,15 @@ class _PlayerScreenState extends State<PlayerScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0F18),
+      backgroundColor: Theme.of(context).canvasColor,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF1A2333), Color(0xFF101827), Color(0xFF0A0F18)],
+            colors: [
+              Theme.of(context).canvasColor.withValues(alpha: 0.8),
+              Theme.of(context).canvasColor,
+              Theme.of(context).canvasColor,
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -209,18 +213,22 @@ class _PlayerScreenState extends State<PlayerScreen>
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.2),
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.2),
                             border: Border.all(
-                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.3),
                             ),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.emergency,
-                                color: AppTheme.primary,
+                                color: Theme.of(context).primaryColor,
                                 size: 16,
                               ),
                               const SizedBox(width: 8),
@@ -229,8 +237,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                 builder: (context, mood, _) {
                                   return Text(
                                     'CURRENT MOOD: ${mood.toUpperCase()}',
-                                    style: const TextStyle(
-                                      color: AppTheme.primary,
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.2,
@@ -273,7 +281,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 40.0),
                           child: MusicWaveform(
-                            color: AppTheme.primary.withValues(alpha: 0.8),
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.8),
                             count: 40,
                             isPlaying: PlayerService().isPlaying,
                           ),
@@ -345,8 +355,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         const SizedBox(height: 2),
                                         Text(
                                           song?.artist ?? '',
-                                          style: const TextStyle(
-                                            color: AppTheme.textMuted,
+                                          style: TextStyle(
+                                            color: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.color,
                                             fontSize: 14,
                                           ),
                                           maxLines: 1,
@@ -390,8 +402,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                                         CircularProgressIndicator(
                                                           value: progress,
                                                           strokeWidth: 2,
-                                                          color:
-                                                              AppTheme.primary,
+                                                          color: Theme.of(
+                                                            context,
+                                                          ).primaryColor,
                                                         ),
                                                   );
                                                 }
@@ -402,8 +415,13 @@ class _PlayerScreenState extends State<PlayerScreen>
                                                         : Icons
                                                               .download_for_offline_outlined,
                                                     color: isDownloaded
-                                                        ? AppTheme.primary
-                                                        : AppTheme.textMuted,
+                                                        ? Theme.of(
+                                                            context,
+                                                          ).primaryColor
+                                                        : Theme.of(context)
+                                                              .textTheme
+                                                              .bodyMedium
+                                                              ?.color,
                                                     size: 24,
                                                   ),
                                                   onPressed: () {
@@ -432,8 +450,13 @@ class _PlayerScreenState extends State<PlayerScreen>
                                                     ? Icons.favorite
                                                     : Icons.favorite_border,
                                                 color: liked
-                                                    ? AppTheme.primary
-                                                    : AppTheme.textMuted,
+                                                    ? Theme.of(
+                                                        context,
+                                                      ).primaryColor
+                                                    : Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.color,
                                               ),
                                               onPressed: () =>
                                                   PlayerService().toggleLiked(),
@@ -494,7 +517,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                           widthFactor: progress,
                                           child: Container(
                                             decoration: BoxDecoration(
-                                              color: AppTheme.primary,
+                                              color: Theme.of(
+                                                context,
+                                              ).primaryColor,
                                               borderRadius:
                                                   BorderRadius.circular(3),
                                             ),
@@ -555,8 +580,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     icon: Icon(
                                       Icons.shuffle,
                                       color: shuffled
-                                          ? AppTheme.primary
-                                          : AppTheme.textMuted,
+                                          ? Theme.of(context).primaryColor
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.color,
                                     ),
                                     onPressed: () {
                                       PlayerService().toggleShuffle();
@@ -585,13 +612,13 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       width: 64,
                                       height: 64,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.primary,
+                                        color: Theme.of(context).primaryColor,
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppTheme.primary.withValues(
-                                              alpha: 0.3,
-                                            ),
+                                            color: Theme.of(context)
+                                                .primaryColor
+                                                .withValues(alpha: 0.3),
                                             blurRadius: 15,
                                           ),
                                         ],

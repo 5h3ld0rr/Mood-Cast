@@ -279,7 +279,7 @@ class PlaylistSelector extends StatelessWidget {
   final SongInfo song;
   final DatabaseService _db = DatabaseService();
 
-  PlaylistSelector({required this.song});
+  PlaylistSelector({super.key, required this.song});
 
   @override
   Widget build(BuildContext context) {

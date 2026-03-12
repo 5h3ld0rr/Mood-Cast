@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/player_service.dart';
-import '../theme.dart';
+
 import '../screens/player.dart';
 import 'cached_image.dart';
 
@@ -88,7 +88,7 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -139,8 +139,10 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                           ),
                           Text(
                             widget.song.artist,
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.color,
                               fontSize: 12,
                             ),
                             maxLines: 1,
@@ -165,7 +167,9 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                             child: Icon(
                               liked ? Icons.favorite : Icons.favorite_border,
                               key: ValueKey<bool>(liked),
-                              color: liked ? AppTheme.primary : Colors.white,
+                              color: liked
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.white,
                               size: 24,
                             ),
                           ),
@@ -180,14 +184,14 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                       valueListenable: PlayerService().isBuffering,
                       builder: (context, buffering, _) {
                         if (buffering) {
-                          return const SizedBox(
+                          return SizedBox(
                             width: 32,
                             height: 32,
                             child: Padding(
                               padding: EdgeInsets.all(8.0),
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppTheme.primary,
+                                color: Theme.of(context).primaryColor,
                               ),
                             ),
                           );
@@ -225,8 +229,8 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                     child: LinearProgressIndicator(
                       value: progress,
                       backgroundColor: Colors.white.withValues(alpha: 0.1),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppTheme.primary,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).primaryColor,
                       ),
                     ),
                   );

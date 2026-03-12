@@ -10,7 +10,8 @@ class MoodBackground extends StatefulWidget {
   State<MoodBackground> createState() => _MoodBackgroundState();
 }
 
-class _MoodBackgroundState extends State<MoodBackground> with SingleTickerProviderStateMixin {
+class _MoodBackgroundState extends State<MoodBackground>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -36,7 +37,8 @@ class _MoodBackgroundState extends State<MoodBackground> with SingleTickerProvid
       valueListenable: MoodService().currentMood,
       builder: (context, mood, _) {
         final primaryColor = AppTheme.moodColors[mood] ?? AppTheme.primary;
-        final bgColor = AppTheme.moodBackgrounds[mood] ?? AppTheme.backgroundDark;
+        final bgColor =
+            AppTheme.moodBackgrounds[mood] ?? AppTheme.backgroundDark;
 
         return Stack(
           children: [
@@ -84,17 +86,21 @@ class _MoodBackgroundState extends State<MoodBackground> with SingleTickerProvid
 
             // The actual app content
             // We wrap it in a Theme to provide mood colors to all components
-            Theme(
-              data: AppTheme.getThemeForMood(mood),
-              child: widget.child,
-            ),
+            Theme(data: AppTheme.getThemeForMood(mood), child: widget.child),
           ],
         );
       },
     );
   }
 
-  Widget _buildGlowWidget({double? top, double? bottom, double? left, double? right, required Color color, required double size}) {
+  Widget _buildGlowWidget({
+    double? top,
+    double? bottom,
+    double? left,
+    double? right,
+    required Color color,
+    required double size,
+  }) {
     return Positioned(
       top: top,
       bottom: bottom,

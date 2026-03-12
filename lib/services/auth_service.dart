@@ -15,9 +15,7 @@ class AuthService {
         serverClientId:
             '138700460734-e2ondshg6he0dj8r0hdsvb5rqurptus0.apps.googleusercontent.com',
       );
-      final GoogleSignInAccount? googleUser = await _googleSignIn
-          .authenticate();
-      if (googleUser == null) return null;
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
       // Step 2: Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;

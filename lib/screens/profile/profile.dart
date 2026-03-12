@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../theme.dart';
 import '../../services/auth_service.dart';
 import '../auth/login.dart';
 import 'edit_profile.dart';
@@ -57,8 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     StreamBuilder<User?>(
                       stream: _authService.userChanges,
                       builder: (context, snapshot) {
-                        final user =
-                            snapshot.data ?? _authService.currentUser;
+                        final user = snapshot.data ?? _authService.currentUser;
                         final photoUrl = user?.photoURL;
                         final displayName = user?.displayName ?? 'User';
                         final email = user?.email ?? 'No email';
@@ -72,16 +70,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Theme.of(context).primaryColor.withValues(
-                                    alpha: 0.5,
-                                  ),
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.5),
                                   width: 4,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Theme.of(context).primaryColor.withValues(
-                                      alpha: 0.2,
-                                    ),
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.2),
                                     blurRadius: 24,
                                     spreadRadius: 4,
                                   ),
@@ -109,8 +107,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 4),
                             Text(
                               email,
-                              style: const TextStyle(
-                                color: AppTheme.textMuted,
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color,
                                 fontSize: 16,
                               ),
                             ),
@@ -161,7 +161,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Menu Items
                     Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.cardBg,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surface.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.1),
@@ -207,14 +209,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     Text(
                                       label,
-                                      style: const TextStyle(
-                                        color: AppTheme.textMuted,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Icon(
+                                    Icon(
                                       Icons.chevron_right,
-                                      color: AppTheme.textMuted,
+                                      color: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.color,
                                     ),
                                   ],
                                 );
@@ -227,13 +233,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.insights,
                             title: 'Trends & Insights',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const InsightsScreen(),
+                                  builder: (context) => const InsightsScreen(),
                                 ),
                               );
                             },
@@ -243,10 +245,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.security,
                             title: 'Privacy & Security',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const PrivacySecurityScreen(),
@@ -260,10 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             title: 'Subscription',
                             subtitle: 'Free Plan Active',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const SubscriptionScreen(),
@@ -276,10 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.help_outline,
                             title: 'Help & Support',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const HelpSupportScreen(),
@@ -391,10 +384,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withValues(alpha: 0.1),
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: AppTheme.primary, size: 24),
+        child: Icon(icon, color: Theme.of(context).primaryColor, size: 24),
       ),
       title: Text(
         title,
@@ -407,12 +400,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       subtitle: subtitle != null
           ? Text(
               subtitle,
-              style: const TextStyle(color: AppTheme.primary, fontSize: 12),
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontSize: 12,
+              ),
             )
           : null,
       trailing:
           trailing ??
-          const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+          Icon(
+            Icons.chevron_right,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
     );
   }
 
@@ -430,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: AppTheme.backgroundDark,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
@@ -479,7 +478,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return RadioListTile<AudioQuality>(
           value: value,
           groupValue: currentQuality,
-          activeColor: AppTheme.primary,
+          activeColor: Theme.of(context).primaryColor,
           title: Text(
             title,
             style: const TextStyle(
@@ -490,7 +489,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           subtitle: Text(
             subtitle,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+              fontSize: 12,
+            ),
           ),
           onChanged: (val) {
             if (val != null) {

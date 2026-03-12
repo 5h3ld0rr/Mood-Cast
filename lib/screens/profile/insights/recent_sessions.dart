@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '../../../theme.dart';
+
 import '../../../services/metrics_service.dart';
 
 class RecentSessionsScreen extends StatelessWidget {
@@ -9,22 +9,22 @@ class RecentSessionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, String> _moodEmojis = {
+    final Map<String, String> moodEmojis = {
       'Happy': '😊',
       'Angry': '😠',
       'Sad': '😔',
       'Natural': '😐',
     };
 
-    final Map<String, Color> _moodColors = {
+    final Map<String, Color> moodColors = {
       'Happy': Colors.tealAccent,
       'Angry': Colors.redAccent,
       'Sad': Colors.blueAccent,
-      'Natural': AppTheme.primary,
+      'Natural': Theme.of(context).primaryColor,
     };
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       appBar: AppBar(
         title: const Text(
           'Recent History',
@@ -49,10 +49,12 @@ class RecentSessionsScreen extends StatelessWidget {
           final history = snapshot.data ?? [];
 
           if (history.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
                 'No scans yet',
-                style: TextStyle(color: AppTheme.textMuted),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
               ),
             );
           }
@@ -65,15 +67,18 @@ class RecentSessionsScreen extends StatelessWidget {
                 final entry = history[index];
                 final mood = entry['mood'] as String;
                 final ts = entry['timestamp'] as Timestamp?;
-                final dateStr = ts != null ? DateFormat('MMM dd, hh:mm a').format(ts.toDate()) : 'Recent';
+                final dateStr = ts != null
+                    ? DateFormat('MMM dd, hh:mm a').format(ts.toDate())
+                    : 'Recent';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _buildSessionTile(
+                    context,
                     mood,
                     dateStr,
-                    _moodEmojis[mood] ?? '👤',
-                    _moodColors[mood] ?? Colors.white,
+                    moodEmojis[mood] ?? '👤',
+                    moodColors[mood] ?? Colors.white,
                   ),
                 );
               },
@@ -85,6 +90,7 @@ class RecentSessionsScreen extends StatelessWidget {
   }
 
   Widget _buildSessionTile(
+    BuildContext context,
     String title,
     String subtitle,
     String emoji,
@@ -93,7 +99,7 @@ class RecentSessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -105,9 +111,22 @@ class RecentSessionsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../services/database_service.dart';
@@ -67,9 +66,13 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _fullArtist == null) {
-      return const Scaffold(
-        backgroundColor: AppTheme.backgroundDeep,
-        body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+      return Scaffold(
+        backgroundColor: Theme.of(context).canvasColor,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
       );
     }
 
@@ -78,13 +81,13 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
     final topSongs = artist.topSongs ?? [];
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDeep,
+      backgroundColor: Theme.of(context).canvasColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
-            backgroundColor: AppTheme.backgroundDeep,
+            backgroundColor: Theme.of(context).canvasColor,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 artist.name,
@@ -99,11 +102,14 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
                 children: [
                   CachedImage(imageUrl: artist.artworkUrl, fit: BoxFit.cover),
                   Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, AppTheme.backgroundDeep],
+                        colors: [
+                          Colors.transparent,
+                          Theme.of(context).canvasColor,
+                        ],
                       ),
                     ),
                   ),
@@ -124,7 +130,7 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _isFollowed
                               ? Colors.transparent
-                              : AppTheme.primary,
+                              : Theme.of(context).primaryColor,
                           foregroundColor: _isFollowed
                               ? Colors.white
                               : Colors.black,
@@ -218,8 +224,8 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
                   ),
                   subtitle: Text(
                     track.artist,
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontSize: 12,
                     ),
                   ),

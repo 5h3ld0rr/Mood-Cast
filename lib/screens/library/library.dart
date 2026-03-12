@@ -104,11 +104,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 hintStyle: const TextStyle(color: Colors.white38),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
-                    color: AppTheme.primary.withValues(alpha: 0.5),
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.5),
                   ),
                 ),
-                focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: AppTheme.primary),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
                 ),
               ),
               onChanged: (value) => playlistName = value,
@@ -133,7 +135,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.black,
                   ),
                   child: const Text('CREATE'),
@@ -405,11 +407,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           builder: (context, artistSnapshot) {
                             if (artistSnapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return const Center(
+                              return Center(
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 20,
+                                  ),
                                   child: CircularProgressIndicator(
-                                    color: AppTheme.primary,
+                                    color: Theme.of(context).primaryColor,
                                     strokeWidth: 2,
                                   ),
                                 ),
@@ -471,7 +475,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             builder: (context) => Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).canvasColor.withValues(alpha: 0.98),
+                                color: Theme.of(
+                                  context,
+                                ).canvasColor.withValues(alpha: 0.98),
                                 borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(24),
                                 ),
@@ -480,9 +486,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   ListTile(
-                                    leading: const Icon(
+                                    leading: Icon(
                                       Icons.person,
-                                      color: AppTheme.primary,
+                                      color: Theme.of(context).primaryColor,
                                     ),
                                     title: Text(
                                       artist.name,
@@ -491,10 +497,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    subtitle: const Text(
+                                    subtitle: Text(
                                       'Artist Options',
                                       style: TextStyle(
-                                        color: AppTheme.textMuted,
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
                                       ),
                                     ),
                                   ),
@@ -713,11 +721,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     ),
                                   ),
                                   if (song.isPinned)
-                                    const Padding(
-                                      padding: EdgeInsets.only(right: 8.0),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 8.0,
+                                      ),
                                       child: Icon(
                                         Icons.push_pin,
-                                        color: AppTheme.primary,
+                                        color: Theme.of(context).primaryColor,
                                         size: 14,
                                       ),
                                     ),
@@ -784,8 +794,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 stream: _db.getPlaylists(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).primaryColor,
+                      ),
                     );
                   }
 
@@ -878,7 +890,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     subtitle:
                                         'Playlist • ${playlist['songCount']} songs',
                                     icon: Icons.queue_music,
-                                    color: AppTheme.primary,
+                                    color: Theme.of(context).primaryColor,
                                     playlistId: playlist['id'] as String,
                                   ),
                                 ),
@@ -921,12 +933,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary
+              ? Theme.of(context).primaryColor
               : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
-                ? AppTheme.primary
+                ? Theme.of(context).primaryColor
                 : Colors.white.withValues(alpha: 0.1),
           ),
         ),
@@ -1023,11 +1035,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   Row(
                     children: [
                       if (isLikedSongs || isPinned)
-                        const Padding(
-                          padding: EdgeInsets.only(right: 6.0),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6.0),
                           child: Icon(
                             Icons.push_pin,
-                            color: AppTheme.primary,
+                            color: Theme.of(context).primaryColor,
                             size: 14,
                           ),
                         ),
@@ -1125,8 +1137,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         ),
                       Text(
                         followers,
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontSize: 14,
                         ),
                       ),
@@ -1292,9 +1304,9 @@ class _ArtistSearchBottomSheetState extends State<_ArtistSearchBottomSheet> {
                 }
 
                 return _isLoading
-                    ? const Center(
+                    ? Center(
                         child: CircularProgressIndicator(
-                          color: AppTheme.primary,
+                          color: Theme.of(context).primaryColor,
                         ),
                       )
                     : _results.isEmpty && _controller.text.isNotEmpty

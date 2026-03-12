@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../theme.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../services/search_history_service.dart';
@@ -541,7 +540,10 @@ class _SearchScreenState extends State<SearchScreen> {
               artistName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontSize: 12,
+              ),
             ),
             trailing: IconButton(
               icon: const Icon(Icons.more_vert, color: Colors.white54),
@@ -596,9 +598,12 @@ class _SearchScreenState extends State<SearchScreen> {
             fontSize: 15,
           ),
         ),
-        subtitle: const Text(
+        subtitle: Text(
           'Artist',
-          style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+            fontSize: 12,
+          ),
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.white24),
       ),
@@ -627,9 +632,12 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Check your connection to search for music.',
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 16),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+                fontSize: 16,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -641,7 +649,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
+                backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
