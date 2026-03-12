@@ -27,6 +27,7 @@ class _MainScreenState extends State<MainScreen> {
     2: GlobalKey<NavigatorState>(),
     3: GlobalKey<NavigatorState>(),
     4: GlobalKey<NavigatorState>(),
+    5: GlobalKey<NavigatorState>(),
   };
 
   List<Widget> get _screens => [
@@ -50,6 +51,14 @@ class _MainScreenState extends State<MainScreen> {
     ),
     TabNavigator(
       navigatorKey: _navigatorKeys[4]!,
+      rootScreen: const Scaffold(
+        body: Center(
+          child: Text('Community', style: TextStyle(color: Colors.white)),
+        ),
+      ),
+    ),
+    TabNavigator(
+      navigatorKey: _navigatorKeys[5]!,
       rootScreen: const ProfileScreen(),
     ),
   ];
@@ -96,76 +105,116 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const MiniPlayer(),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).canvasColor.withValues(alpha: 0.95),
-                border: Border(
-                  top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                ),
+            NavigationBarTheme(
+              data: NavigationBarThemeData(
+                indicatorColor: Theme.of(
+                  context,
+                ).primaryColor.withValues(alpha: 0.15),
+                labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    );
+                  }
+                  return const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textMuted,
+                  );
+                }),
+                iconTheme: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return IconThemeData(
+                      color: Theme.of(context).primaryColor,
+                      size: 26,
+                    );
+                  }
+                  return const IconThemeData(
+                    color: AppTheme.textMuted,
+                    size: 26,
+                  );
+                }),
               ),
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                    _isScanActiveNotifier.value = (index == 2);
-                    if (index == 2) {
-                      _isAnalysisActivated = true;
-                    }
-                  });
-                },
-                backgroundColor: Colors.transparent,
-                type: BottomNavigationBarType.fixed,
-                elevation: 0,
-                selectedItemColor: Theme.of(context).primaryColor,
-                unselectedItemColor:
-                    Theme.of(context).textTheme.bodyMedium?.color ??
-                    AppTheme.textMuted,
-                selectedFontSize: 12,
-                unselectedFontSize: 12,
-                selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
+              child: Container(
+                margin: const EdgeInsets.only(
+                  left: 12,
+                  right: 12,
+                  bottom: 16,
+                  top: 4,
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).canvasColor.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                      child: Icon(Icons.home, size: 28),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    removeBottom: true,
+                    child: NavigationBar(
+                      selectedIndex: _currentIndex,
+                      onDestinationSelected: (index) {
+                        setState(() {
+                          _currentIndex = index;
+                          _isScanActiveNotifier.value = (index == 2);
+                          if (index == 2) {
+                            _isAnalysisActivated = true;
+                          }
+                        });
+                      },
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      height: 65,
+                      labelBehavior:
+                          NavigationDestinationLabelBehavior.onlyShowSelected,
+                      destinations: const [
+                        NavigationDestination(
+                          icon: Icon(Icons.home_outlined),
+                          selectedIcon: Icon(Icons.home),
+                          label: 'Home',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.search_outlined),
+                          selectedIcon: Icon(Icons.search),
+                          label: 'Search',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.theater_comedy_outlined),
+                          selectedIcon: Icon(Icons.theater_comedy),
+                          label: 'MoodSync',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.library_music_outlined),
+                          selectedIcon: Icon(Icons.library_music),
+                          label: 'Library',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.groups_outlined),
+                          selectedIcon: Icon(Icons.groups),
+                          label: 'Community',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.person_outline),
+                          selectedIcon: Icon(Icons.person),
+                          label: 'Profile',
+                        ),
+                      ],
                     ),
-                    label: 'Home',
                   ),
-                  BottomNavigationBarItem(
-                    icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                      child: Icon(Icons.search, size: 28),
-                    ),
-                    label: 'Search',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                      child: Icon(Icons.auto_awesome, size: 28),
-                    ),
-                    label: 'MoodSync',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                      child: Icon(Icons.library_music, size: 28),
-                    ),
-                    label: 'Library',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4.0, top: 8.0),
-                      child: Icon(Icons.person, size: 28),
-                    ),
-                    label: 'Profile',
-                  ),
-                ],
+                ),
               ),
             ),
           ],
