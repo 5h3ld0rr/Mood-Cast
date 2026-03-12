@@ -81,8 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       // 4. Get Recommended Artists
-      final artistQuery = _getArtistQueryForMood(_moodService.currentMood.value);
-      final artists = await _ytmService.searchArtists(artistQuery);
+      final artists = await _ytmService.getArtistsByMood(_moodService.currentMood.value);
 
       if (mounted) {
         setState(() {
@@ -468,28 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _getArtistQueryForMood(String mood) {
-    switch (mood.toLowerCase()) {
-      case 'happy':
-        return 'Uplifting Pop Artists';
-      case 'sad':
-        return 'Soulful Indie Artists';
-      case 'energetic':
-        return 'Electronic Dance Artists';
-      case 'calm':
-        return 'Ambient Piano Artists';
-      case 'focused':
-        return 'Lo-Fi Chill Artists';
-      case 'relaxing':
-        return 'Acoustic Folk Artists';
-      case 'inspired':
-        return 'Cinematic Instrumental Artists';
-      case 'angry':
-        return 'Alternative Rock Bands';
-      default:
-        return 'Top Global Artists';
-    }
-  }
+
 
   Widget _buildSectionHeader(BuildContext context, String title,
       {VoidCallback? onSeeAll}) {

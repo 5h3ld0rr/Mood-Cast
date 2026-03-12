@@ -171,25 +171,37 @@ class YouTubeMusicService {
     required List<SongInfo> likedSongs,
     String? country,
   }) async {
-    // 1. If user has liked songs, prioritize similar music/recommendations
-    if (likedSongs.isNotEmpty) {
-      // Pick a random liked song to get similar music
-      final randomSong = (likedSongs..shuffle()).first;
-      final query = "${randomSong.title} ${randomSong.artist}";
-      final results = await searchTracks(query);
-      if (results.length > 3) return results;
-    }
+    List<YouTubeMusicMetadata> finalResults = [];
 
-    // 2. Fallback: Search for trending music in their country or based on mood
-    String query;
+    // 1. Priority: Country Trending (Local Relevance)
     if (country != null && country.isNotEmpty) {
-      String countryName = _getCountryName(country);
-      query = "trending music in $countryName";
-    } else {
-      query = _getQueryForMood(mood);
+      final countryName = _getCountryName(country);
+      final trendingResults = await searchTracks("top trending $countryName hits");
+      finalResults.addAll(trendingResults.take(10));
     }
 
-    return await searchTracks(query);
+    // 2. Content-Based: Use multiple liked songs if available
+    if (likedSongs.isNotEmpty) {
+      final sample = List<SongInfo>.from(likedSongs)..shuffle();
+      // Take up to 2 liked songs to seed variety
+      for (var song in sample.take(2)) {
+        final query = "${song.artist} radio mix";
+        final results = await searchTracks(query);
+        finalResults.addAll(results.take(5));
+      }
+    }
+
+    // 3. Discover based on Mood
+    final moodQuery = _getQueryForMood(mood);
+    final moodResults = await searchTracks(moodQuery);
+    finalResults.addAll(moodResults.take(10));
+
+    // Shuffle and filter duplicates
+    final seenIds = <String>{};
+    final uniqueResults = finalResults.where((t) => seenIds.add(t.videoId)).toList();
+    uniqueResults.shuffle();
+
+    return uniqueResults.take(20).toList();
   }
 
   String _getCountryName(String code) {
@@ -208,23 +220,60 @@ class YouTubeMusicService {
   String _getQueryForMood(String mood) {
     switch (mood.toLowerCase()) {
       case 'happy':
-        return "happy uplifting music hits";
+        return "feel good anthems charts 2024";
       case 'sad':
-        return "sad emotional deep songs";
+        return "slow bittersweet acoustic piano ballads";
       case 'energetic':
-        return "top upbeat energetic workout music";
+        return "high energy gym phonk edm shuffle";
       case 'calm':
-        return "calm relaxing ambient peaceful music";
+        return "peaceful meditation nature ambient soundscapes";
       case 'focused':
-        return "lofi focus work study deep house";
+        return "lofi hip hop radio beats to study/relax to";
+      case 'relaxing':
+        return "chill r&b soul evening vibes";
+      case 'inspired':
+        return "epic cinematic orchestral motivation tracks";
+      case 'angry':
+        return "heavy metal breakdown aggressive hardcore";
       default:
-        return "trending $mood music";
+        return "popular $mood songs 2024";
     }
   }
 
   Future<List<YouTubeMusicMetadata>> getRecommendationsByMood(
     String mood,
   ) async {
-    return await searchTracks(_getQueryForMood(mood));
+    // Reuse smart recommendations logic but without liked songs context
+    // This provides better variety than a single literal search
+    return await getSmartRecommendations(mood: mood, likedSongs: []);
+  }
+
+  Future<List<YouTubeArtistMetadata>> getArtistsByMood(String mood) async {
+    final query = _getArtistQueryForMood(mood);
+    final results = await searchArtists(query);
+    return results;
+  }
+
+  String _getArtistQueryForMood(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'happy':
+        return 'Upbeat Pop Dance Artists mix';
+      case 'sad':
+        return 'Soulful Melodic Indie Folk Artists';
+      case 'energetic':
+        return 'Electronic Dance House Techno Artists';
+      case 'calm':
+        return 'Ambient Piano Neo-Classical Artists';
+      case 'focused':
+        return 'Lo-Fi Chill Hop Beats Artists';
+      case 'relaxing':
+        return 'Smooth R&B Neo-Soul Jazz Artists';
+      case 'inspired':
+        return 'Cinematic Epic Orchestral Composers';
+      case 'angry':
+        return 'Alternative Hard Rock Metal Bands';
+      default:
+        return 'Trending Global Music Artists';
+    }
   }
 }
