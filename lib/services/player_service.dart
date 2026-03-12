@@ -280,6 +280,7 @@ class PlayerService {
     position.value = Duration.zero;
     duration.value = const Duration(seconds: 1);
     isBuffering.value = true;
+    _db.saveRecentTrack(song);
 
     try {
       await _audioPlayer.stop();

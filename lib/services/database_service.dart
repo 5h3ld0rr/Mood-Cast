@@ -406,4 +406,45 @@ class DatabaseService {
           }).toList();
         });
   }
+
+  // --- Recent Tracks ---
+  Future<void> saveRecentTrack(SongInfo song) async {
+    if (uid == null || song.videoId == null) return;
+
+    final docRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('recent_tracks')
+        .doc(song.videoId);
+
+    await docRef.set({
+      'title': song.title,
+      'artist': song.artist,
+      'coverUrl': song.coverUrl,
+      'videoId': song.videoId,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<SongInfo>> getRecentTracks({int limit = 10}) {
+    if (uid == null) return Stream.value([]);
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('recent_tracks')
+        .orderBy('timestamp', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return SongInfo(
+              title: data['title'] ?? '',
+              artist: data['artist'] ?? '',
+              coverUrl: data['coverUrl'],
+              videoId: data['videoId'],
+            );
+          }).toList();
+        });
+  }
 }

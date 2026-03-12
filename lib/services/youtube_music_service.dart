@@ -169,32 +169,37 @@ class YouTubeMusicService {
   Future<List<YouTubeMusicMetadata>> getSmartRecommendations({
     required String mood,
     required List<SongInfo> likedSongs,
+    List<SongInfo> recentTracks = const [],
     String? country,
   }) async {
     List<YouTubeMusicMetadata> finalResults = [];
 
-    // 1. Priority: Country Trending (Local Relevance)
-    if (country != null && country.isNotEmpty) {
-      final countryName = _getCountryName(country);
-      final trendingResults = await searchTracks("top trending $countryName hits");
-      finalResults.addAll(trendingResults.take(10));
-    }
+    // 1. Personal Preference: Liked + Recent (variety mix)
+    final combinedSeeds = [
+      ...likedSongs,
+      ...recentTracks,
+    ]..shuffle();
 
-    // 2. Content-Based: Use multiple liked songs if available
-    if (likedSongs.isNotEmpty) {
-      final sample = List<SongInfo>.from(likedSongs)..shuffle();
-      // Take up to 2 liked songs to seed variety
-      for (var song in sample.take(2)) {
-        final query = "${song.artist} radio mix";
+    if (combinedSeeds.isNotEmpty) {
+      // Take up to 3 seeds to seed variety
+      for (var seed in combinedSeeds.take(3)) {
+        final query = "${seed.artist} radio mix";
         final results = await searchTracks(query);
         finalResults.addAll(results.take(5));
       }
     }
 
-    // 3. Discover based on Mood
+    // 2. Discover based on Mood
     final moodQuery = _getQueryForMood(mood);
     final moodResults = await searchTracks(moodQuery);
     finalResults.addAll(moodResults.take(10));
+
+    // 3. Country Trending (Local Relevance)
+    if (country != null && country.isNotEmpty) {
+      final countryName = _getCountryName(country);
+      final trendingResults = await searchTracks("top trending $countryName hits");
+      finalResults.addAll(trendingResults.take(5));
+    }
 
     // Shuffle and filter duplicates
     final seenIds = <String>{};
@@ -248,32 +253,77 @@ class YouTubeMusicService {
     return await getSmartRecommendations(mood: mood, likedSongs: []);
   }
 
-  Future<List<YouTubeArtistMetadata>> getArtistsByMood(String mood) async {
-    final query = _getArtistQueryForMood(mood);
-    final results = await searchArtists(query);
-    return results;
+  Future<List<YouTubeArtistMetadata>> getSmartArtistRecommendations({
+    required String mood,
+    List<SongInfo> likedSongs = const [],
+    List<SongInfo> recentTracks = const [],
+    String? country,
+  }) async {
+    final List<YouTubeArtistMetadata> finalArtists = [];
+    final seenIds = <String>{};
+
+    try {
+      // 1. Personal Preference: Liked + Recent Artists
+      final combinedSeeds = [
+        ...likedSongs,
+        ...recentTracks,
+      ]..shuffle();
+
+      if (combinedSeeds.isNotEmpty) {
+        for (var song in combinedSeeds.take(4)) {
+          final results = await searchArtists(song.artist);
+          if (results.isNotEmpty) {
+            final artist = results.first;
+            if (seenIds.add(artist.browseId)) finalArtists.add(artist);
+          }
+        }
+      }
+
+      // 2. Mood-Based Discovery
+      final moodQuery = _getArtistQueryForMood(mood);
+      final moodArtists = await searchArtists(moodQuery);
+      for (var artist in moodArtists) {
+        if (seenIds.add(artist.browseId)) finalArtists.add(artist);
+      }
+
+      // 3. Country Trending Artists
+      if (country != null && country.isNotEmpty) {
+        final countryName = _getCountryName(country);
+        final trendingArtists = await searchArtists("popular artists in $countryName");
+        for (var artist in trendingArtists.take(5)) {
+          if (seenIds.add(artist.browseId)) finalArtists.add(artist);
+        }
+      }
+
+      // Weighted Shuffle
+      finalArtists.shuffle();
+      return finalArtists.take(15).toList();
+    } catch (e) {
+      debugPrint('Error getting smart artist recommendations: $e');
+      return finalArtists;
+    }
   }
 
   String _getArtistQueryForMood(String mood) {
     switch (mood.toLowerCase()) {
       case 'happy':
-        return 'Upbeat Pop Dance Artists mix';
+        return 'Mainstream Pop';
       case 'sad':
-        return 'Soulful Melodic Indie Folk Artists';
+        return 'Indie Alternative';
       case 'energetic':
-        return 'Electronic Dance House Techno Artists';
+        return 'Dance Electronic';
       case 'calm':
-        return 'Ambient Piano Neo-Classical Artists';
+        return 'Classical Ambient';
       case 'focused':
-        return 'Lo-Fi Chill Hop Beats Artists';
+        return 'Lo-fi Beats';
       case 'relaxing':
-        return 'Smooth R&B Neo-Soul Jazz Artists';
+        return 'Neo-Soul Jazz';
       case 'inspired':
-        return 'Cinematic Epic Orchestral Composers';
+        return 'Cinematic Composers';
       case 'angry':
-        return 'Alternative Hard Rock Metal Bands';
+        return 'Hard Rock Metal';
       default:
-        return 'Trending Global Music Artists';
+        return 'Trending';
     }
   }
 }

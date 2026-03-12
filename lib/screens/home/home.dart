@@ -66,22 +66,29 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      // 1. Get Liked Songs
+      // 1. Get User Activity Context
       final likedSongs = await _dbService.getLikedSongs().first;
+      final recentTracks = await _dbService.getRecentTracks().first;
 
       // 2. Get Weather Country
       final weather = WeatherService().currentWeather.value;
       final country = weather?.country;
 
-      // 3. Get Smart Recommendations
+      // 3. Get Smart Recommendations (Tracks)
       final tracks = await _ytmService.getSmartRecommendations(
         mood: _moodService.currentMood.value,
         likedSongs: likedSongs,
+        recentTracks: recentTracks,
         country: country,
       );
 
-      // 4. Get Recommended Artists
-      final artists = await _ytmService.getArtistsByMood(_moodService.currentMood.value);
+      // 4. Get Smart Recommendations (Artists)
+      final artists = await _ytmService.getSmartArtistRecommendations(
+        mood: _moodService.currentMood.value,
+        likedSongs: likedSongs,
+        recentTracks: recentTracks,
+        country: country,
+      );
 
       if (mounted) {
         setState(() {
