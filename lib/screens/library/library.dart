@@ -79,9 +79,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
           left: 24,
           right: 24,
         ),
-        decoration: const BoxDecoration(
-          color: Color(0xFF080C14),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).canvasColor.withValues(alpha: 0.98),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -207,7 +207,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,9 +470,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             backgroundColor: Colors.transparent,
                             builder: (context) => Container(
                               padding: const EdgeInsets.symmetric(vertical: 20),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF080C14),
-                                borderRadius: BorderRadius.vertical(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).canvasColor.withValues(alpha: 0.98),
+                                borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(24),
                                 ),
                               ),

@@ -90,97 +90,63 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
-      body: Stack(
-        children: [
-          // Background Gradients
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF1A3A5F), Colors.transparent],
-                  stops: [0.0, 0.5],
-                ),
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
               ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            left: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF0D1526), Colors.transparent],
-                  stops: [0.0, 0.5],
-                ),
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 12.0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.music_note,
-                              color: AppTheme.primary,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'MoodCast',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.notifications_none,
-                          color: Colors.white,
-                          size: 28,
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const NotificationListScreen(),
-                            ),
-                          );
-                        },
+                        child: Icon(
+                          Icons.music_note,
+                          color: Theme.of(context).primaryColor,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'MoodCast',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
-                ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications_none,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const NotificationListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
 
                 // Scrollable Content
                 Expanded(
@@ -259,14 +225,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'CURRENT MOOD',
-                                      style: TextStyle(
-                                        color: AppTheme.primary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.5,
-                                      ),
+                                    ValueListenableBuilder<String>(
+                                      valueListenable: _moodService.currentMood,
+                                      builder: (context, mood, _) {
+                                        return Text(
+                                          'CURRENT MOOD',
+                                          style: TextStyle(
+                                            color: Theme.of(context).primaryColor,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        );
+                                      },
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
@@ -277,7 +248,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(height: 16),
                                     const SizedBox(height: 16),
                                     ValueListenableBuilder<String>(
                                       valueListenable: _moodService.currentMood,
@@ -311,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }
                                   return Icon(
                                     _getWeatherIcon(weather.condition),
-                                    color: AppTheme.primary.withValues(
+                                    color: Theme.of(context).primaryColor.withValues(
                                       alpha: 0.8,
                                     ),
                                     size: 32,
@@ -345,9 +315,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 );
                               },
-                              child: const Text(
+                              child: Text(
                                 'See All',
-                                style: TextStyle(color: AppTheme.primary),
+                                style: TextStyle(color: Theme.of(context).primaryColor),
                               ),
                             ),
                           ],
@@ -391,8 +361,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-        ],
-      ),
     );
   }
 

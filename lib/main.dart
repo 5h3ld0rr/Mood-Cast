@@ -9,6 +9,8 @@ import 'services/notification_service.dart';
 import 'services/weather_service.dart';
 import 'services/download_service.dart';
 import 'services/connectivity_service.dart';
+import 'services/mood_service.dart';
+import 'widgets/mood_background.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -50,20 +52,27 @@ class MoodCastApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'MoodCast',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      builder: (context, child) {
-        return ScrollConfiguration(
-          behavior: const ScrollBehavior().copyWith(
-            physics: const BouncingScrollPhysics(),
-          ),
-          child: child!,
+    return ValueListenableBuilder<String>(
+      valueListenable: MoodService().currentMood,
+      builder: (context, mood, _) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'MoodCast',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.getThemeForMood(mood),
+          builder: (context, child) {
+            return MoodBackground(
+              child: ScrollConfiguration(
+                behavior: const ScrollBehavior().copyWith(
+                  physics: const BouncingScrollPhysics(),
+                ),
+                child: child ?? const SizedBox.shrink(),
+              ),
+            );
+          },
+          home: const SplashScreen(),
         );
       },
-      home: const SplashScreen(),
     );
   }
 }

@@ -63,7 +63,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14), // #080c14
+      backgroundColor: Colors.transparent,
       body: PopScope(
         canPop: false,
         onPopInvokedWithResult: (bool didPop, dynamic result) async {
@@ -98,7 +98,7 @@ class _MainScreenState extends State<MainScreen> {
             const MiniPlayer(),
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF080C14).withValues(alpha: 0.9),
+                color: Theme.of(context).canvasColor.withValues(alpha: 0.95),
                 border: Border(
                   top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),

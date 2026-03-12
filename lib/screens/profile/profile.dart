@@ -30,348 +30,313 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
-      body: Stack(
-        children: [
-          // Background Glows
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF1A3A5F), Colors.transparent],
-                  stops: [0.0, 0.5],
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              floating: true,
+              title: const Text(
+                'Profile',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              actions: const [],
             ),
-          ),
-          Positioned(
-            bottom: 100,
-            left: -150,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF0D1526), Colors.transparent],
-                  stops: [0.0, 0.5],
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  floating: true,
-                  title: const Text(
-                    'Profile',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  actions: const [],
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        StreamBuilder<User?>(
-                          stream: _authService.userChanges,
-                          builder: (context, snapshot) {
-                            final user =
-                                snapshot.data ?? _authService.currentUser;
-                            final photoUrl = user?.photoURL;
-                            final displayName = user?.displayName ?? 'User';
-                            final email = user?.email ?? 'No email';
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    StreamBuilder<User?>(
+                      stream: _authService.userChanges,
+                      builder: (context, snapshot) {
+                        final user =
+                            snapshot.data ?? _authService.currentUser;
+                        final photoUrl = user?.photoURL;
+                        final displayName = user?.displayName ?? 'User';
+                        final email = user?.email ?? 'No email';
 
-                            return Column(
-                              children: [
-                                // Profile Avatar
-                                Container(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppTheme.primary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      width: 4,
+                        return Column(
+                          children: [
+                            // Profile Avatar
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(context).primaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  width: 4,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context).primaryColor.withValues(
+                                      alpha: 0.2,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppTheme.primary.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        blurRadius: 24,
-                                        spreadRadius: 4,
-                                      ),
-                                    ],
+                                    blurRadius: 24,
+                                    spreadRadius: 4,
                                   ),
-                                  child: CachedImage(
-                                    imageUrl:
-                                        photoUrl != null && photoUrl.isNotEmpty
-                                        ? photoUrl
-                                        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmn4pWrDE1f07NiO_-ALAPW18mUchf6vj9oA&s',
-                                    isCircle: true,
-                                    width: 120,
-                                    height: 120,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  displayName,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  email,
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
+                              child: CachedImage(
+                                imageUrl:
+                                    photoUrl != null && photoUrl.isNotEmpty
+                                    ? photoUrl
+                                    : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmn4pWrDE1f07NiO_-ALAPW18mUchf6vj9oA&s',
+                                isCircle: true,
+                                width: 120,
+                                height: 120,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              displayName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              email,
+                              style: const TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Stats Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        StreamBuilder<int>(
+                          stream: MetricsService.getHoursListenedStream(),
+                          builder: (context, snapshot) {
+                            return _buildStatItem(
+                              (snapshot.data ?? 0).toString(),
+                              'Hours Listened',
                             );
                           },
                         ),
-                        const SizedBox(height: 32),
-
-                        // Stats Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            StreamBuilder<int>(
-                              stream: MetricsService.getHoursListenedStream(),
-                              builder: (context, snapshot) {
-                                return _buildStatItem(
-                                  (snapshot.data ?? 0).toString(),
-                                  'Hours Listened',
-                                );
-                              },
-                            ),
-                            _buildVerticalDivider(),
-                            StreamBuilder<int>(
-                              stream: MetricsService.getScansCompletedStream(),
-                              builder: (context, snapshot) {
-                                return _buildStatItem(
-                                  (snapshot.data ?? 0).toString(),
-                                  'Scans Completed',
-                                );
-                              },
-                            ),
-                            _buildVerticalDivider(),
-                            StreamBuilder<List<Map<String, dynamic>>>(
-                              stream: DatabaseService().getPlaylists(),
-                              builder: (context, snapshot) {
-                                final count = snapshot.data?.length ?? 0;
-                                return _buildStatItem(
-                                  count.toString(),
-                                  'Playlists',
-                                );
-                              },
-                            ),
-                          ],
+                        _buildVerticalDivider(),
+                        StreamBuilder<int>(
+                          stream: MetricsService.getScansCompletedStream(),
+                          builder: (context, snapshot) {
+                            return _buildStatItem(
+                              (snapshot.data ?? 0).toString(),
+                              'Scans Completed',
+                            );
+                          },
                         ),
-                        const SizedBox(height: 40),
-
-                        // Menu Items
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBg,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildMenuItem(
-                                icon: Icons.person_outline,
-                                title: 'Edit Profile',
-                                onTap: () async {
-                                  final result =
-                                      await Navigator.of(
-                                        context,
-                                        rootNavigator: true,
-                                      ).push(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const EditProfileScreen(),
-                                        ),
-                                      );
-                                  if (result == true) {
-                                    _refreshProfile();
-                                  }
-                                },
-                              ),
-                              _buildDivider(),
-                              _buildMenuItem(
-                                icon: Icons.high_quality,
-                                title: 'Audio Quality',
-                                trailing: ValueListenableBuilder<AudioQuality>(
-                                  valueListenable: PlayerService().audioQuality,
-                                  builder: (context, quality, _) {
-                                    String label = 'Normal';
-                                    if (quality == AudioQuality.low) {
-                                      label = 'Data Saver';
-                                    }
-                                    if (quality == AudioQuality.high) {
-                                      label = 'High Quality';
-                                    }
-                                    return Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          label,
-                                          style: const TextStyle(
-                                            color: AppTheme.textMuted,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        const Icon(
-                                          Icons.chevron_right,
-                                          color: AppTheme.textMuted,
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                                onTap: _showAudioQualityDialog,
-                              ),
-                              _buildDivider(),
-                              _buildMenuItem(
-                                icon: Icons.insights,
-                                title: 'Trends & Insights',
-                                onTap: () {
-                                  Navigator.of(
-                                    context,
-                                    rootNavigator: true,
-                                  ).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const InsightsScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _buildDivider(),
-                              _buildMenuItem(
-                                icon: Icons.security,
-                                title: 'Privacy & Security',
-                                onTap: () {
-                                  Navigator.of(
-                                    context,
-                                    rootNavigator: true,
-                                  ).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const PrivacySecurityScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _buildDivider(),
-                              _buildMenuItem(
-                                icon: Icons.subscriptions_outlined,
-                                title: 'Subscription',
-                                subtitle: 'Free Plan Active',
-                                onTap: () {
-                                  Navigator.of(
-                                    context,
-                                    rootNavigator: true,
-                                  ).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SubscriptionScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                              _buildDivider(),
-                              _buildMenuItem(
-                                icon: Icons.help_outline,
-                                title: 'Help & Support',
-                                onTap: () {
-                                  Navigator.of(
-                                    context,
-                                    rootNavigator: true,
-                                  ).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const HelpSupportScreen(),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                        _buildVerticalDivider(),
+                        StreamBuilder<List<Map<String, dynamic>>>(
+                          stream: DatabaseService().getPlaylists(),
+                          builder: (context, snapshot) {
+                            final count = snapshot.data?.length ?? 0;
+                            return _buildStatItem(
+                              count.toString(),
+                              'Playlists',
+                            );
+                          },
                         ),
-                        const SizedBox(height: 32),
-
-                        // Log Out Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: OutlinedButton(
-                            onPressed: () async {
-                              await _authService.signOut();
-                              if (context.mounted) {
-                                Navigator.of(
-                                  context,
-                                  rootNavigator: true,
-                                ).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                    builder: (context) => const LoginScreen(),
-                                  ),
-                                  (r) => false,
-                                );
-                              }
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.redAccent,
-                              side: BorderSide(
-                                color: Colors.redAccent.withValues(alpha: 0.5),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'LOG OUT',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 60), // Space for bottom nav
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 40),
+
+                    // Menu Items
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildMenuItem(
+                            icon: Icons.person_outline,
+                            title: 'Edit Profile',
+                            onTap: () async {
+                              final result =
+                                  await Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EditProfileScreen(),
+                                    ),
+                                  );
+                              if (result == true) {
+                                _refreshProfile();
+                              }
+                            },
+                          ),
+                          _buildDivider(),
+                          _buildMenuItem(
+                            icon: Icons.high_quality,
+                            title: 'Audio Quality',
+                            trailing: ValueListenableBuilder<AudioQuality>(
+                              valueListenable: PlayerService().audioQuality,
+                              builder: (context, quality, _) {
+                                String label = 'Normal';
+                                if (quality == AudioQuality.low) {
+                                  label = 'Data Saver';
+                                }
+                                if (quality == AudioQuality.high) {
+                                  label = 'High Quality';
+                                }
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      label,
+                                      style: const TextStyle(
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.chevron_right,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            onTap: _showAudioQualityDialog,
+                          ),
+                          _buildDivider(),
+                          _buildMenuItem(
+                            icon: Icons.insights,
+                            title: 'Trends & Insights',
+                            onTap: () {
+                              Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const InsightsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildDivider(),
+                          _buildMenuItem(
+                            icon: Icons.security,
+                            title: 'Privacy & Security',
+                            onTap: () {
+                              Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const PrivacySecurityScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildDivider(),
+                          _buildMenuItem(
+                            icon: Icons.subscriptions_outlined,
+                            title: 'Subscription',
+                            subtitle: 'Free Plan Active',
+                            onTap: () {
+                              Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const SubscriptionScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildDivider(),
+                          _buildMenuItem(
+                            icon: Icons.help_outline,
+                            title: 'Help & Support',
+                            onTap: () {
+                              Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const HelpSupportScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Log Out Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          await _authService.signOut();
+                          if (context.mounted) {
+                            Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            ).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                              (r) => false,
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: BorderSide(
+                            color: Colors.redAccent.withValues(alpha: 0.5),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'LOG OUT',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 60), // Space for bottom nav
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
