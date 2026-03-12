@@ -74,7 +74,7 @@ class RecentSessionsScreen extends StatelessWidget {
                     mood,
                     dateStr,
                     moodEmojis[mood] ?? '👤',
-                    moodColors[mood] ?? Colors.white,
+                    _moodColors[mood] ?? Colors.white,
                   ),
                 );
               },

@@ -144,14 +144,18 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Theme.of(context).primaryColor : Colors.white54,
+              color: isSelected
+                  ? Theme.of(context).primaryColor
+                  : Colors.white54,
               size: 22,
             ),
             const SizedBox(width: 16),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? Theme.of(context).primaryColor : Colors.white,
+                color: isSelected
+                    ? Theme.of(context).primaryColor
+                    : Colors.white,
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
@@ -163,7 +167,9 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? Theme.of(context).primaryColor : Colors.white24,
+                  color: isSelected
+                      ? Theme.of(context).primaryColor
+                      : Colors.white24,
                   width: 2,
                 ),
               ),
@@ -255,8 +261,8 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          dominantColor.withOpacity(0.8),
-                          dominantColor.withOpacity(0.2),
+                          dominantColor.withValues(alpha: 0.8),
+                          dominantColor.withValues(alpha: 0.2),
                           Theme.of(context).canvasColor,
                         ],
                       ),
@@ -275,11 +281,11 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                             width: 160,
                             height: 160,
                             decoration: BoxDecoration(
-                              color: dominantColor.withOpacity(0.2),
+                              color: dominantColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
+                                  color: Colors.black.withValues(alpha: 0.5),
                                   blurRadius: 30,
                                   offset: const Offset(0, 10),
                                 ),
@@ -577,8 +583,8 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              dominantColor.withOpacity(0.8),
-                              dominantColor.withOpacity(0.2),
+                              dominantColor.withValues(alpha: 0.8),
+                              dominantColor.withValues(alpha: 0.2),
                               Theme.of(context).canvasColor,
                             ],
                           ),
@@ -595,12 +601,12 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                                 width: 160,
                                 height: 160,
                                 decoration: BoxDecoration(
-                                  color: dominantColor.withOpacity(0.2),
+                                  color: dominantColor.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(4),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(
-                                        0.5,
+                                      color: Colors.black.withValues(
+                                        alpha: 0.5,
                                       ),
                                       blurRadius: 30,
                                       offset: const Offset(0, 10),
@@ -787,7 +793,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TextField(
@@ -838,7 +844,7 @@ class _PlaylistDetailsScreenState extends State<PlaylistDetailsScreen> {
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
@@ -1126,7 +1132,9 @@ class _AddSongsBottomSheetState extends State<_AddSongsBottomSheet> {
           Expanded(
             child: _isSearching
                 ? Center(
-                    child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   )
                 : _searchResults.isEmpty && _searchQuery.isNotEmpty
                 ? const Center(

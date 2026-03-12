@@ -65,7 +65,9 @@ class _DiscoverArtistsScreenState extends State<DiscoverArtistsScreen> {
         setState(() {
           // Merge lists and remove duplicates based on browseId
           final existingIds = _artists.map((a) => a.browseId).toSet();
-          final newArtists = results.where((a) => !existingIds.contains(a.browseId));
+          final newArtists = results.where(
+            (a) => !existingIds.contains(a.browseId),
+          );
           _artists.addAll(newArtists);
           _isLoading = false;
         });
@@ -87,7 +89,11 @@ class _DiscoverArtistsScreenState extends State<DiscoverArtistsScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.white,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -137,9 +143,9 @@ class _DiscoverArtistsScreenState extends State<DiscoverArtistsScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.03),
+          color: Colors.white.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -162,7 +168,11 @@ class _DiscoverArtistsScreenState extends State<DiscoverArtistsScreen> {
                 child: CachedImage(
                   imageUrl: artist.artworkUrl,
                   isCircle: true,
-                  errorWidget: const Icon(Icons.person, color: Colors.white24, size: 40),
+                  errorWidget: const Icon(
+                    Icons.person,
+                    color: Colors.white24,
+                    size: 40,
+                  ),
                 ),
               ),
             ),
@@ -184,10 +194,7 @@ class _DiscoverArtistsScreenState extends State<DiscoverArtistsScreen> {
             const SizedBox(height: 4),
             const Text(
               'Artist',
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 11,
-              ),
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
             ),
           ],
         ),
@@ -203,7 +210,7 @@ class ArtistSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(

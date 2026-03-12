@@ -108,8 +108,9 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _fetchSuggestedArtists() async {
     if (mounted) setState(() => _isArtistsLoading = true);
     try {
-      final artists =
-          await _ytmService.searchArtists('Top 2024 Popular Artists');
+      final artists = await _ytmService.searchArtists(
+        'Top 2024 Popular Artists',
+      );
       if (mounted) {
         setState(() {
           _suggestedArtists = artists.take(10).toList();
@@ -370,7 +371,9 @@ class _SearchScreenState extends State<SearchScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
-            child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+            child: CircularProgressIndicator(
+              color: Theme.of(context).primaryColor,
+            ),
           );
         }
         final history = snapshot.data ?? [];
@@ -506,7 +509,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSearchResults() {
-    if (_searchResults.isEmpty && _artistResults.isEmpty && _playlistResults.isEmpty && !_isLoading) {
+    if (_searchResults.isEmpty &&
+        _artistResults.isEmpty &&
+        _playlistResults.isEmpty &&
+        !_isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -526,7 +532,8 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    final int itemCount = _searchResults.length + _artistResults.length + _playlistResults.length;
+    final int itemCount =
+        _searchResults.length + _artistResults.length + _playlistResults.length;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -536,7 +543,7 @@ class _SearchScreenState extends State<SearchScreen> {
         if (index < _artistResults.length) {
           return _buildArtistCard(_artistResults[index]);
         }
-        
+
         final playlistIndex = index - _artistResults.length;
         if (playlistIndex < _playlistResults.length) {
           return _buildPlaylistCard(_playlistResults[playlistIndex]);
@@ -584,7 +591,8 @@ class _SearchScreenState extends State<SearchScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                color:
+                    Theme.of(context).textTheme.bodyMedium?.color ??
                     AppTheme.textMuted,
                 fontSize: 12,
               ),
@@ -645,7 +653,8 @@ class _SearchScreenState extends State<SearchScreen> {
         subtitle: Text(
           'Artist',
           style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color ??
+            color:
+                Theme.of(context).textTheme.bodyMedium?.color ??
                 AppTheme.textMuted,
             fontSize: 12,
           ),
@@ -667,7 +676,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 playlistId: playlist['id'],
                 playlistName: playlist['name'] ?? 'Playlist',
                 isPublic: playlist['isPublic'] ?? false,
-                subtitle: '${(playlist['isPublic'] == true) ? 'Public Playlist' : 'Playlist'} • ${playlist['songCount'] ?? 0} songs',
+                subtitle:
+                    '${(playlist['isPublic'] == true) ? 'Public Playlist' : 'Playlist'} • ${playlist['songCount'] ?? 0} songs',
                 icon: Icons.queue_music,
                 color: Theme.of(context).primaryColor,
               ),
@@ -694,10 +704,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                 )
-              : Icon(
-                  Icons.queue_music,
-                  color: Theme.of(context).primaryColor,
-                ),
+              : Icon(Icons.queue_music, color: Theme.of(context).primaryColor),
         ),
         title: Text(
           playlist['name'] ?? 'Playlist',
@@ -714,7 +721,8 @@ class _SearchScreenState extends State<SearchScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color ??
+            color:
+                Theme.of(context).textTheme.bodyMedium?.color ??
                 AppTheme.textMuted,
             fontSize: 12,
           ),
@@ -747,7 +755,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => DiscoverArtistsScreen(
-                        mood: 'Natural', // Search suggestions are generally natural/popular
+                        mood:
+                            'Natural', // Search suggestions are generally natural/popular
                         initialArtists: _suggestedArtists,
                       ),
                     ),
@@ -776,7 +785,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     width: 100,
                     margin: const EdgeInsets.only(right: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -845,7 +854,7 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             Icon(
               Icons.wifi_off_rounded,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               size: 100,
             ),
             const SizedBox(height: 24),
@@ -861,7 +870,8 @@ class _SearchScreenState extends State<SearchScreen> {
             Text(
               'Check your connection to search for music.',
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                color:
+                    Theme.of(context).textTheme.bodyMedium?.color ??
                     AppTheme.textMuted,
                 fontSize: 16,
               ),
