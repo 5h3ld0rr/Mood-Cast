@@ -41,9 +41,8 @@ class MetricsService {
       currentStreak = 1;
     }
 
-    // 2. Update stats and history
+    // 2. Update streak and history
     await docRef.set({
-      'scans_completed': FieldValue.increment(1),
       'current_streak': currentStreak,
       'last_streak_date': Timestamp.fromDate(today),
     }, SetOptions(merge: true));
@@ -71,31 +70,6 @@ class MetricsService {
         });
   }
 
-  static Future<void> incrementScans() async {
-    final docRef = _userDoc;
-    if (docRef == null) return;
-    await docRef.set({
-      'scans_completed': FieldValue.increment(1),
-    }, SetOptions(merge: true));
-  }
-
-  static Stream<int> getScansCompletedStream() {
-    final docRef = _userDoc;
-    if (docRef == null) return Stream.value(0);
-    return docRef.snapshots().map((doc) {
-      final data = doc.data() as Map<String, dynamic>?;
-      return (data?['scans_completed'] as num?)?.toInt() ?? 0;
-    });
-  }
-
-  static Future<int> getScansCompleted() async {
-    final docRef = _userDoc;
-    if (docRef == null) return 0;
-    final doc = await docRef.get();
-    final data = doc.data() as Map<String, dynamic>?;
-    return (data?['scans_completed'] as num?)?.toInt() ?? 0;
-  }
-
   // Playtime
   static Future<void> addPlaytime(Duration duration) async {
     final docRef = _userDoc;
@@ -105,23 +79,14 @@ class MetricsService {
     }, SetOptions(merge: true));
   }
 
-  static Stream<int> getHoursListenedStream() {
+  static Stream<double> getHoursListenedStream() {
     final docRef = _userDoc;
-    if (docRef == null) return Stream.value(0);
+    if (docRef == null) return Stream.value(0.0);
     return docRef.snapshots().map((doc) {
       final data = doc.data() as Map<String, dynamic>?;
-      final seconds = (data?['playtime_seconds'] as num?)?.toInt() ?? 0;
-      return seconds ~/ 3600;
+      final seconds = (data?['playtime_seconds'] as num?)?.toDouble() ?? 0.0;
+      return (seconds / 360.0).ceil() / 10.0;
     });
-  }
-
-  static Future<int> getHoursListened() async {
-    final docRef = _userDoc;
-    if (docRef == null) return 0;
-    final doc = await docRef.get();
-    final data = doc.data() as Map<String, dynamic>?;
-    final seconds = (data?['playtime_seconds'] as num?)?.toInt() ?? 0;
-    return seconds ~/ 3600;
   }
 
   static Stream<int> getStreakStream() {

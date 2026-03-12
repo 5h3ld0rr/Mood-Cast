@@ -10,7 +10,7 @@ import 'help_support.dart';
 import 'insights/insights.dart';
 import '../../services/player_service.dart';
 import '../../widgets/cached_image.dart';
-import '../../services/database_service.dart';
+
 import '../../services/metrics_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -125,22 +125,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        StreamBuilder<int>(
+                        StreamBuilder<double>(
                           stream: MetricsService.getHoursListenedStream(),
                           builder: (context, snapshot) {
+                            final hours = snapshot.data ?? 0.0;
                             return _buildStatItem(
-                              (snapshot.data ?? 0).toString(),
+                              hours.toStringAsFixed(1),
                               'Hours Listened',
-                            );
-                          },
-                        ),
-                        _buildVerticalDivider(),
-                        StreamBuilder<int>(
-                          stream: MetricsService.getScansCompletedStream(),
-                          builder: (context, snapshot) {
-                            return _buildStatItem(
-                              (snapshot.data ?? 0).toString(),
-                              'Scans Done',
                             );
                           },
                         ),
@@ -151,17 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             return _buildStatItem(
                               '${snapshot.data ?? 0}🔥',
                               'Streak',
-                            );
-                          },
-                        ),
-                        _buildVerticalDivider(),
-                        StreamBuilder<List<Map<String, dynamic>>>(
-                          stream: DatabaseService().getPlaylists(),
-                          builder: (context, snapshot) {
-                            final count = snapshot.data?.length ?? 0;
-                            return _buildStatItem(
-                              count.toString(),
-                              'Playlists',
                             );
                           },
                         ),
