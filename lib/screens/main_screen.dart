@@ -6,6 +6,7 @@ import 'scan/analysis.dart';
 import 'profile/profile.dart';
 import 'search/search.dart';
 import 'library/library.dart';
+import 'community/community.dart';
 import '../widgets/tab_navigator.dart';
 import '../widgets/mini_player.dart';
 
@@ -51,11 +52,7 @@ class _MainScreenState extends State<MainScreen> {
     ),
     TabNavigator(
       navigatorKey: _navigatorKeys[4]!,
-      rootScreen: const Scaffold(
-        body: Center(
-          child: Text('Community', style: TextStyle(color: Colors.white)),
-        ),
-      ),
+      rootScreen: const CommunityScreen(),
     ),
     TabNavigator(
       navigatorKey: _navigatorKeys[5]!,
