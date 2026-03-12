@@ -17,7 +17,7 @@ class RecentSessionsScreen extends StatelessWidget {
     };
 
     final Map<String, Color> _moodColors = {
-      'Happy': Colors.tealAccent,
+      'Happy': Colors.purpleAccent,
       'Angry': Colors.redAccent,
       'Sad': Colors.blueAccent,
       'Natural': Theme.of(context).primaryColor,
@@ -70,6 +70,7 @@ class RecentSessionsScreen extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _buildSessionTile(
+                    context,
                     mood,
                     dateStr,
                     _moodEmojis[mood] ?? '👤',
@@ -85,6 +86,7 @@ class RecentSessionsScreen extends StatelessWidget {
   }
 
   Widget _buildSessionTile(
+    BuildContext context,
     String title,
     String subtitle,
     String emoji,
@@ -95,7 +97,7 @@ class RecentSessionsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [

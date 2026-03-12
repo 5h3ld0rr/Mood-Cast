@@ -21,7 +21,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   };
 
   Map<String, Color> _getMoodColors(BuildContext context) => {
-    'Happy': Colors.tealAccent,
+    'Happy': Colors.purpleAccent,
     'Angry': Colors.redAccent,
     'Sad': Colors.blueAccent,
     'Natural': Theme.of(context).primaryColor,

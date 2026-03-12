@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF2B6CEE);
+  static const Color primary = Color(0xFF10B981); // Emerald Green
   static const Color backgroundLight = Color(0xFFF6F6F8);
   static const Color backgroundDark = Color(0xFF080C14);
   static const Color backgroundDeep = Color(0xFF020408);
@@ -11,14 +11,14 @@ class AppTheme {
   static const Color textMuted = Color(0xFF94A3B8);
 
   static Map<String, Color> get moodColors => {
-    'Happy': const Color(0xFFFFD700), // Gold
+    'Happy': const Color(0xFFA855F7), // Purple
     'Sad': const Color(0xFF4A90E2), // Blue
     'Angry': const Color(0xFFFF3B30), // Red
-    'Natural': primary, // Default Blue
+    'Natural': primary, // Emerald Green
   };
 
   static Map<String, Color> get moodBackgrounds => {
-    'Happy': const Color(0xFF0F0E01),
+    'Happy': const Color(0xFF0C0514),
     'Sad': const Color(0xFF050A14),
     'Angry': const Color(0xFF140505),
     'Natural': backgroundDark,

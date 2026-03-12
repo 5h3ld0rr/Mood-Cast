@@ -69,7 +69,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withValues(alpha: 0.15),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -81,7 +81,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.purple.withValues(alpha: 0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -253,12 +253,12 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.play_arrow_rounded,
-                  color: AppTheme.primary,
+                  color: Theme.of(context).primaryColor,
                   size: 24,
                 ),
               ),
