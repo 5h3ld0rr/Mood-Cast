@@ -728,6 +728,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 _progress = 1.0;
                                 _isScanning = false;
                               });
+                              MoodService().updateMood(mood);
                             },
                             borderRadius: BorderRadius.circular(20),
                             child: AnimatedContainer(

@@ -241,13 +241,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                       },
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      _moodService.currentMood.value,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    ValueListenableBuilder<String>(
+                                      valueListenable: _moodService.currentMood,
+                                      builder: (context, mood, _) {
+                                        return Text(
+                                          mood.toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 36,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        );
+                                      },
                                     ),
                                     const SizedBox(height: 16),
                                     ValueListenableBuilder<String>(
@@ -383,6 +388,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return ['Dreamy', 'Cloudy', 'Soul'];
       case 'sad':
         return ['Melodic', 'Slow', 'Emotional'];
+      case 'angry':
+        return ['Metal', 'Hard Rock', 'Aggressive'];
+      case 'natural':
       default:
         return ['Vibe', 'Music', 'Discovery'];
     }
