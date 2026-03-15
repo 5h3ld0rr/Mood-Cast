@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
 import 'dart:async';
 import '../../theme.dart';
@@ -8,6 +10,8 @@ import '../../services/community_service.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../models/community_models.dart';
+import '../../services/notification_service.dart';
+import '../../utils/ui_utils.dart';
 
 // MoodboardSong class is now in community_models.dart
 
@@ -27,13 +31,16 @@ class _CommunityScreenState extends State<CommunityScreen>
   final PlayerService _playerService = PlayerService();
   final ValueNotifier<Color?> _screenGlowColor = ValueNotifier<Color?>(null);
 
+  StreamSubscription? _supportListener;
+  int _lastResponseCount = 0;
+
   final Map<String, Tribe> _moodToTribe = {
     'Happy': Tribe(
       id: 'happy_tribe',
       name: 'Joy Jumpers',
       description:
           'Chasing the light with high-energy rhythms and collective euphoria.',
-      colorValue: Colors.amber.toARGB32(),
+      colorValue: const Color(0xFFA855F7).toARGB32(),
       icon: Icons.wb_sunny_rounded,
       members: '3.4k',
     ),
@@ -70,14 +77,38 @@ class _CommunityScreenState extends State<CommunityScreen>
   void initState() {
     super.initState();
     _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+                                vsync: this,
+                                duration: const Duration(seconds: 2),
+                              )..repeat(reverse: true);
+
+    // Listen for vibes dropped for user's own active request
+    _supportListener = _communityService.getActiveSupportRequest().listen((
+      post,
+    ) {
+      if (post != null) {
+        final newResponses = post.supportResponses.length;
+        // Check if a new vibe was dropped
+        if (newResponses > _lastResponseCount) {
+          final latestResponse = post.supportResponses.last;
+          // Notify ONLY if someone else dropped the vibe
+          if (latestResponse.userId != _communityService.uid) {
+            NotificationService().showSimpleNotification(
+              title: 'New Vibe Recieved! 💖',
+              body: '${latestResponse.userName} just dropped a vibe for your lift.',
+            );
+          }
+        }
+        _lastResponseCount = newResponses;
+      } else {
+        _lastResponseCount = 0;
+      }
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _supportListener?.cancel();
     super.dispose();
   }
 
@@ -98,7 +129,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   void _dropAVibe(String postId) {
     final currentMood = _moodService.currentMood.value;
     if (currentMood != 'Happy' && currentMood != 'Natural') {
-      _showError('Switch to a Happy mood to Drop a Vibe! ✨');
+      _showFeedback('Switch to a Happy mood to Drop a Vibe! ✨');
       return;
     }
 
@@ -114,167 +145,168 @@ class _CommunityScreenState extends State<CommunityScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.backgroundDark,
-      shape: RoundedRectangleBorder(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.all(Radius.circular(2)),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: StatefulBuilder(
+          builder: (context, setState) => Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(32),
+              ),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.all(Radius.circular(2)),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Drop a Healing Vibe',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Search for a song that can help shift their mood',
-                style: TextStyle(color: Colors.white54, fontSize: 13),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: searchController,
-                autofocus: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Search songs...',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: Colors.pinkAccent,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
+                const SizedBox(height: 24),
+                const Text(
+                  'Drop a Healing Vibe',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                onChanged: (query) {
-                  if (debounce?.isActive ?? false) debounce!.cancel();
-                  debounce = Timer(const Duration(milliseconds: 500), () async {
-                    if (query.length > 2) {
-                      setState(() => isLoading = true);
-                      final results = await _ytmService.searchTracks(query);
-                      setState(() {
-                        searchResults = results;
-                        isLoading = false;
-                      });
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : searchResults.isEmpty
-                    ? Center(
-                        child: Text(
-                          searchController.text.length > 2
-                              ? 'No songs found'
-                              : 'Start typing to find a song...',
-                          style: const TextStyle(color: Colors.white24),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: searchResults.length,
-                        itemBuilder: (context, index) {
-                          final song = searchResults[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.white10,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: song.artworkUrl != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        song.artworkUrl!,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.music_note,
-                                      color: Colors.white24,
-                                    ),
-                            ),
-                            title: Text(
-                              song.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              song.artist,
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                            trailing: const Icon(
-                              Icons.send_rounded,
-                              color: Colors.pinkAccent,
-                            ),
-                            onTap: () {
-                              _communityService.addSupportResponse(
-                                postId: postId,
-                                songTitle: song.title,
-                                artist: song.artist,
-                                moodColorValue: Colors.amber.toARGB32(),
-                              );
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.volunteer_activism,
-                                        color: Colors.white,
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text(
-                                        'Vibe Dropped! +50 Empathy Points 💖',
-                                      ),
-                                    ],
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                  backgroundColor: Colors.pinkAccent.withValues(
-                                    alpha: 0.9,
-                                  ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Search for a song that can help shift their mood',
+                  style: TextStyle(color: Colors.white54, fontSize: 13),
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: searchController,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search songs...',
+                    hintStyle: const TextStyle(color: Colors.white38),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Colors.pinkAccent,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (query) {
+                    if (debounce?.isActive ?? false) debounce!.cancel();
+                    debounce = Timer(
+                      const Duration(milliseconds: 500),
+                      () async {
+                        if (query.length > 2) {
+                          setState(() => isLoading = true);
+                          final results = await _ytmService.searchTracks(query);
+                          setState(() {
+                            searchResults = results;
+                            isLoading = false;
+                          });
+                        }
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : searchResults.isEmpty
+                      ? Center(
+                          child: Text(
+                            searchController.text.length > 2
+                                ? 'No songs found'
+                                : 'Start typing to find a song...',
+                            style: const TextStyle(color: Colors.white24),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: searchResults.length,
+                          itemBuilder: (context, index) {
+                            final song = searchResults[index];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white10,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-              ),
-            ],
+                                child: song.artworkUrl != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          song.artworkUrl!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.music_note,
+                                        color: Colors.white24,
+                                      ),
+                              ),
+                              title: Text(
+                                song.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                song.artist,
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              trailing: const Icon(
+                                Icons.send_rounded,
+                                color: Colors.pinkAccent,
+                              ),
+                              onTap: () {
+                                _communityService.addSupportResponse(
+                                  postId: postId,
+                                  songTitle: song.title,
+                                  artist: song.artist,
+                                  moodColorValue: Colors.amber.toARGB32(),
+                                );
+                                Navigator.pop(context);
+                                _showFeedback(
+                                  'Vibe Dropped! +50 Empathy Points 💖',
+                                  icon: Icons.volunteer_activism,
+                                );
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -284,22 +316,145 @@ class _CommunityScreenState extends State<CommunityScreen>
   void _postNeedALift() {
     final mood = _moodService.currentMood.value;
     if (mood != 'Sad' && mood != 'Angry') {
-      _showError('You can only "Need a Lift" when feeling Sad or Angry! 🧘');
+      _showFeedback('You can only "Need a Lift" when feeling Sad or Angry! 🧘');
       return;
     }
 
-    _communityService.createPost(
-      content:
-          'Feeling a bit overwhelmed... sharing a song to help would mean a lot. #NeedALift',
-      userMood: mood,
-      moodColorValue: mood == 'Sad'
-          ? Colors.blue.toARGB32()
-          : Colors.red.toARGB32(),
-      isSupportRequest: true,
-      overrideUserName: 'Anonymous',
-    );
+    final messageController = TextEditingController();
+    final themeColor = mood == 'Sad' ? Colors.blue : Colors.red;
 
-    _showError('Your support request is now live! 🫂');
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.backgroundDark.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+                width: 0.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  blurRadius: 40,
+                  offset: const Offset(0, 20),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need a Lift',
+                  style: GoogleFonts.spaceGrotesk(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Share how you\'re feeling... the community is here to drop a healing vibe for you.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: messageController,
+                  autofocus: true,
+                  maxLines: 4,
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  decoration: InputDecoration(
+                    hintText: 'What\'s on your mind?',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.05),
+                    contentPadding: const EdgeInsets.all(16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'CANCEL',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final content = messageController.text.trim();
+                          if (content.isNotEmpty) {
+                            _communityService.createPost(
+                              content: content,
+                              userMood: mood,
+                              moodColorValue: themeColor.toARGB32(),
+                              isSupportRequest: true,
+                              overrideUserName: 'Anonymous',
+                            );
+                            Navigator.pop(context);
+                            _showFeedback(
+                              'Your support request is now live! 🫂',
+                              icon: Icons.favorite,
+                            );
+                          }
+                        },
+                        style:
+                            ElevatedButton.styleFrom(
+                              backgroundColor: themeColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ).copyWith(
+                              shadowColor: WidgetStateProperty.all(
+                                themeColor.withValues(alpha: 0.3),
+                              ),
+                            ),
+                        child: const Text(
+                          'POST',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _reactToPost(String postId, String reaction) {
@@ -397,7 +552,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                   artist: artistController.text,
                 );
                 Navigator.pop(context);
-                _showError('Song added to the Live Moodboard! 🎵');
+                _showFeedback('Song added to the Live Moodboard! 🎵');
               }
             },
             child: const Text('ADD VIBE'),
@@ -607,13 +762,14 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.white12,
-      ),
+  void _showFeedback(String message, {bool isError = false, IconData? icon}) {
+    // Show in-app SnackBar using global UI utility
+    UIUtils.showSnackBar(
+      context,
+      message,
+      isError: isError,
+      icon: icon,
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -1007,74 +1163,223 @@ class _CommunityScreenState extends State<CommunityScreen>
                 ),
               ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 16.0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Column(
+              StreamBuilder<CommunityPost?>(
+                stream: _communityService.getActiveSupportRequest(),
+                builder: (context, snapshot) {
+                  final activePost = snapshot.data;
+
+                  return SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 16.0,
+                      ),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'HEAL Session',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'HEAL Session',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Help others shift their mood',
+                                    style: TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              ValueListenableBuilder<String>(
+                                valueListenable: _moodService.currentMood,
+                                builder: (context, mood, _) {
+                                  final isSadOrAngry =
+                                      mood == 'Sad' || mood == 'Angry';
+                                  if (!isSadOrAngry) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  if (activePost != null) {
+                                    return TextButton.icon(
+                                      onPressed: () async {
+                                        await _communityService.deletePost(
+                                          activePost.id,
+                                        );
+                                        _showFeedback(
+                                          'Support request removed',
+                                          icon: Icons.delete_outline,
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.close_rounded,
+                                        size: 18,
+                                      ),
+                                      label: const Text('REMOVE REQUEST'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                  }
+
+                                  return TextButton.icon(
+                                    onPressed: _postNeedALift,
+                                    icon: const Icon(
+                                      Icons.add_circle_outline,
+                                      size: 18,
+                                    ),
+                                    label: const Text('NEED A LIFT'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.blueAccent,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                          Text(
-                            'Help others shift their mood',
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 13,
+                          if (activePost != null &&
+                              activePost.supportResponses.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            const Text(
+                              'VIBES RECEIVED',
+                              style: TextStyle(
+                                color: Colors.pinkAccent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 100,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: activePost.supportResponses.length,
+                                itemBuilder: (context, index) {
+                                  final vibe =
+                                      activePost.supportResponses.reversed.toList()[index];
+                                  final color = Color(vibe.moodColorValue);
+
+                                  return Container(
+                                    width: 200,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: color.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: color.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: color.withValues(alpha: 0.2),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            Icons.music_note_rounded,
+                                            color: color,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                vibe.songTitle,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                              Text(
+                                                vibe.artist,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: Colors.white.withValues(
+                                                    alpha: 0.5,
+                                                  ),
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'from ${vibe.userName}',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color: color.withValues(
+                                                    alpha: 0.8,
+                                                  ),
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                      ValueListenableBuilder<String>(
-                        valueListenable: _moodService.currentMood,
-                        builder: (context, mood, _) {
-                          final isSadOrAngry = mood == 'Sad' || mood == 'Angry';
-                          if (!isSadOrAngry) return const SizedBox.shrink();
-
-                          return TextButton.icon(
-                            onPressed: _postNeedALift,
-                            icon: const Icon(
-                              Icons.add_circle_outline,
-                              size: 18,
-                            ),
-                            label: const Text('NEED A LIFT'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.blueAccent,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
 
-              StreamBuilder<List<CommunityPost>>(
-                stream: _communityService.getPosts(),
-                builder: (context, snapshot) {
-                  final posts = snapshot.data ?? [];
-                  if (posts.isEmpty &&
-                      snapshot.connectionState == ConnectionState.waiting) {
-                    return const SliverToBoxAdapter(
-                      child: Center(child: CircularProgressIndicator()),
-                    );
+              ValueListenableBuilder<String>(
+                valueListenable: _moodService.currentMood,
+                builder: (context, mood, _) {
+                  final isHappyOrNatural = mood == 'Happy' || mood == 'Natural';
+                  if (!isHappyOrNatural) {
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
                   }
-                  return SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final post = posts[index];
-                      return _buildSupportPost(post, index);
-                    }, childCount: posts.length),
+
+                  return StreamBuilder<List<CommunityPost>>(
+                    stream: _communityService.getPosts(),
+                    builder: (context, snapshot) {
+                      final posts = snapshot.data ?? [];
+                      if (posts.isEmpty &&
+                          snapshot.connectionState == ConnectionState.waiting) {
+                        return const SliverToBoxAdapter(
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      return SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final post = posts[index];
+                          return _buildSupportPost(post, index);
+                        }, childCount: posts.length),
+                      );
+                    },
                   );
                 },
               ),
@@ -1300,40 +1605,99 @@ class _CommunityScreenState extends State<CommunityScreen>
           const SizedBox(height: 20),
 
           if (post.supportResponses.isNotEmpty) ...[
-            const Text(
-              'Vibes Dropped:',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
               ),
-            ),
-            const SizedBox(height: 8),
-            ...post.supportResponses
-                .take(2)
-                .map(
-                  (res) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.music_note,
-                          color: Colors.blueAccent,
-                          size: 14,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.volunteer_activism_rounded,
+                        color: post.moodColor,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Vibes Shared',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${res.userName} shared ${res.songTitle}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...post.supportResponses.reversed.take(5).map(
+                    (res) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 2),
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: Color(res.moodColorValue),
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: res.userName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const TextSpan(
+                                        text: ' sent ',
+                                        style: TextStyle(color: Colors.white54),
+                                      ),
+                                      TextSpan(
+                                        text: res.songTitle,
+                                        style: TextStyle(
+                                          color: Color(res.moodColorValue),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  'by ${res.artist}',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
 
           // Reaction Bar

@@ -47,6 +47,24 @@ class CommunityService {
     await _firestore.collection('community_posts').add(post.toMap());
   }
 
+  Stream<CommunityPost?> getActiveSupportRequest() {
+    if (uid == null) return Stream.value(null);
+    return _firestore
+        .collection('community_posts')
+        .where('userId', isEqualTo: uid)
+        .where('isSupportRequest', isEqualTo: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      return CommunityPost.fromFirestore(snapshot.docs.first);
+    });
+  }
+
+  Future<void> deletePost(String postId) async {
+    await _firestore.collection('community_posts').doc(postId).delete();
+  }
+
   Future<void> reactToPost(String postId, String reaction) async {
     final docRef = _firestore.collection('community_posts').doc(postId);
     await _firestore.runTransaction((transaction) async {
