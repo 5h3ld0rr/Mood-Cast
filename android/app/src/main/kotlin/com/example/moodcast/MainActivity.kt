@@ -1,4 +1,4 @@
-package com.example.mood_cast
+package com.example.moodcast
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

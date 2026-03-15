@@ -6,7 +6,7 @@ import '../../services/database_service.dart';
 import '../../services/player_service.dart';
 import '../../services/youtube_music_service.dart';
 import 'playlist_details.dart';
-import 'package:mood_cast/screens/search/artist_details.dart';
+import 'package:moodcast/screens/search/artist_details.dart';
 import '../../utils/ui_utils.dart';
 import '../../services/download_service.dart';
 import '../../widgets/cached_image.dart';

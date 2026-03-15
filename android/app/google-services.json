@@ -7,28 +7,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:138700460734:android:bf322eb7d676b75f5244ef",
+        "mobilesdk_app_id": "1:138700460734:android:c2223161584882315244ef",
         "android_client_info": {
-          "package_name": "com.example.mood_cast"
+          "package_name": "com.example.moodcast"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "138700460734-d1seea5ph5dt6758j69nlnlpc7ler8of.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.mood_cast",
-            "certificate_hash": "eb09d8f0854984b5922250f52bb3f3a74130ca24"
-          }
-        },
-        {
-          "client_id": "138700460734-e6o2cp10rqorn1ongconhedjubtqoenp.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.mood_cast",
-            "certificate_hash": "2cc53db2ee8413c65cd5d3eb90df2e17bc782b95"
-          }
-        },
         {
           "client_id": "138700460734-e2ondshg6he0dj8r0hdsvb5rqurptus0.apps.googleusercontent.com",
           "client_type": 3
