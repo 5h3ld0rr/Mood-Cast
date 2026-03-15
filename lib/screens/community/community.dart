@@ -3,83 +3,10 @@ import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../theme.dart';
 import '../../services/mood_service.dart';
+import '../../services/community_service.dart';
+import '../../models/community_models.dart';
 
-class Tribe {
-  final String name;
-  final String description;
-  final Color color;
-  final IconData icon;
-  final String members;
-
-  Tribe({
-    required this.name,
-    required this.description,
-    required this.color,
-    required this.icon,
-    required this.members,
-  });
-}
-
-class SupportResponse {
-  final String userName;
-  final String songTitle;
-  final String artist;
-  final Color moodColor;
-
-  SupportResponse({
-    required this.userName,
-    required this.songTitle,
-    required this.artist,
-    required this.moodColor,
-  });
-}
-
-class CommunityPost {
-  final String id;
-  final String userName;
-  final String userMood;
-  final String content;
-  final String timeAgo;
-  final Color moodColor;
-  final bool isSupportRequest;
-  final List<SupportResponse> supportResponses;
-  final Map<String, int> reactions; // { 'Relatable': 0, 'Vibing': 0, ... }
-
-  CommunityPost({
-    required this.id,
-    required this.userName,
-    required this.userMood,
-    required this.content,
-    required this.timeAgo,
-    required this.moodColor,
-    this.isSupportRequest = false,
-    this.supportResponses = const [],
-    this.reactions = const {
-      'Relatable': 0,
-      'Vibing': 0,
-      'Healing': 0,
-      'Powerful': 0,
-    },
-  });
-}
-
-class MoodboardSong {
-  final String id;
-  final String title;
-  final String artist;
-  final String? coverUrl;
-  int vibes;
-  final String addedBy;
-
-  MoodboardSong({
-    required this.id,
-    required this.title,
-    required this.artist,
-    this.coverUrl,
-    this.vibes = 0,
-    required this.addedBy,
-  });
-}
+// MoodboardSong class is now in community_models.dart
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -91,151 +18,44 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
-  final Set<String> _joinedTribes = {};
-  int _empathyPoints = 450;
   final MoodService _moodService = MoodService();
+  final CommunityService _communityService = CommunityService();
   final ValueNotifier<Color?> _screenGlowColor = ValueNotifier<Color?>(null);
-
-  final List<CommunityPost> _posts = [
-    CommunityPost(
-      id: 'support_1',
-      userName: 'Leo Park',
-      userMood: 'Sad',
-      content:
-          'Rough day at work. Feels like nothing is going right. Need a vibe to lift me up? 😔',
-      timeAgo: '2m ago',
-      moodColor: Colors.blue,
-      isSupportRequest: true,
-      supportResponses: [],
-      reactions: {'Relatable': 12, 'Vibing': 5, 'Healing': 24, 'Powerful': 2},
-    ),
-  ];
-
-  final Map<String, List<MoodboardSong>> _moodboards = {
-    'Happy': [
-      MoodboardSong(
-        id: 'h1',
-        title: 'Don\'t Stop Me Now',
-        artist: 'Queen',
-        vibes: 1240,
-        addedBy: 'FreddieFan',
-      ),
-      MoodboardSong(
-        id: 'h2',
-        title: 'Walking On Sunshine',
-        artist: 'Katrina & The Waves',
-        vibes: 890,
-        addedBy: 'Sunny99',
-      ),
-      MoodboardSong(
-        id: 'h3',
-        title: 'Can\'t Stop The Feeling',
-        artist: 'Justin Timberlake',
-        vibes: 750,
-        addedBy: 'DanceKing',
-      ),
-    ],
-    'Sad': [
-      MoodboardSong(
-        id: 's1',
-        title: 'Fix You',
-        artist: 'Coldplay',
-        vibes: 2100,
-        addedBy: 'MelancholyMina',
-      ),
-      MoodboardSong(
-        id: 's2',
-        title: 'Someone Like You',
-        artist: 'Adele',
-        vibes: 1540,
-        addedBy: 'RainyDays',
-      ),
-      MoodboardSong(
-        id: 's3',
-        title: 'The Night We Met',
-        artist: 'Lord Huron',
-        vibes: 980,
-        addedBy: 'MemoryLane',
-      ),
-    ],
-    'Angry': [
-      MoodboardSong(
-        id: 'a1',
-        title: 'Break Stuff',
-        artist: 'Limp Bizkit',
-        vibes: 1800,
-        addedBy: 'ChaosTheory',
-      ),
-      MoodboardSong(
-        id: 'a2',
-        title: 'Killing In The Name',
-        artist: 'R.A.T.M',
-        vibes: 1650,
-        addedBy: 'RebelSoul',
-      ),
-      MoodboardSong(
-        id: 'a3',
-        title: 'Down With The Sickness',
-        artist: 'Disturbed',
-        vibes: 1100,
-        addedBy: 'FireStarter',
-      ),
-    ],
-    'Natural': [
-      MoodboardSong(
-        id: 'n1',
-        title: 'Weightless',
-        artist: 'Marconi Union',
-        vibes: 3200,
-        addedBy: 'ZenMaster',
-      ),
-      MoodboardSong(
-        id: 'n2',
-        title: 'Spiegel im Spiegel',
-        artist: 'Arvo Pärt',
-        vibes: 1400,
-        addedBy: 'AuraWalker',
-      ),
-      MoodboardSong(
-        id: 'n3',
-        title: 'River Flows In You',
-        artist: 'Yiruma',
-        vibes: 1200,
-        addedBy: 'FlowState',
-      ),
-    ],
-  };
 
   final Map<String, Tribe> _moodToTribe = {
     'Happy': Tribe(
+      id: 'happy_tribe',
       name: 'Joy Jumpers',
       description:
           'Chasing the light with high-energy rhythms and collective euphoria.',
-      color: Colors.amber,
+      colorValue: Colors.amber.toARGB32(),
       icon: Icons.wb_sunny_rounded,
       members: '3.4k',
     ),
     'Sad': Tribe(
+      id: 'sad_tribe',
       name: 'Rainy Echoes',
       description:
           'Finding beauty in the blues and melancholic beats for deep reflection.',
-      color: Colors.blue,
+      colorValue: Colors.blue.toARGB32(),
       icon: Icons.cloudy_snowing,
       members: '2.8k',
     ),
     'Angry': Tribe(
+      id: 'angry_tribe',
       name: 'Storm Riders',
       description:
           'Channelling raw energy through heavy frequencies and intense vibes.',
-      color: Colors.red,
+      colorValue: Colors.red.toARGB32(),
       icon: Icons.bolt_rounded,
       members: '1.2k',
     ),
     'Natural': Tribe(
+      id: 'natural_tribe',
       name: 'Aura Circle',
       description:
           'Balanced frequencies and peaceful rhythms for a grounded soul.',
-      color: const Color(0xFF10B981),
+      colorValue: const Color(0xFF10B981).toARGB32(),
       icon: Icons.energy_savings_leaf_rounded,
       members: '4.5k',
     ),
@@ -256,51 +76,33 @@ class _CommunityScreenState extends State<CommunityScreen>
     super.dispose();
   }
 
-  void _toggleJoinTribe(String tribeName) {
-    setState(() {
-      if (_joinedTribes.contains(tribeName)) {
-        _joinedTribes.remove(tribeName);
-      } else {
-        _joinedTribes.add(tribeName);
-      }
-    });
+  String _getTimeAgo(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
 
-    final isJoining = _joinedTribes.contains(tribeName);
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isJoining
-              ? 'You joined the $tribeName tribe! 🫂'
-              : 'You left the tribe.',
-        ),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        backgroundColor: isJoining
-            ? Colors.blueAccent.withValues(alpha: 0.9)
-            : Colors.white24,
-      ),
-    );
+    if (difference.inDays > 0) return '${difference.inDays}d ago';
+    if (difference.inHours > 0) return '${difference.inHours}h ago';
+    if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+    return 'Just now';
   }
 
-  void _dropAVibe(int index) {
+  void _toggleJoinTribe(String tribeId, String tribeName) {
+    _communityService.toggleJoinTribe(tribeId);
+  }
+
+  void _dropAVibe(String postId) {
     final currentMood = _moodService.currentMood.value;
     if (currentMood != 'Happy' && currentMood != 'Natural') {
       _showError('Switch to a Happy mood to Drop a Vibe! ✨');
       return;
     }
 
-    setState(() {
-      _posts[index].supportResponses.add(
-        SupportResponse(
-          userName: 'You',
-          songTitle: 'Sunshine Beats',
-          artist: 'MoodCast Originals',
-          moodColor: Colors.amber,
-        ),
-      );
-      _empathyPoints += 50;
-    });
+    _communityService.addSupportResponse(
+      postId: postId,
+      songTitle: 'Sunshine Beats',
+      artist: 'MoodCast Originals',
+      moodColorValue: Colors.amber.toARGB32(),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -324,29 +126,18 @@ class _CommunityScreenState extends State<CommunityScreen>
       return;
     }
 
-    setState(() {
-      _posts.insert(
-        0,
-        CommunityPost(
-          id: DateTime.now().toString(),
-          userName: 'You',
-          userMood: mood,
-          content:
-              'Feeling a bit overwhelmed... sharing a song to help would mean a lot. #NeedALift',
-          timeAgo: 'Just now',
-          moodColor: mood == 'Sad' ? Colors.blue : Colors.red,
-          isSupportRequest: true,
-        ),
-      );
-    });
+    _communityService.createPost(
+      content: 'Feeling a bit overwhelmed... sharing a song to help would mean a lot. #NeedALift',
+      userMood: mood,
+      moodColorValue: mood == 'Sad' ? Colors.blue.toARGB32() : Colors.red.toARGB32(),
+      isSupportRequest: true,
+    );
+
     _showError('Your support request is now live! 🫂');
   }
 
-  void _reactToPost(int index, String reaction) {
-    setState(() {
-      final currentCount = _posts[index].reactions[reaction] ?? 0;
-      _posts[index].reactions[reaction] = currentCount + 1;
-    });
+  void _reactToPost(String postId, String reaction) {
+    _communityService.reactToPost(postId, reaction);
 
     final Map<String, Color> reactionColors = {
       'Relatable': Colors.blueAccent,
@@ -377,13 +168,8 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  void _vibeWithSong(String mood, int index) {
-    setState(() {
-      _moodboards[mood]![index].vibes += 1;
-      _moodboards[mood]!.sort((a, b) => b.vibes.compareTo(a.vibes));
-    });
-
-    _empathyPoints += 5;
+  void _vibeWithSong(String mood, String songId) {
+    _communityService.vibeWithSong(mood, songId);
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -439,18 +225,11 @@ class _CommunityScreenState extends State<CommunityScreen>
             onPressed: () {
               if (titleController.text.isNotEmpty &&
                   artistController.text.isNotEmpty) {
-                setState(() {
-                  _moodboards[mood]!.add(
-                    MoodboardSong(
-                      id: DateTime.now().toString(),
-                      title: titleController.text,
-                      artist: artistController.text,
-                      addedBy: 'You',
-                      vibes: 1,
-                    ),
-                  );
-                  _moodboards[mood]!.sort((a, b) => b.vibes.compareTo(a.vibes));
-                });
+                _communityService.addSongToMoodboard(
+                  mood: mood,
+                  title: titleController.text,
+                  artist: artistController.text,
+                );
                 Navigator.pop(context);
                 _showError('Song added to the Live Moodboard! 🎵');
               }
@@ -631,37 +410,42 @@ class _CommunityScreenState extends State<CommunityScreen>
                 ),
                 actions: [
                   Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      margin: const EdgeInsets.only(right: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.pinkAccent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.pinkAccent.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.volunteer_activism,
-                            color: Colors.pinkAccent,
-                            size: 14,
+                    child: StreamBuilder<int>(
+                      stream: _communityService.getEmpathyPoints(),
+                      builder: (context, snapshot) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '$_empathyPoints',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                          margin: const EdgeInsets.only(right: 24),
+                          decoration: BoxDecoration(
+                            color: Colors.pinkAccent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.pinkAccent.withValues(alpha: 0.2),
                             ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.volunteer_activism,
+                                color: Colors.pinkAccent,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${snapshot.data ?? 0}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -673,162 +457,172 @@ class _CommunityScreenState extends State<CommunityScreen>
                   builder: (context, mood, _) {
                     final tribe =
                         _moodToTribe[mood] ?? _moodToTribe['Natural']!;
-                    final isJoined = _joinedTribes.contains(tribe.name);
 
-                    return Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.fastOutSlowIn,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              tribe.color.withValues(alpha: 0.25),
-                              tribe.color.withValues(alpha: 0.05),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(32),
-                          border: Border.all(
-                            color: tribe.color.withValues(alpha: 0.2),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: tribe.color.withValues(alpha: 0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: tribe.color.withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    tribe.icon,
-                                    color: tribe.color,
-                                    size: 28,
-                                  ),
+                    return StreamBuilder<List<String>>(
+                      stream: _communityService.getJoinedTribes(),
+                      builder: (context, snapshot) {
+                        final joinedTribes = snapshot.data ?? [];
+                        final isJoined = joinedTribes.contains(tribe.id);
+
+                        return Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.fastOutSlowIn,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  tribe.color.withValues(alpha: 0.25),
+                                  tribe.color.withValues(alpha: 0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(32),
+                              border: Border.all(
+                                color: tribe.color.withValues(alpha: 0.2),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: tribe.color.withValues(alpha: 0.1),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        isJoined
-                                            ? 'Welcome To Tribe'
-                                            : 'Your Mood Tribe',
-                                        style: TextStyle(
-                                          color: tribe.color,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.2,
-                                        ),
-                                      ),
-                                      Text(
-                                        tribe.name,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (isJoined)
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.greenAccent,
-                                    size: 28,
-                                  ),
                               ],
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              tribe.description,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontSize: 15,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Wrap(
-                                  children: List.generate(
-                                    3,
-                                    (i) => Transform.translate(
-                                      offset: Offset(i * -12.0, 0),
-                                      child: CircleAvatar(
-                                        radius: 14,
-                                        backgroundColor: tribe.color.withValues(
-                                          alpha: 0.2,
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: tribe.color.withValues(alpha: 0.15),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        tribe.icon,
+                                        color: tribe.color,
+                                        size: 28,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            isJoined
+                                                ? 'Welcome To Tribe'
+                                                : 'Your Mood Tribe',
+                                            style: TextStyle(
+                                              color: tribe.color,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          Text(
+                                            tribe.name,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isJoined)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.greenAccent,
+                                        size: 28,
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  tribe.description,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                    fontSize: 15,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    Wrap(
+                                      children: List.generate(
+                                        3,
+                                        (i) => Transform.translate(
+                                          offset: Offset(i * -12.0, 0),
+                                          child: CircleAvatar(
+                                            radius: 14,
+                                            backgroundColor: tribe.color.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 14,
+                                              color: tribe.color,
+                                            ),
+                                          ),
                                         ),
-                                        child: Icon(
-                                          Icons.person,
-                                          size: 14,
-                                          color: tribe.color,
-                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${tribe.members} others vibing right now',
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    onPressed: () =>
+                                        _toggleJoinTribe(tribe.id, tribe.name),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: isJoined
+                                          ? Colors.white.withValues(alpha: 0.1)
+                                          : tribe.color,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      elevation: isJoined ? 0 : 8,
+                                      shadowColor: tribe.color.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isJoined
+                                          ? 'LEAVE TRIBE'
+                                          : 'JOIN THE SESSION',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        letterSpacing: 1,
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${tribe.members} others vibing right now',
-                                  style: const TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
                               ],
                             ),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: ElevatedButton(
-                                onPressed: () => _toggleJoinTribe(tribe.name),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isJoined
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : tribe.color,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: isJoined ? 0 : 8,
-                                  shadowColor: tribe.color.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                ),
-                                child: Text(
-                                  isJoined ? 'LEAVE TRIBE' : 'JOIN THE SESSION',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -864,70 +658,88 @@ class _CommunityScreenState extends State<CommunityScreen>
                 child: ValueListenableBuilder<String>(
                   valueListenable: _moodService.currentMood,
                   builder: (context, mood, _) {
-                    final boardMood = _moodboards.containsKey(mood)
-                        ? mood
-                        : 'Natural';
-                    final songs = _moodboards[boardMood]!;
+                    final boardMood =
+                        _moodToTribe.containsKey(mood) ? mood : 'Natural';
                     final themeColor =
                         AppTheme.moodColors[boardMood] ?? Colors.amber;
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                    return StreamBuilder<List<MoodboardSong>>(
+                      stream: _communityService.getMoodboardSongs(boardMood),
+                      builder: (context, snapshot) {
+                        final songs = snapshot.data ?? [];
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'Live ${boardMood}board',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Live ${boardMood}board',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const Text(
+                                        'Ranked by the community',
+                                        style: TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const Text(
-                                    'Ranked by the community',
-                                    style: TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 13,
+                                  IconButton(
+                                    onPressed: () =>
+                                        _showAddSongDialog(boardMood),
+                                    icon: Icon(
+                                      Icons.add_box_rounded,
+                                      color: themeColor,
                                     ),
                                   ),
                                 ],
                               ),
-                              IconButton(
-                                onPressed: () => _showAddSongDialog(boardMood),
-                                icon: Icon(
-                                  Icons.add_box_rounded,
-                                  color: themeColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 180,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: songs.length,
-                            itemBuilder: (context, index) {
-                              final song = songs[index];
-                              return _buildMoodboardItem(
-                                song,
-                                boardMood,
-                                index,
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 180,
+                              child: songs.isEmpty
+                                  ? const Center(
+                                      child: Text(
+                                        'No songs added yet. Be the first!',
+                                        style: TextStyle(color: Colors.white24),
+                                      ),
+                                    )
+                                  : ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                      itemCount: songs.length,
+                                      itemBuilder: (context, index) {
+                                        final song = songs[index];
+                                        return _buildMoodboardItem(
+                                          song,
+                                          boardMood,
+                                          index,
+                                        );
+                                      },
+                                    ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -975,11 +787,25 @@ class _CommunityScreenState extends State<CommunityScreen>
                 ),
               ),
 
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final post = _posts[index];
-                  return _buildSupportPost(post, index);
-                }, childCount: _posts.length),
+              StreamBuilder<List<CommunityPost>>(
+                stream: _communityService.getPosts(),
+                builder: (context, snapshot) {
+                  final posts = snapshot.data ?? [];
+                  if (posts.isEmpty && snapshot.connectionState == ConnectionState.waiting) {
+                    return const SliverToBoxAdapter(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final post = posts[index];
+                        return _buildSupportPost(post, index);
+                      },
+                      childCount: posts.length,
+                    ),
+                  );
+                },
               ),
 
               const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
@@ -1144,6 +970,198 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
+
+  Widget _buildSupportPost(CommunityPost post, int index) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: post.moodColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: post.moodColor.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: post.moodColor.withValues(alpha: 0.2),
+                child: Text(
+                  post.userName.isNotEmpty ? post.userName[0] : '?',
+                  style: TextStyle(
+                    color: post.moodColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.userName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Feeling ${post.userMood} • ${_getTimeAgo(post.timestamp)}',
+                    style: TextStyle(
+                      color: post.moodColor.withValues(alpha: 0.7),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            post.content,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          if (post.supportResponses.isNotEmpty) ...[
+            const Text(
+              'Vibes Dropped:',
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...post.supportResponses.take(2).map(
+                  (res) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.music_note,
+                          color: Colors.blueAccent,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${res.userName} shared ${res.songTitle}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            const SizedBox(height: 12),
+          ],
+
+          // Reaction Bar
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildReactionButton(
+                  post.id,
+                  post.reactions,
+                  'Relatable',
+                  '🫂',
+                  Colors.blueAccent,
+                ),
+                _buildReactionButton(
+                  post.id,
+                  post.reactions,
+                  'Vibing',
+                  '🔥',
+                  Colors.amber,
+                ),
+                _buildReactionButton(
+                  post.id,
+                  post.reactions,
+                  'Healing',
+                  '🌿',
+                  Colors.greenAccent,
+                ),
+                _buildReactionButton(
+                  post.id,
+                  post.reactions,
+                  'Powerful',
+                  '⚡',
+                  Colors.redAccent,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              onPressed: () => _dropAVibe(post.id),
+              icon: const Icon(Icons.volunteer_activism, size: 18),
+              label: const Text(
+                'DROP A VIBE',
+                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.pinkAccent,
+                side: const BorderSide(color: Colors.pinkAccent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReactionButton(
+    String postId,
+    Map<String, int> reactions,
+    String label,
+    String emoji,
+    Color color,
+  ) {
+    final count = reactions[label] ?? 0;
+    return GestureDetector(
+      onTap: () => _reactToPost(postId, label),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 4),
+            Text(
+              count.toString(),
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMoodboardItem(MoodboardSong song, String mood, int index) {
     final color = AppTheme.moodColors[mood] ?? Colors.amber;
 
@@ -1201,7 +1219,7 @@ class _CommunityScreenState extends State<CommunityScreen>
             top: 8,
             right: 8,
             child: GestureDetector(
-              onTap: () => _vibeWithSong(mood, index),
+              onTap: () => _vibeWithSong(mood, song.id),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
@@ -1241,184 +1259,6 @@ class _CommunityScreenState extends State<CommunityScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSupportPost(CommunityPost post, int index) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: post.moodColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: post.moodColor.withValues(alpha: 0.15)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: post.moodColor.withValues(alpha: 0.2),
-                child: Text(
-                  post.userName[0],
-                  style: TextStyle(
-                    color: post.moodColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    post.userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Feeling ${post.userMood} • ${post.timeAgo}',
-                    style: TextStyle(
-                      color: post.moodColor.withValues(alpha: 0.7),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            post.content,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          if (post.supportResponses.isNotEmpty) ...[
-            const Text(
-              'Vibes Dropped:',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...post.supportResponses
-                .take(2)
-                .map(
-                  (res) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.music_note,
-                          color: Colors.blueAccent,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${res.userName} shared ${res.songTitle}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            const SizedBox(height: 12),
-          ],
-
-          // Reaction Bar
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildReactionButton(
-                  index,
-                  'Relatable',
-                  '🫂',
-                  Colors.blueAccent,
-                ),
-                _buildReactionButton(index, 'Vibing', '🔥', Colors.amber),
-                _buildReactionButton(
-                  index,
-                  'Healing',
-                  '🌿',
-                  Colors.greenAccent,
-                ),
-                _buildReactionButton(index, 'Powerful', '⚡', Colors.redAccent),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: OutlinedButton.icon(
-              onPressed: () => _dropAVibe(index),
-              icon: const Icon(Icons.volunteer_activism, size: 18),
-              label: const Text(
-                'DROP A VIBE',
-                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.pinkAccent,
-                side: const BorderSide(color: Colors.pinkAccent),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReactionButton(
-    int postIndex,
-    String label,
-    String emoji,
-    Color color,
-  ) {
-    final count = _posts[postIndex].reactions[label] ?? 0;
-    return GestureDetector(
-      onTap: () => _reactToPost(postIndex, label),
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 4),
-            Text(
-              count.toString(),
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
