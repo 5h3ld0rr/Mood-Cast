@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'dart:async';
 import '../../theme.dart';
 import '../../services/mood_service.dart';
 import '../../services/community_service.dart';
+import '../../services/youtube_music_service.dart';
 import '../../models/community_models.dart';
 
 // MoodboardSong class is now in community_models.dart
@@ -20,6 +22,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   late AnimationController _pulseController;
   final MoodService _moodService = MoodService();
   final CommunityService _communityService = CommunityService();
+  final YouTubeMusicService _ytmService = YouTubeMusicService();
   final ValueNotifier<Color?> _screenGlowColor = ValueNotifier<Color?>(null);
 
   final Map<String, Tribe> _moodToTribe = {
@@ -97,24 +100,178 @@ class _CommunityScreenState extends State<CommunityScreen>
       return;
     }
 
-    _communityService.addSupportResponse(
-      postId: postId,
-      songTitle: 'Sunshine Beats',
-      artist: 'MoodCast Originals',
-      moodColorValue: Colors.amber.toARGB32(),
-    );
+    _showDropAVibeDialog(postId);
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.volunteer_activism, color: Colors.white),
-            SizedBox(width: 12),
-            Text('Vibe Dropped! +50 Empathy Points 💖'),
-          ],
+  void _showDropAVibeDialog(String postId) {
+    final searchController = TextEditingController();
+    List<YouTubeMusicMetadata> searchResults = [];
+    bool isLoading = false;
+    Timer? debounce;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.backgroundDark,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.all(Radius.circular(2)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Drop a Healing Vibe',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Search for a song that can help shift their mood',
+                style: TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Search songs...',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  prefixIcon: const Icon(Icons.search, color: Colors.pinkAccent),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (query) {
+                  if (debounce?.isActive ?? false) debounce!.cancel();
+                  debounce = Timer(const Duration(milliseconds: 500), () async {
+                    if (query.length > 2) {
+                      setState(() => isLoading = true);
+                      final results = await _ytmService.searchTracks(query);
+                      setState(() {
+                        searchResults = results;
+                        isLoading = false;
+                      });
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : searchResults.isEmpty
+                        ? Center(
+                            child: Text(
+                              searchController.text.length > 2
+                                  ? 'No songs found'
+                                  : 'Start typing to find a song...',
+                              style: const TextStyle(color: Colors.white24),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: searchResults.length,
+                            itemBuilder: (context, index) {
+                              final song = searchResults[index];
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white10,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: song.artworkUrl != null
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          child: Image.network(
+                                            song.artworkUrl!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.music_note,
+                                          color: Colors.white24,
+                                        ),
+                                ),
+                                title: Text(
+                                  song.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  song.artist,
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                trailing: const Icon(
+                                  Icons.send_rounded,
+                                  color: Colors.pinkAccent,
+                                ),
+                                onTap: () {
+                                  _communityService.addSupportResponse(
+                                    postId: postId,
+                                    songTitle: song.title,
+                                    artist: song.artist,
+                                    moodColorValue: Colors.amber.toARGB32(),
+                                  );
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.volunteer_activism,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text(
+                                            'Vibe Dropped! +50 Empathy Points 💖',
+                                          ),
+                                        ],
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor: Colors.pinkAccent
+                                          .withValues(alpha: 0.9),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
         ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.pinkAccent.withValues(alpha: 0.9),
       ),
     );
   }

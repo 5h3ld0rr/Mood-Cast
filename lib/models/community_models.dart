@@ -69,7 +69,7 @@ class SupportResponse {
       songTitle: data['songTitle'] ?? '',
       artist: data['artist'] ?? '',
       moodColorValue: data['moodColorValue'] ?? Colors.blue.toARGB32(),
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
