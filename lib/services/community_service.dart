@@ -15,9 +15,11 @@ class CommunityService {
         .collection('community_posts')
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CommunityPost.fromFirestore(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CommunityPost.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   Future<void> createPost({
@@ -38,12 +40,7 @@ class CommunityService {
       moodColorValue: moodColorValue,
       isSupportRequest: isSupportRequest,
       supportResponses: [],
-      reactions: {
-        'Relatable': 0,
-        'Vibing': 0,
-        'Healing': 0,
-        'Powerful': 0,
-      },
+      reactions: {'Relatable': 0, 'Vibing': 0, 'Healing': 0, 'Powerful': 0},
     );
 
     await _firestore.collection('community_posts').add(post.toMap());
@@ -55,7 +52,9 @@ class CommunityService {
       final snapshot = await transaction.get(docRef);
       if (!snapshot.exists) return;
 
-      Map<String, dynamic> reactions = Map<String, dynamic>.from(snapshot.get('reactions') ?? {});
+      Map<String, dynamic> reactions = Map<String, dynamic>.from(
+        snapshot.get('reactions') ?? {},
+      );
       int currentCount = reactions[reaction] ?? 0;
       reactions[reaction] = currentCount + 1;
 
@@ -81,7 +80,7 @@ class CommunityService {
     );
 
     await _firestore.collection('community_posts').doc(postId).update({
-      'supportResponses': FieldValue.arrayUnion([response.toMap()])
+      'supportResponses': FieldValue.arrayUnion([response.toMap()]),
     });
 
     // Award empathy points
@@ -96,9 +95,11 @@ class CommunityService {
         .collection('songs')
         .orderBy('vibes', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => MoodboardSong.fromFirestore(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => MoodboardSong.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   Future<void> addSongToMoodboard({
@@ -133,7 +134,7 @@ class CommunityService {
         .collection('songs')
         .doc(songId)
         .update({'vibes': FieldValue.increment(1)});
-    
+
     await awardEmpathyPoints(5);
   }
 
@@ -156,10 +157,10 @@ class CommunityService {
   Future<void> toggleJoinTribe(String tribeId) async {
     if (uid == null) return;
     final userRef = _firestore.collection('users').doc(uid);
-    
+
     await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(userRef);
-      
+
       List<String> joinedTribes = [];
       if (snapshot.exists) {
         joinedTribes = List<String>.from(snapshot.get('joinedTribes') ?? []);
@@ -171,7 +172,9 @@ class CommunityService {
         joinedTribes.add(tribeId);
       }
 
-      transaction.set(userRef, {'joinedTribes': joinedTribes}, SetOptions(merge: true));
+      transaction.set(userRef, {
+        'joinedTribes': joinedTribes,
+      }, SetOptions(merge: true));
     });
   }
 

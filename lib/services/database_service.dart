@@ -187,7 +187,7 @@ class DatabaseService {
         final data = doc.data();
         data['id'] = doc.id;
         // Get the creator's user ID from doc reference since collectionGroup returns docs from anywhere
-        data['creatorId'] = doc.reference.parent.parent?.id; 
+        data['creatorId'] = doc.reference.parent.parent?.id;
         return data;
       }).toList();
 

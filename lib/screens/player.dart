@@ -52,7 +52,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     setState(() {
       _dragOffset += details.primaryDelta!;
       if (_dragOffset < 0) _dragOffset = 0;
-      
+
       // Calculate opacity and scale based on drag distance
       _dragOpacity = (1 - (_dragOffset / 500)).clamp(0.5, 1.0);
       _dragScale = (1 - (_dragOffset / 2000)).clamp(0.85, 1.0);
@@ -80,7 +80,9 @@ class _PlayerScreenState extends State<PlayerScreen>
       onVerticalDragUpdate: _handleVerticalDragUpdate,
       onVerticalDragEnd: _handleVerticalDragEnd,
       child: AnimatedContainer(
-        duration: _dragOffset == 0 ? const Duration(milliseconds: 300) : Duration.zero,
+        duration: _dragOffset == 0
+            ? const Duration(milliseconds: 300)
+            : Duration.zero,
         curve: Curves.easeOutCubic,
         transform: Matrix4.identity()
           ..translate(0.0, _dragOffset)
@@ -102,631 +104,717 @@ class _PlayerScreenState extends State<PlayerScreen>
                 ),
               ),
               child: SafeArea(
-          child: CustomScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            slivers: [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Column(
-                  children: [
-                    // Header
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: CustomScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  slivers: [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Column(
                         children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.keyboard_arrow_down,
-                              color: Colors.white,
-                              size: 32,
+                          // Header
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
                             ),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          const Column(
-                            children: [
-                              Text(
-                                'PLAYING FROM',
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 10,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.bold,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                  onPressed: () => Navigator.pop(context),
                                 ),
-                              ),
-                              Text(
-                                'Wellness Player',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          PopupMenuButton<String>(
-                            icon: const Icon(
-                              Icons.more_horiz,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                            color: const Color(0xFF1E293B),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            onSelected: (value) {
-                              switch (value) {
-                                case 'playlist':
-                                  _showAddedToPlaylist();
-                                  break;
-                                case 'sleep':
-                                  _showSleepTimerDialog();
-                                  break;
-                                case 'share':
-                                  _handleShare();
-                                  break;
-                              }
-                            },
-                            itemBuilder: (BuildContext context) => [
-                              PopupMenuItem<String>(
-                                value: 'playlist',
-                                child: Row(
+                                const Column(
                                   children: [
-                                    const Icon(
-                                      Icons.playlist_add,
-                                      size: 20,
-                                      color: Colors.white70,
+                                    Text(
+                                      'PLAYING FROM',
+                                      style: TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 10,
+                                        letterSpacing: 1.2,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Add to Playlist',
+                                    Text(
+                                      'Wellness Player',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              PopupMenuItem<String>(
-                                value: 'sleep',
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.timer_outlined,
-                                      size: 20,
-                                      color: Colors.white70,
+                                PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_horiz,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                  color: const Color(0xFF1E293B),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  onSelected: (value) {
+                                    switch (value) {
+                                      case 'playlist':
+                                        _showAddedToPlaylist();
+                                        break;
+                                      case 'sleep':
+                                        _showSleepTimerDialog();
+                                        break;
+                                      case 'share':
+                                        _handleShare();
+                                        break;
+                                    }
+                                  },
+                                  itemBuilder: (BuildContext context) => [
+                                    PopupMenuItem<String>(
+                                      value: 'playlist',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.playlist_add,
+                                            size: 20,
+                                            color: Colors.white70,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text(
+                                            'Add to Playlist',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Sleep Timer',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                    PopupMenuItem<String>(
+                                      value: 'sleep',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.timer_outlined,
+                                            size: 20,
+                                            color: Colors.white70,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text(
+                                            'Sleep Timer',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem<String>(
+                                      value: 'share',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.share_outlined,
+                                            size: 20,
+                                            color: Colors.white70,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text(
+                                            'Share',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                              PopupMenuItem<String>(
-                                value: 'share',
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.share_outlined,
-                                      size: 20,
-                                      color: Colors.white70,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Share',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
 
-                    // Mood Badge
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                            border: Border.all(
-                              color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                          // Mood Badge
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.emergency,
-                                color: Theme.of(context).primaryColor,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              ValueListenableBuilder<String>(
-                                valueListenable: MoodService().currentMood,
-                                builder: (context, mood, _) {
-                                  return Text(
-                                    'CURRENT MOOD: ${mood.toUpperCase()}',
-                                    style: TextStyle(
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.2),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.3),
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.emergency,
                                       color: Theme.of(context).primaryColor,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.2,
+                                      size: 16,
                                     ),
-                                  );
-                                },
+                                    const SizedBox(width: 8),
+                                    ValueListenableBuilder<String>(
+                                      valueListenable:
+                                          MoodService().currentMood,
+                                      builder: (context, mood, _) {
+                                        return Text(
+                                          'CURRENT MOOD: ${mood.toUpperCase()}',
+                                          style: TextStyle(
+                                            color: Theme.of(
+                                              context,
+                                            ).primaryColor,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
 
-                    // Song Info Area (Now at Top)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-                      child: ValueListenableBuilder<SongInfo?>(
-                        valueListenable: PlayerService().currentSong,
-                        builder: (context, song, _) {
-                          final size = MediaQuery.of(context).size.width * 0.88;
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 20, bottom: 40),
-                            child: AnimatedBuilder(
-                              animation: _animationController,
-                              builder: (context, child) {
-                                final scale = 1.0 + (_animationController.value * 0.02);
-                                return Transform.scale(
-                                  scale: scale,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(32),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.5),
-                                          blurRadius: 40,
-                                          spreadRadius: 2,
-                                          offset: const Offset(0, 20),
+                          // Song Info Area (Now at Top)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                              vertical: 20,
+                            ),
+                            child: ValueListenableBuilder<SongInfo?>(
+                              valueListenable: PlayerService().currentSong,
+                              builder: (context, song, _) {
+                                final size =
+                                    MediaQuery.of(context).size.width * 0.88;
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 20,
+                                    bottom: 40,
+                                  ),
+                                  child: AnimatedBuilder(
+                                    animation: _animationController,
+                                    builder: (context, child) {
+                                      final scale =
+                                          1.0 +
+                                          (_animationController.value * 0.02);
+                                      return Transform.scale(
+                                        scale: scale,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              32,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.5,
+                                                ),
+                                                blurRadius: 40,
+                                                spreadRadius: 2,
+                                                offset: const Offset(0, 20),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Hero(
+                                            tag: 'player_art',
+                                            child: CachedImage(
+                                              imageUrl: song?.coverUrl,
+                                              width: size,
+                                              height: size,
+                                              borderRadius:
+                                                  BorderRadius.circular(32),
+                                            ),
+                                          ),
                                         ),
-                                      ],
-                                    ),
-                                    child: Hero(
-                                      tag: 'player_art',
-                                      child: CachedImage(
-                                        imageUrl: song?.coverUrl,
-                                        width: size,
-                                        height: size,
-                                        borderRadius: BorderRadius.circular(32),
-                                      ),
-                                    ),
+                                      );
+                                    },
                                   ),
                                 );
                               },
                             ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    // Animation Area (Waveform)
-                    Expanded(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                          child: MusicWaveform(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.8),
-                            count: 40,
-                            isPlaying: PlayerService().isPlaying,
                           ),
-                        ),
-                      ),
-                    ),
 
-                    // Controls Area
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
-                        children: [
-                          ValueListenableBuilder<SongInfo?>(
-                            valueListenable: PlayerService().currentSong,
-                            builder: (context, song, _) {
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                          // Animation Area (Waveform)
+                          Expanded(
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40.0,
+                                ),
+                                child: MusicWaveform(
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.8),
+                                  count: 40,
+                                  isPlaying: PlayerService().isPlaying,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Controls Area
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                            ),
+                            child: Column(
+                              children: [
+                                ValueListenableBuilder<SongInfo?>(
+                                  valueListenable: PlayerService().currentSong,
+                                  builder: (context, song, _) {
+                                    return Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        SizedBox(
-                                          height: 32,
-                                          child: (song?.title.length ?? 0) > 20
-                                              ? Marquee(
-                                                  text: song?.title ?? '',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 22,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                  scrollAxis: Axis.horizontal,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  blankSpace: 50.0,
-                                                  velocity: 30.0,
-                                                  pauseAfterRound:
-                                                      const Duration(
-                                                        seconds: 3,
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              SizedBox(
+                                                height: 32,
+                                                child:
+                                                    (song?.title.length ?? 0) >
+                                                        20
+                                                    ? Marquee(
+                                                        text: song?.title ?? '',
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        scrollAxis:
+                                                            Axis.horizontal,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        blankSpace: 50.0,
+                                                        velocity: 30.0,
+                                                        pauseAfterRound:
+                                                            const Duration(
+                                                              seconds: 3,
+                                                            ),
+                                                        accelerationDuration:
+                                                            const Duration(
+                                                              seconds: 1,
+                                                            ),
+                                                        accelerationCurve:
+                                                            Curves.linear,
+                                                        decelerationDuration:
+                                                            const Duration(
+                                                              milliseconds: 500,
+                                                            ),
+                                                        decelerationCurve:
+                                                            Curves.easeOut,
+                                                      )
+                                                    : Text(
+                                                        song?.title ?? '',
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
                                                       ),
-                                                  accelerationDuration:
-                                                      const Duration(
-                                                        seconds: 1,
-                                                      ),
-                                                  accelerationCurve:
-                                                      Curves.linear,
-                                                  decelerationDuration:
-                                                      const Duration(
-                                                        milliseconds: 500,
-                                                      ),
-                                                  decelerationCurve:
-                                                      Curves.easeOut,
-                                                )
-                                              : Text(
-                                                  song?.title ?? '',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 22,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                song?.artist ?? '',
+                                                style: TextStyle(
+                                                  color:
+                                                      Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.color ??
+                                                      AppTheme.textMuted,
+                                                  fontSize: 14,
                                                 ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          song?.artist ?? '',
-                                          style: TextStyle(
-                                            color: Theme.of(context).textTheme.bodyMedium?.color ??
-                                                AppTheme.textMuted,
-                                            fontSize: 14,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (song != null)
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ValueListenableBuilder<
+                                                Map<String, double>
+                                              >(
+                                                valueListenable:
+                                                    DownloadService()
+                                                        .downloadProgress,
+                                                builder: (context, progressMap, _) {
+                                                  final progress =
+                                                      progressMap[song.videoId];
+                                                  final downloading =
+                                                      progress != null;
+
+                                                  return ValueListenableBuilder<
+                                                    List<SongInfo>
+                                                  >(
+                                                    valueListenable:
+                                                        DownloadService()
+                                                            .downloadedSongs,
+                                                    builder: (context, downloadedSongs, _) {
+                                                      final isDownloaded =
+                                                          downloadedSongs.any(
+                                                            (s) =>
+                                                                s.videoId ==
+                                                                song.videoId,
+                                                          );
+                                                      if (downloading) {
+                                                        return SizedBox(
+                                                          width: 24,
+                                                          height: 24,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                value: progress,
+                                                                strokeWidth: 2,
+                                                                color: Theme.of(
+                                                                  context,
+                                                                ).primaryColor,
+                                                              ),
+                                                        );
+                                                      }
+                                                      return IconButton(
+                                                        icon: Icon(
+                                                          isDownloaded
+                                                              ? Icons
+                                                                    .download_done
+                                                              : Icons
+                                                                    .download_for_offline_outlined,
+                                                          color: isDownloaded
+                                                              ? Theme.of(
+                                                                  context,
+                                                                ).primaryColor
+                                                              : Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .textTheme
+                                                                        .bodyMedium
+                                                                        ?.color ??
+                                                                    AppTheme
+                                                                        .textMuted,
+                                                          size: 24,
+                                                        ),
+                                                        onPressed: () {
+                                                          if (isDownloaded) {
+                                                            DownloadService()
+                                                                .removeDownload(
+                                                                  song.videoId!,
+                                                                );
+                                                          } else {
+                                                            DownloadService()
+                                                                .downloadSong(
+                                                                  song,
+                                                                );
+                                                          }
+                                                        },
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                              ValueListenableBuilder<bool>(
+                                                valueListenable:
+                                                    PlayerService().isLiked,
+                                                builder: (context, liked, _) {
+                                                  return IconButton(
+                                                    icon: Icon(
+                                                      liked
+                                                          ? Icons.favorite
+                                                          : Icons
+                                                                .favorite_border,
+                                                      color: liked
+                                                          ? Theme.of(
+                                                              context,
+                                                            ).primaryColor
+                                                          : Theme.of(context)
+                                                                    .textTheme
+                                                                    .bodyMedium
+                                                                    ?.color ??
+                                                                AppTheme
+                                                                    .textMuted,
+                                                    ),
+                                                    onPressed: () =>
+                                                        PlayerService()
+                                                            .toggleLiked(),
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                ValueListenableBuilder<double>(
+                                  valueListenable: PlayerService().progress,
+                                  builder: (context, progress, _) {
+                                    return Column(
+                                      children: [
+                                        GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onHorizontalDragUpdate: (details) {
+                                            final RenderBox box =
+                                                context.findRenderObject()
+                                                    as RenderBox;
+                                            final double width = box.size.width;
+                                            final double relative =
+                                                details.localPosition.dx /
+                                                width;
+                                            PlayerService().seek(
+                                              relative.clamp(0.0, 1.0),
+                                            );
+                                          },
+                                          onTapUp: (details) {
+                                            final RenderBox box =
+                                                context.findRenderObject()
+                                                    as RenderBox;
+                                            final double width = box.size.width;
+                                            final double relative =
+                                                details.localPosition.dx /
+                                                width;
+                                            PlayerService().seek(
+                                              relative.clamp(0.0, 1.0),
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                            ),
+                                            child: Container(
+                                              height: 6,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[900],
+                                                borderRadius:
+                                                    BorderRadius.circular(3),
+                                              ),
+                                              child: FractionallySizedBox(
+                                                alignment: Alignment.centerLeft,
+                                                widthFactor: progress,
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).primaryColor,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          3,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            ValueListenableBuilder<Duration>(
+                                              valueListenable:
+                                                  PlayerService().position,
+                                              builder: (context, pos, _) {
+                                                return Text(
+                                                  _formatDuration(
+                                                    pos.inSeconds.toDouble(),
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 10,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            ValueListenableBuilder<Duration>(
+                                              valueListenable:
+                                                  PlayerService().duration,
+                                              builder: (context, dur, _) {
+                                                return Text(
+                                                  _formatDuration(
+                                                    dur.inSeconds.toDouble(),
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 10,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable:
+                                          PlayerService().isShuffled,
+                                      builder: (context, shuffled, _) {
+                                        return IconButton(
+                                          icon: Icon(
+                                            Icons.shuffle,
+                                            color: shuffled
+                                                ? Theme.of(context).primaryColor
+                                                : Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.color ??
+                                                      AppTheme.textMuted,
+                                          ),
+                                          onPressed: () {
+                                            PlayerService().toggleShuffle();
+                                          },
+                                        );
+                                      },
                                     ),
-                                  ),
-                                  if (song != null)
                                     Row(
-                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        ValueListenableBuilder<
-                                          Map<String, double>
-                                        >(
-                                          valueListenable: DownloadService()
-                                              .downloadProgress,
-                                          builder: (context, progressMap, _) {
-                                            final progress =
-                                                progressMap[song.videoId];
-                                            final downloading =
-                                                progress != null;
-
-                                            return ValueListenableBuilder<
-                                              List<SongInfo>
-                                            >(
-                                              valueListenable: DownloadService()
-                                                  .downloadedSongs,
-                                              builder: (context, downloadedSongs, _) {
-                                                final isDownloaded =
-                                                    downloadedSongs.any(
-                                                      (s) =>
-                                                          s.videoId ==
-                                                          song.videoId,
-                                                    );
-                                                if (downloading) {
-                                                  return SizedBox(
-                                                    width: 24,
-                                                    height: 24,
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.skip_previous,
+                                            color: Colors.white,
+                                            size: 32,
+                                          ),
+                                          onPressed: () {
+                                            PlayerService().skipToPrevious();
+                                          },
+                                        ),
+                                        const SizedBox(width: 16),
+                                        GestureDetector(
+                                          onTap: () {
+                                            PlayerService().togglePlay();
+                                          },
+                                          child: Container(
+                                            width: 64,
+                                            height: 64,
+                                            decoration: BoxDecoration(
+                                              color: Theme.of(
+                                                context,
+                                              ).primaryColor,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Theme.of(context)
+                                                      .primaryColor
+                                                      .withValues(alpha: 0.3),
+                                                  blurRadius: 15,
+                                                ),
+                                              ],
+                                            ),
+                                            child: ValueListenableBuilder<bool>(
+                                              valueListenable:
+                                                  PlayerService().isBuffering,
+                                              builder: (context, buffering, _) {
+                                                if (buffering) {
+                                                  return const Padding(
+                                                    padding: EdgeInsets.all(
+                                                      16.0,
+                                                    ),
                                                     child:
                                                         CircularProgressIndicator(
-                                                          value: progress,
-                                                          strokeWidth: 2,
-                                                          color: Theme.of(context).primaryColor,
+                                                          color: Colors.white,
+                                                          strokeWidth: 3,
                                                         ),
                                                   );
                                                 }
-                                                return IconButton(
-                                                  icon: Icon(
-                                                    isDownloaded
-                                                        ? Icons.download_done
-                                                        : Icons
-                                                              .download_for_offline_outlined,
-                                                    color: isDownloaded
-                                                        ? Theme.of(context).primaryColor
-                                                        : Theme.of(context).textTheme.bodyMedium?.color ??
-                                                            AppTheme.textMuted,
-                                                    size: 24,
-                                                  ),
-                                                  onPressed: () {
-                                                    if (isDownloaded) {
-                                                      DownloadService()
-                                                          .removeDownload(
-                                                            song.videoId!,
-                                                          );
-                                                    } else {
-                                                      DownloadService()
-                                                          .downloadSong(song);
-                                                    }
-                                                  },
+                                                return ValueListenableBuilder<
+                                                  bool
+                                                >(
+                                                  valueListenable:
+                                                      PlayerService().isPlaying,
+                                                  builder:
+                                                      (context, playing, _) {
+                                                        return Icon(
+                                                          playing
+                                                              ? Icons.pause
+                                                              : Icons
+                                                                    .play_arrow,
+                                                          color: Colors.white,
+                                                          size: 40,
+                                                        );
+                                                      },
                                                 );
                                               },
-                                            );
-                                          },
+                                            ),
+                                          ),
                                         ),
-                                        ValueListenableBuilder<bool>(
-                                          valueListenable:
-                                              PlayerService().isLiked,
-                                          builder: (context, liked, _) {
-                                            return IconButton(
-                                              icon: Icon(
-                                                liked
-                                                    ? Icons.favorite
-                                                    : Icons.favorite_border,
-                                                color: liked
-                                                    ? Theme.of(context).primaryColor
-                                                    : Theme.of(context).textTheme.bodyMedium?.color ??
-                                                        AppTheme.textMuted,
-                                              ),
-                                              onPressed: () =>
-                                                  PlayerService().toggleLiked(),
-                                            );
+                                        const SizedBox(width: 16),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.skip_next,
+                                            color: Colors.white,
+                                            size: 32,
+                                          ),
+                                          onPressed: () {
+                                            PlayerService().skipToNext();
                                           },
                                         ),
                                       ],
                                     ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          ValueListenableBuilder<double>(
-                            valueListenable: PlayerService().progress,
-                            builder: (context, progress, _) {
-                              return Column(
-                                children: [
-                                  GestureDetector(
-                                    behavior: HitTestBehavior.opaque,
-                                    onHorizontalDragUpdate: (details) {
-                                      final RenderBox box =
-                                          context.findRenderObject()
-                                              as RenderBox;
-                                      final double width = box.size.width;
-                                      final double relative =
-                                          details.localPosition.dx / width;
-                                      PlayerService().seek(
-                                        relative.clamp(0.0, 1.0),
-                                      );
-                                    },
-                                    onTapUp: (details) {
-                                      final RenderBox box =
-                                          context.findRenderObject()
-                                              as RenderBox;
-                                      final double width = box.size.width;
-                                      final double relative =
-                                          details.localPosition.dx / width;
-                                      PlayerService().seek(
-                                        relative.clamp(0.0, 1.0),
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 10,
-                                      ),
-                                      child: Container(
-                                        height: 6,
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[900],
-                                          borderRadius: BorderRadius.circular(
-                                            3,
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable:
+                                          PlayerService().isLooping,
+                                      builder: (context, looping, _) {
+                                        return IconButton(
+                                          icon: Icon(
+                                            Icons.repeat,
+                                            color: looping
+                                                ? Theme.of(context).primaryColor
+                                                : Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.color ??
+                                                      AppTheme.textMuted,
                                           ),
-                                        ),
-                                        child: FractionallySizedBox(
-                                          alignment: Alignment.centerLeft,
-                                          widthFactor: progress,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Theme.of(context).primaryColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(3),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                          onPressed: () {
+                                            PlayerService().toggleLoop();
+                                          },
+                                        );
+                                      },
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      ValueListenableBuilder<Duration>(
-                                        valueListenable:
-                                            PlayerService().position,
-                                        builder: (context, pos, _) {
-                                          return Text(
-                                            _formatDuration(
-                                              pos.inSeconds.toDouble(),
-                                            ),
-                                            style: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 10,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      ValueListenableBuilder<Duration>(
-                                        valueListenable:
-                                            PlayerService().duration,
-                                        builder: (context, dur, _) {
-                                          return Text(
-                                            _formatDuration(
-                                              dur.inSeconds.toDouble(),
-                                            ),
-                                            style: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 10,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ValueListenableBuilder<bool>(
-                                valueListenable: PlayerService().isShuffled,
-                                builder: (context, shuffled, _) {
-                                  return IconButton(
-                                    icon: Icon(
-                                      Icons.shuffle,
-                                      color: shuffled
-                                          ? Theme.of(context).primaryColor
-                                          : Theme.of(context).textTheme.bodyMedium?.color ??
-                                              AppTheme.textMuted,
-                                    ),
-                                    onPressed: () {
-                                      PlayerService().toggleShuffle();
-                                    },
-                                  );
-                                },
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.skip_previous,
-                                      color: Colors.white,
-                                      size: 32,
-                                    ),
-                                    onPressed: () {
-                                      PlayerService().skipToPrevious();
-                                    },
-                                  ),
-                                  const SizedBox(width: 16),
-                                  GestureDetector(
-                                    onTap: () {
-                                      PlayerService().togglePlay();
-                                    },
-                                    child: Container(
-                                      width: 64,
-                                      height: 64,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).primaryColor,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Theme.of(context).primaryColor.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                            blurRadius: 15,
-                                          ),
-                                        ],
-                                      ),
-                                      child: ValueListenableBuilder<bool>(
-                                        valueListenable:
-                                            PlayerService().isBuffering,
-                                        builder: (context, buffering, _) {
-                                          if (buffering) {
-                                            return const Padding(
-                                              padding: EdgeInsets.all(16.0),
-                                              child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 3,
-                                              ),
-                                            );
-                                          }
-                                          return ValueListenableBuilder<bool>(
-                                            valueListenable:
-                                                PlayerService().isPlaying,
-                                            builder: (context, playing, _) {
-                                              return Icon(
-                                                playing
-                                                    ? Icons.pause
-                                                    : Icons.play_arrow,
-                                                color: Colors.white,
-                                                size: 40,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.skip_next,
-                                      color: Colors.white,
-                                      size: 32,
-                                    ),
-                                    onPressed: () {
-                                      PlayerService().skipToNext();
-                                    },
-                                  ),
-                                ],
-                              ),
-                              ValueListenableBuilder<bool>(
-                                valueListenable: PlayerService().isLooping,
-                                builder: (context, looping, _) {
-                                  return IconButton(
-                                    icon: Icon(
-                                      Icons.repeat,
-                                      color: looping
-                                          ? Theme.of(context).primaryColor
-                                          : Theme.of(context).textTheme.bodyMedium?.color ??
-                                              AppTheme.textMuted,
-                                    ),
-                                    onPressed: () {
-                                      PlayerService().toggleLoop();
-                                    },
-                                  );
-                                },
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -734,15 +822,12 @@ class _PlayerScreenState extends State<PlayerScreen>
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-),
-);
-}
+    );
+  }
 
   void _showAddedToPlaylist() {
     final song = PlayerService().currentSong.value;
@@ -777,7 +862,8 @@ class _PlayerScreenState extends State<PlayerScreen>
             child: Text(
               'CANCEL',
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                color:
+                    Theme.of(context).textTheme.bodyMedium?.color ??
                     AppTheme.textMuted,
               ),
             ),
@@ -833,7 +919,8 @@ class _PlayerScreenState extends State<PlayerScreen>
             child: Text(
               'CANCEL',
               style: TextStyle(
-                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                color:
+                    Theme.of(context).textTheme.bodyMedium?.color ??
                     AppTheme.textMuted,
               ),
             ),

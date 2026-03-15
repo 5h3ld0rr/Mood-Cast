@@ -81,12 +81,14 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
                           Navigator.pop(context);
                           UIUtils.showSnackBar(
                             context,
-                            isPublic ? 'Playlist is now private' : 'Playlist is now public',
+                            isPublic
+                                ? 'Playlist is now private'
+                                : 'Playlist is now public',
                           );
                         }
                       },
                     ),
-                ]
+                ],
               );
             },
           ),
@@ -126,7 +128,10 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
               color: Colors.white10,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.queue_music, color: Theme.of(context).primaryColor),
+            child: Icon(
+              Icons.queue_music,
+              color: Theme.of(context).primaryColor,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -146,7 +151,8 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
                 Text(
                   'Playlist Options',
                   style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                    color:
+                        Theme.of(context).textTheme.bodyMedium?.color ??
                         AppTheme.textMuted,
                     fontSize: 14,
                   ),

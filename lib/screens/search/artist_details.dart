@@ -70,7 +70,9 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
       return Scaffold(
         backgroundColor: Theme.of(context).canvasColor,
         body: Center(
-          child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+          child: CircularProgressIndicator(
+            color: Theme.of(context).primaryColor,
+          ),
         ),
       );
     }
@@ -228,7 +230,8 @@ class _ArtistDetailsScreenState extends State<ArtistDetailsScreen> {
                   subtitle: Text(
                     track.artist,
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      color:
+                          Theme.of(context).textTheme.bodyMedium?.color ??
                           AppTheme.textMuted,
                       fontSize: 12,
                     ),

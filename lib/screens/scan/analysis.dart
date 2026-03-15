@@ -26,7 +26,6 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   double _zoomScale = 1.3; // Increased base zoom to ensure fill
   String? _detectedMood;
 
-
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(
       enableClassification: true,
@@ -415,7 +414,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Theme.of(context).canvasColor],
+                        colors: [
+                          Colors.transparent,
+                          Theme.of(context).canvasColor,
+                        ],
                       ),
                     ),
                   ),
@@ -436,7 +438,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -602,7 +606,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.05),
                             blurRadius: 30,
                             spreadRadius: 0,
                           ),
@@ -613,7 +619,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -630,9 +638,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 Text(
                                   'CURRENT STATE',
                                   style: TextStyle(
-                                    color: Theme.of(context).primaryColor.withValues(
-                                      alpha: 0.6,
-                                    ),
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.6),
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 2.5,
@@ -758,7 +766,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                            Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.1),
                             Colors.white.withValues(alpha: 0.05),
                           ],
                           begin: Alignment.topLeft,
@@ -781,7 +791,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 ? 'CHEER UP JOKE! 😂'
                                 : 'AI INSIGHT ✨',
                             style: TextStyle(
-                              color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.5),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
@@ -813,7 +825,11 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     );
   }
 
-  Widget _buildCorner(BuildContext context, {required bool isTop, required bool isLeft}) {
+  Widget _buildCorner(
+    BuildContext context, {
+    required bool isTop,
+    required bool isLeft,
+  }) {
     return Container(
       width: 40,
       height: 40,
@@ -876,9 +892,9 @@ class _PulseCircleState extends State<_PulseCircle>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).primaryColor.withValues(
-                  alpha: _pulseController.value * 0.8,
-                ),
+                color: Theme.of(
+                  context,
+                ).primaryColor.withValues(alpha: _pulseController.value * 0.8),
                 blurRadius: 8 * _pulseController.value,
                 spreadRadius: 2 * _pulseController.value,
               ),

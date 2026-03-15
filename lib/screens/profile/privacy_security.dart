@@ -83,7 +83,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     );
                   },
                   activeThumbColor: Theme.of(context).primaryColor,
-                  activeTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                  activeTrackColor: Theme.of(
+                    context,
+                  ).primaryColor.withValues(alpha: 0.3),
                 ),
               ),
               _buildDivider(),
@@ -101,7 +103,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     );
                   },
                   activeThumbColor: Theme.of(context).primaryColor,
-                  activeTrackColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                  activeTrackColor: Theme.of(
+                    context,
+                  ).primaryColor.withValues(alpha: 0.3),
                 ),
               ),
             ]),
@@ -142,7 +146,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+        ),
       ),
       child: Column(children: children),
     );

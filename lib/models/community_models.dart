@@ -27,7 +27,10 @@ class Tribe {
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       colorValue: data['colorValue'] ?? Colors.blue.toARGB32(),
-      icon: IconData(data['iconCode'] ?? Icons.group.codePoint, fontFamily: 'MaterialIcons'),
+      icon: IconData(
+        data['iconCode'] ?? Icons.group.codePoint,
+        fontFamily: 'MaterialIcons',
+      ),
       members: data['members'] ?? '0',
     );
   }
@@ -131,12 +134,10 @@ class CommunityPost {
       supportResponses: (data['supportResponses'] as List? ?? [])
           .map((e) => SupportResponse.fromMap(e as Map<String, dynamic>))
           .toList(),
-      reactions: Map<String, int>.from(data['reactions'] ?? {
-        'Relatable': 0,
-        'Vibing': 0,
-        'Healing': 0,
-        'Powerful': 0,
-      }),
+      reactions: Map<String, int>.from(
+        data['reactions'] ??
+            {'Relatable': 0, 'Vibing': 0, 'Healing': 0, 'Powerful': 0},
+      ),
     );
   }
 

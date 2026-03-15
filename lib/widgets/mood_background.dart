@@ -38,9 +38,12 @@ class _MoodBackgroundState extends State<MoodBackground>
       valueListenable: MoodService().currentMood,
       builder: (context, mood, _) {
         // Force 'Sad' (Blue/Black) mood for Auth/Splash screens if no user is logged in
-        final activeMood = FirebaseAuth.instance.currentUser == null ? 'Sad' : mood;
-        
-        final primaryColor = AppTheme.moodColors[activeMood] ?? AppTheme.primary;
+        final activeMood = FirebaseAuth.instance.currentUser == null
+            ? 'Sad'
+            : mood;
+
+        final primaryColor =
+            AppTheme.moodColors[activeMood] ?? AppTheme.primary;
         final bgColor =
             AppTheme.moodBackgrounds[activeMood] ?? AppTheme.backgroundDark;
 
@@ -90,7 +93,10 @@ class _MoodBackgroundState extends State<MoodBackground>
 
             // The actual app content
             // We wrap it in a Theme to provide mood colors to all components
-            Theme(data: AppTheme.getThemeForMood(activeMood), child: widget.child),
+            Theme(
+              data: AppTheme.getThemeForMood(activeMood),
+              child: widget.child,
+            ),
           ],
         );
       },

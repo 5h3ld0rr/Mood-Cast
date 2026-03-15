@@ -21,7 +21,10 @@ class SubscriptionScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Theme.of(context).primaryColor.withValues(alpha: 0.3), Colors.transparent],
+                  colors: [
+                    Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                    Colors.transparent,
+                  ],
                   stops: [0.0, 0.5],
                 ),
               ),
@@ -36,7 +39,10 @@ class SubscriptionScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Theme.of(context).primaryColor.withValues(alpha: 0.1), Colors.transparent],
+                  colors: [
+                    Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                    Colors.transparent,
+                  ],
                   stops: [0.0, 0.5],
                 ),
               ),
@@ -227,7 +233,9 @@ class SubscriptionScreen extends StatelessWidget {
                   child: Text(
                     badgeText,
                     style: TextStyle(
-                      color: isCurrent ? Theme.of(context).primaryColor : Colors.white,
+                      color: isCurrent
+                          ? Theme.of(context).primaryColor
+                          : Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),

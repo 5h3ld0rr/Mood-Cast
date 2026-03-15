@@ -148,7 +148,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        colors: [Theme.of(context).primaryColor.withValues(alpha: 0.3), Colors.transparent],
+                        colors: [
+                          Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                          Colors.transparent,
+                        ],
                         stops: [0.0, 0.5],
                       ),
                     ),
@@ -235,7 +238,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           const Text(
             'Mood Breakdown',
             style: TextStyle(
@@ -250,7 +252,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+              ),
             ),
             child: Column(
               children: [
@@ -368,7 +372,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -438,7 +444,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
       height: 100 * heightFactor,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Theme.of(context).primaryColor.withValues(alpha: 0.3), Theme.of(context).primaryColor],
+          colors: [
+            Theme.of(context).primaryColor.withValues(alpha: 0.3),
+            Theme.of(context).primaryColor,
+          ],
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
         ),
@@ -458,7 +467,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [

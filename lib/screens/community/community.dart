@@ -157,7 +157,10 @@ class _CommunityScreenState extends State<CommunityScreen>
                 decoration: InputDecoration(
                   hintText: 'Search songs...',
                   hintStyle: const TextStyle(color: Colors.white38),
-                  prefixIcon: const Icon(Icons.search, color: Colors.pinkAccent),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Colors.pinkAccent,
+                  ),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.05),
                   border: OutlineInputBorder(
@@ -184,92 +187,92 @@ class _CommunityScreenState extends State<CommunityScreen>
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : searchResults.isEmpty
-                        ? Center(
-                            child: Text(
-                              searchController.text.length > 2
-                                  ? 'No songs found'
-                                  : 'Start typing to find a song...',
-                              style: const TextStyle(color: Colors.white24),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: searchResults.length,
-                            itemBuilder: (context, index) {
-                              final song = searchResults[index];
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white10,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: song.artworkUrl != null
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Image.network(
-                                            song.artworkUrl!,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.music_note,
-                                          color: Colors.white24,
-                                        ),
-                                ),
-                                title: Text(
-                                  song.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  song.artist,
-                                  style: const TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                trailing: const Icon(
-                                  Icons.send_rounded,
-                                  color: Colors.pinkAccent,
-                                ),
-                                onTap: () {
-                                  _communityService.addSupportResponse(
-                                    postId: postId,
-                                    songTitle: song.title,
-                                    artist: song.artist,
-                                    moodColorValue: Colors.amber.toARGB32(),
-                                  );
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.volunteer_activism,
-                                            color: Colors.white,
-                                          ),
-                                          SizedBox(width: 12),
-                                          Text(
-                                            'Vibe Dropped! +50 Empathy Points 💖',
-                                          ),
-                                        ],
+                    ? Center(
+                        child: Text(
+                          searchController.text.length > 2
+                              ? 'No songs found'
+                              : 'Start typing to find a song...',
+                          style: const TextStyle(color: Colors.white24),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: searchResults.length,
+                        itemBuilder: (context, index) {
+                          final song = searchResults[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white10,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: song.artworkUrl != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        song.artworkUrl!,
+                                        fit: BoxFit.cover,
                                       ),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: Colors.pinkAccent
-                                          .withValues(alpha: 0.9),
+                                    )
+                                  : const Icon(
+                                      Icons.music_note,
+                                      color: Colors.white24,
                                     ),
-                                  );
-                                },
+                            ),
+                            title: Text(
+                              song.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              song.artist,
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
+                            ),
+                            trailing: const Icon(
+                              Icons.send_rounded,
+                              color: Colors.pinkAccent,
+                            ),
+                            onTap: () {
+                              _communityService.addSupportResponse(
+                                postId: postId,
+                                songTitle: song.title,
+                                artist: song.artist,
+                                moodColorValue: Colors.amber.toARGB32(),
+                              );
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.volunteer_activism,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'Vibe Dropped! +50 Empathy Points 💖',
+                                      ),
+                                    ],
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: Colors.pinkAccent.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                ),
                               );
                             },
-                          ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -286,9 +289,12 @@ class _CommunityScreenState extends State<CommunityScreen>
     }
 
     _communityService.createPost(
-      content: 'Feeling a bit overwhelmed... sharing a song to help would mean a lot. #NeedALift',
+      content:
+          'Feeling a bit overwhelmed... sharing a song to help would mean a lot. #NeedALift',
       userMood: mood,
-      moodColorValue: mood == 'Sad' ? Colors.blue.toARGB32() : Colors.red.toARGB32(),
+      moodColorValue: mood == 'Sad'
+          ? Colors.blue.toARGB32()
+          : Colors.red.toARGB32(),
       isSupportRequest: true,
     );
 
@@ -411,36 +417,39 @@ class _CommunityScreenState extends State<CommunityScreen>
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           if (isFetching && !hasError) {
-            _ytmService.getRecommendationsByMood(mood).then((results) async {
-              if (results.isNotEmpty && mounted) {
-                final song = results.first;
-                setDialogState(() {
-                  snippetMetadata = song;
-                  isFetching = false;
+            _ytmService
+                .getRecommendationsByMood(mood)
+                .then((results) async {
+                  if (results.isNotEmpty && mounted) {
+                    final song = results.first;
+                    setDialogState(() {
+                      snippetMetadata = song;
+                      isFetching = false;
+                    });
+                    // Start playback
+                    await _playerService.play(
+                      SongInfo(
+                        title: song.title,
+                        artist: song.artist,
+                        coverUrl: song.artworkUrl,
+                        videoId: song.videoId,
+                      ),
+                    );
+                  } else {
+                    setDialogState(() {
+                      isFetching = false;
+                      hasError = true;
+                    });
+                  }
+                })
+                .catchError((e) {
+                  if (mounted) {
+                    setDialogState(() {
+                      isFetching = false;
+                      hasError = true;
+                    });
+                  }
                 });
-                // Start playback
-                await _playerService.play(
-                  SongInfo(
-                    title: song.title,
-                    artist: song.artist,
-                    coverUrl: song.artworkUrl,
-                    videoId: song.videoId,
-                  ),
-                );
-              } else {
-                setDialogState(() {
-                  isFetching = false;
-                  hasError = true;
-                });
-              }
-            }).catchError((e) {
-              if (mounted) {
-                setDialogState(() {
-                  isFetching = false;
-                  hasError = true;
-                });
-              }
-            });
           }
 
           final themeColor = AppTheme.moodColors[mood] ?? Colors.white;
@@ -452,9 +461,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               decoration: BoxDecoration(
                 color: AppTheme.backgroundDark,
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(
-                  color: themeColor.withValues(alpha: 0.3),
-                ),
+                border: Border.all(color: themeColor.withValues(alpha: 0.3)),
                 boxShadow: [
                   BoxShadow(
                     color: themeColor.withValues(alpha: 0.2),
@@ -477,10 +484,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                   const SizedBox(height: 8),
                   Text(
                     'Collective $mood frequency',
-                    style: TextStyle(
-                      color: themeColor,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: themeColor, fontSize: 14),
                   ),
                   const SizedBox(height: 32),
                   // Animated Frequency Bars
@@ -496,10 +500,16 @@ class _CommunityScreenState extends State<CommunityScreen>
                           curve: Curves.easeInOut,
                           builder: (context, val, _) => Container(
                             width: 6,
-                            height: val * (isFetching ? 1 : (math.Random().nextDouble() + 0.5)),
+                            height:
+                                val *
+                                (isFetching
+                                    ? 1
+                                    : (math.Random().nextDouble() + 0.5)),
                             margin: const EdgeInsets.symmetric(horizontal: 2),
                             decoration: BoxDecoration(
-                              color: themeColor.withValues(alpha: isFetching ? 0.3 : 1.0),
+                              color: themeColor.withValues(
+                                alpha: isFetching ? 0.3 : 1.0,
+                              ),
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
@@ -512,8 +522,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                     isFetching
                         ? 'Tuning into frequency...'
                         : hasError
-                            ? 'Failed to catch the vibe ⚠️'
-                            : 'Mashup: ${snippetMetadata?.title ?? 'Unknown Vibz'}',
+                        ? 'Failed to catch the vibe ⚠️'
+                        : 'Mashup: ${snippetMetadata?.title ?? 'Unknown Vibz'}',
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -747,7 +757,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                                     Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: tribe.color.withValues(alpha: 0.15),
+                                        color: tribe.color.withValues(
+                                          alpha: 0.15,
+                                        ),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
@@ -811,9 +823,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                                           offset: Offset(i * -12.0, 0),
                                           child: CircleAvatar(
                                             radius: 14,
-                                            backgroundColor: tribe.color.withValues(
-                                              alpha: 0.2,
-                                            ),
+                                            backgroundColor: tribe.color
+                                                .withValues(alpha: 0.2),
                                             child: Icon(
                                               Icons.person,
                                               size: 14,
@@ -906,8 +917,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                 child: ValueListenableBuilder<String>(
                   valueListenable: _moodService.currentMood,
                   builder: (context, mood, _) {
-                    final boardMood =
-                        _moodToTribe.containsKey(mood) ? mood : 'Natural';
+                    final boardMood = _moodToTribe.containsKey(mood)
+                        ? mood
+                        : 'Natural';
                     final themeColor =
                         AppTheme.moodColors[boardMood] ?? Colors.amber;
 
@@ -920,8 +932,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 24.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                              ),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -1039,19 +1052,17 @@ class _CommunityScreenState extends State<CommunityScreen>
                 stream: _communityService.getPosts(),
                 builder: (context, snapshot) {
                   final posts = snapshot.data ?? [];
-                  if (posts.isEmpty && snapshot.connectionState == ConnectionState.waiting) {
+                  if (posts.isEmpty &&
+                      snapshot.connectionState == ConnectionState.waiting) {
                     return const SliverToBoxAdapter(
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
                   return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final post = posts[index];
-                        return _buildSupportPost(post, index);
-                      },
-                      childCount: posts.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final post = posts[index];
+                      return _buildSupportPost(post, index);
+                    }, childCount: posts.length),
                   );
                 },
               ),
@@ -1218,7 +1229,6 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-
   Widget _buildSupportPost(CommunityPost post, int index) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -1287,7 +1297,9 @@ class _CommunityScreenState extends State<CommunityScreen>
               ),
             ),
             const SizedBox(height: 8),
-            ...post.supportResponses.take(2).map(
+            ...post.supportResponses
+                .take(2)
+                .map(
                   (res) => Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(

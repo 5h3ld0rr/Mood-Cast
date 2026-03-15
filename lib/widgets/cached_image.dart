@@ -61,7 +61,7 @@ class CachedImage extends StatelessWidget {
       if (regExp.hasMatch(url)) {
         return url.replaceFirst(regExp, '=w1024-h1024');
       }
-      
+
       // Some URLs might have s120-c or similar
       final sRegExp = RegExp(r'/s\d+-c/');
       if (sRegExp.hasMatch(url)) {

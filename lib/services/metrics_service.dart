@@ -19,18 +19,22 @@ class MetricsService {
     // 1. Update Streak
     final userSnap = await docRef.get();
     final userData = userSnap.data() as Map<String, dynamic>?;
-    
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    
+
     int currentStreak = userData?['current_streak'] ?? 0;
     final lastStreakTimestamp = userData?['last_streak_date'] as Timestamp?;
-    
+
     if (lastStreakTimestamp != null) {
       final lastDate = lastStreakTimestamp.toDate();
-      final lastStreakDate = DateTime(lastDate.year, lastDate.month, lastDate.day);
+      final lastStreakDate = DateTime(
+        lastDate.year,
+        lastDate.month,
+        lastDate.day,
+      );
       final difference = today.difference(lastStreakDate).inDays;
-      
+
       if (difference == 1) {
         currentStreak++;
       } else if (difference > 1) {
@@ -99,8 +103,11 @@ class MetricsService {
       final lastStreakTimestamp = data?['last_streak_date'] as Timestamp?;
       if (lastStreakTimestamp != null) {
         final lastDate = lastStreakTimestamp.toDate();
-        final lastStreakDate =
-            DateTime(lastDate.year, lastDate.month, lastDate.day);
+        final lastStreakDate = DateTime(
+          lastDate.year,
+          lastDate.month,
+          lastDate.day,
+        );
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
         final difference = today.difference(lastStreakDate).inDays;

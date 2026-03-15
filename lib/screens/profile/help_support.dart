@@ -22,7 +22,10 @@ class HelpSupportScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Theme.of(context).primaryColor.withValues(alpha: 0.3), Colors.transparent],
+                  colors: [
+                    Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                    Colors.transparent,
+                  ],
                   stops: [0.0, 0.5],
                 ),
               ),
@@ -37,7 +40,10 @@ class HelpSupportScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Theme.of(context).primaryColor.withValues(alpha: 0.1), Colors.transparent],
+                  colors: [
+                    Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                    Colors.transparent,
+                  ],
                   stops: [0.0, 0.5],
                 ),
               ),
@@ -78,7 +84,10 @@ class HelpSupportScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader(context, 'Frequently Asked Questions'),
+                        _buildSectionHeader(
+                          context,
+                          'Frequently Asked Questions',
+                        ),
                         const SizedBox(height: 16),
                         _buildFaqItem(
                           context,
@@ -149,9 +158,9 @@ class HelpSupportScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor.withValues(
-                                    alpha: 0.1,
-                                  ),
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -205,7 +214,11 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem(BuildContext context, {required String question, required String answer}) {
+  Widget _buildFaqItem(
+    BuildContext context, {
+    required String question,
+    required String answer,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
@@ -272,7 +285,11 @@ class HelpSupportScreen extends StatelessWidget {
                 color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Theme.of(context).primaryColor, size: 28),
+              child: Icon(
+                icon,
+                color: Theme.of(context).primaryColor,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(

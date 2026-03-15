@@ -39,7 +39,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => Center(
-          child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+          child: CircularProgressIndicator(
+            color: Theme.of(context).primaryColor,
+          ),
         ),
       );
 
@@ -374,7 +376,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             errorBuilder: (context, error, stackTrace) => Text(
               type,
               style: TextStyle(
-                color: isSelected ? Theme.of(context).primaryColor : Colors.white,
+                color: isSelected
+                    ? Theme.of(context).primaryColor
+                    : Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),

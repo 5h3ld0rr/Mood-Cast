@@ -65,7 +65,9 @@ class RecentSessionsScreen extends StatelessWidget {
                 final entry = history[index];
                 final mood = entry['mood'] as String;
                 final ts = entry['timestamp'] as Timestamp?;
-                final dateStr = ts != null ? DateFormat('MMM dd, hh:mm a').format(ts.toDate()) : 'Recent';
+                final dateStr = ts != null
+                    ? DateFormat('MMM dd, hh:mm a').format(ts.toDate())
+                    : 'Recent';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -97,7 +99,9 @@ class RecentSessionsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [
@@ -107,9 +111,22 @@ class RecentSessionsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),

@@ -175,10 +175,7 @@ class YouTubeMusicService {
     List<YouTubeMusicMetadata> finalResults = [];
 
     // 1. Personal Preference: Liked + Recent (variety mix)
-    final combinedSeeds = [
-      ...likedSongs,
-      ...recentTracks,
-    ]..shuffle();
+    final combinedSeeds = [...likedSongs, ...recentTracks]..shuffle();
 
     if (combinedSeeds.isNotEmpty) {
       // Take up to 3 seeds to seed variety
@@ -197,13 +194,17 @@ class YouTubeMusicService {
     // 3. Country Trending (Local Relevance)
     if (country != null && country.isNotEmpty) {
       final countryName = _getCountryName(country);
-      final trendingResults = await searchTracks("top trending $countryName hits");
+      final trendingResults = await searchTracks(
+        "top trending $countryName hits",
+      );
       finalResults.addAll(trendingResults.take(5));
     }
 
     // Shuffle and filter duplicates
     final seenIds = <String>{};
-    final uniqueResults = finalResults.where((t) => seenIds.add(t.videoId)).toList();
+    final uniqueResults = finalResults
+        .where((t) => seenIds.add(t.videoId))
+        .toList();
     uniqueResults.shuffle();
 
     return uniqueResults.take(20).toList();
@@ -264,10 +265,7 @@ class YouTubeMusicService {
 
     try {
       // 1. Personal Preference: Liked + Recent Artists
-      final combinedSeeds = [
-        ...likedSongs,
-        ...recentTracks,
-      ]..shuffle();
+      final combinedSeeds = [...likedSongs, ...recentTracks]..shuffle();
 
       if (combinedSeeds.isNotEmpty) {
         for (var song in combinedSeeds.take(4)) {
@@ -289,7 +287,9 @@ class YouTubeMusicService {
       // 3. Country Trending Artists
       if (country != null && country.isNotEmpty) {
         final countryName = _getCountryName(country);
-        final trendingArtists = await searchArtists("popular artists in $countryName");
+        final trendingArtists = await searchArtists(
+          "popular artists in $countryName",
+        );
         for (var artist in trendingArtists.take(5)) {
           if (seenIds.add(artist.browseId)) finalArtists.add(artist);
         }

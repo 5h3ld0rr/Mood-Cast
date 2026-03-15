@@ -239,7 +239,8 @@ class SongOptionsBottomSheet extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                    color:
+                        Theme.of(context).textTheme.bodyMedium?.color ??
                         AppTheme.textMuted,
                     fontSize: 14,
                   ),
@@ -335,7 +336,8 @@ class PlaylistSelector extends StatelessWidget {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
                     child: CircularProgressIndicator(
-                        color: Theme.of(context).primaryColor),
+                      color: Theme.of(context).primaryColor,
+                    ),
                   );
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -368,7 +370,10 @@ class PlaylistSelector extends StatelessWidget {
                       ),
                       subtitle: Text(
                         '${(playlist['isPublic'] == true) ? 'Public' : 'Private'} Playlist • ${playlist['songCount']} songs',
-                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
                       ),
                       onTap: () {
                         _db.addSongToPlaylist(playlist['id'], song);
@@ -430,19 +435,29 @@ class PlaylistSelector extends StatelessWidget {
                   hintStyle: const TextStyle(color: Colors.white38),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).primaryColor.withValues(alpha: 0.5),
                     ),
                   ),
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
                 onChanged: (value) => playlistName = value,
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Public Playlist', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Anyone can find this playlist through search', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                title: const Text(
+                  'Public Playlist',
+                  style: TextStyle(color: Colors.white),
+                ),
+                subtitle: const Text(
+                  'Anyone can find this playlist through search',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
                 value: isPublic,
                 activeThumbColor: Theme.of(context).primaryColor,
                 contentPadding: EdgeInsets.zero,
@@ -463,7 +478,10 @@ class PlaylistSelector extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () async {
                       if (playlistName.isNotEmpty) {
-                        final playlistId = await _db.createPlaylist(playlistName, isPublic: isPublic);
+                        final playlistId = await _db.createPlaylist(
+                          playlistName,
+                          isPublic: isPublic,
+                        );
                         if (playlistId != null) {
                           await _db.addSongToPlaylist(playlistId, song);
                         }

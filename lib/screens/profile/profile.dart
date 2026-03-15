@@ -57,8 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     StreamBuilder<User?>(
                       stream: _authService.userChanges,
                       builder: (context, snapshot) {
-                        final user =
-                            snapshot.data ?? _authService.currentUser;
+                        final user = snapshot.data ?? _authService.currentUser;
                         final photoUrl = user?.photoURL;
                         final displayName = user?.displayName ?? 'User';
                         final email = user?.email ?? 'No email';
@@ -72,16 +71,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Theme.of(context).primaryColor.withValues(
-                                    alpha: 0.5,
-                                  ),
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.5),
                                   width: 4,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Theme.of(context).primaryColor.withValues(
-                                      alpha: 0.2,
-                                    ),
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.2),
                                     blurRadius: 24,
                                     spreadRadius: 4,
                                   ),
@@ -110,7 +109,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text(
                               email,
                               style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color ??
                                     AppTheme.textMuted,
                                 fontSize: 16,
                               ),
@@ -168,10 +170,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                                      color: Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Text(
@@ -197,7 +203,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppTheme.cardBg,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Column(
@@ -241,14 +249,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Text(
                                       label,
                                       style: TextStyle(
-                                        color: Theme.of(context).textTheme.bodyMedium?.color ??
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.color ??
                                             AppTheme.textMuted,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     Icon(
                                       Icons.chevron_right,
-                                      color: Theme.of(context).textTheme.bodyMedium?.color ??
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.color ??
                                           AppTheme.textMuted,
                                     ),
                                   ],
@@ -262,13 +276,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.insights,
                             title: 'Trends & Insights',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const InsightsScreen(),
+                                  builder: (context) => const InsightsScreen(),
                                 ),
                               );
                             },
@@ -278,10 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.security,
                             title: 'Privacy & Security',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const PrivacySecurityScreen(),
@@ -295,10 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             title: 'Subscription',
                             subtitle: 'Free Plan Active',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const SubscriptionScreen(),
@@ -311,10 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.help_outline,
                             title: 'Help & Support',
                             onTap: () {
-                              Navigator.of(
-                                context,
-                                rootNavigator: true,
-                              ).push(
+                              Navigator.of(context, rootNavigator: true).push(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const HelpSupportScreen(),
@@ -403,7 +404,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+              color:
+                  Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
                   const Color(0xFF94A3B8), // Slate-400
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -443,12 +447,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       subtitle: subtitle != null
           ? Text(
               subtitle,
-              style: TextStyle(color: Theme.of(context).primaryColor, fontSize: 12),
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontSize: 12,
+              ),
             )
           : null,
       trailing:
           trailing ??
-          Icon(Icons.chevron_right, color: Theme.of(context).textTheme.bodyMedium?.color ?? AppTheme.textMuted),
+          Icon(
+            Icons.chevron_right,
+            color:
+                Theme.of(context).textTheme.bodyMedium?.color ??
+                AppTheme.textMuted,
+          ),
     );
   }
 
@@ -469,7 +481,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: Theme.of(context).canvasColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.1)),
+            side: BorderSide(
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+            ),
           ),
           title: const Text(
             'Audio Quality',
@@ -527,7 +541,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           subtitle: Text(
             subtitle,
             style: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium?.color ??
+              color:
+                  Theme.of(context).textTheme.bodyMedium?.color ??
                   AppTheme.textMuted,
               fontSize: 12,
             ),

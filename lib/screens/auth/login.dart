@@ -163,7 +163,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: moodTheme.primaryColor.withValues(alpha: 0.4),
+                              color: moodTheme.primaryColor.withValues(
+                                alpha: 0.4,
+                              ),
                               blurRadius: 20,
                               spreadRadius: 0,
                             ),
@@ -195,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 48),
-  
+
                       // Login Form
                       Container(
                         constraints: const BoxConstraints(maxWidth: 400),
@@ -232,7 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 bottom: 8.0,
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
                                     'Password',
@@ -359,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 "Google Login: Weather fetch failed. $e",
                                               );
                                             }
-  
+
                                             if (context.mounted) {
                                               Navigator.of(
                                                 context,
@@ -427,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 48),
-  
+
                       // Footer
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

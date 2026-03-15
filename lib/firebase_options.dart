@@ -63,8 +63,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '138700460734',
     projectId: 'mood-cast-23dff',
     storageBucket: 'mood-cast-23dff.firebasestorage.app',
-    androidClientId: '138700460734-d1seea5ph5dt6758j69nlnlpc7ler8of.apps.googleusercontent.com',
-    iosClientId: '138700460734-r5i2i1pv61me0atkucsj598qcori9gda.apps.googleusercontent.com',
+    androidClientId:
+        '138700460734-d1seea5ph5dt6758j69nlnlpc7ler8of.apps.googleusercontent.com',
+    iosClientId:
+        '138700460734-r5i2i1pv61me0atkucsj598qcori9gda.apps.googleusercontent.com',
     iosBundleId: 'com.example.moodcast',
   );
 }
