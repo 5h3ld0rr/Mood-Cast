@@ -45,7 +45,7 @@ class NotificationService {
   }
 
   Future<void> initialize() async {
-    // Request permission (Required for iOS and Android 13+)
+    // 1. Request FCM Permission (Required for iOS and Android 13+)
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       badge: true,
@@ -53,59 +53,67 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('User granted permission');
-
-      // Get the token (for testing/server use)
-      String? token = await _fcm.getToken();
-      debugPrint("FCM Token: $token");
-
-      // Initialize local notifications
-      const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
-
-      const InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
-
-      await _localNotifications.initialize(
-        settings: initializationSettings,
-        onDidReceiveNotificationResponse: (NotificationResponse response) {
-          _handleNotificationClick(response.payload);
-        },
-      );
-
-      // Create Android Notification Channel
-      if (Platform.isAndroid) {
-        await _localNotifications
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >()
-            ?.createNotificationChannel(_channel);
-      }
-
-      // Handle background messages
-      FirebaseMessaging.onBackgroundMessage(
-        _firebaseMessagingBackgroundHandler,
-      );
-
-      // Listen for foreground messages
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        RemoteNotification? notification = message.notification;
-
-        if (notification != null) {
-          showSimpleNotification(
-            title: notification.title ?? "New Message",
-            body: notification.body ?? "",
-            payload: jsonEncode({
-              'title': notification.title,
-              'body': notification.body,
-              'data': message.data,
-            }),
-          );
-        }
-      });
-    } else {
-      debugPrint('User declined or has not accepted permission');
+      debugPrint('FCM Permisson Granted');
     }
+
+    // 2. Request Local Notification Permission (Android 13+)
+    if (Platform.isAndroid) {
+      final androidImplementation = _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      
+      if (androidImplementation != null) {
+        await androidImplementation.requestNotificationsPermission();
+      }
+    }
+
+    // Initialize local notifications config
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await _localNotifications.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        _handleNotificationClick(response.payload);
+      },
+    );
+
+    // Create Android Notification Channel
+    if (Platform.isAndroid) {
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+    }
+
+    // Get the token
+    String? token = await _fcm.getToken();
+    debugPrint("FCM Token: $token");
+
+    // Handle background messages
+    FirebaseMessaging.onBackgroundMessage(
+      _firebaseMessagingBackgroundHandler,
+    );
+
+    // Listen for foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+
+      if (notification != null) {
+        showSimpleNotification(
+          title: notification.title ?? "New Message",
+          body: notification.body ?? "",
+          payload: jsonEncode({
+            'title': notification.title,
+            'body': notification.body,
+            'data': message.data,
+          }),
+        );
+      }
+    });
   }
 
   void _handleNotificationClick(String? payload) {

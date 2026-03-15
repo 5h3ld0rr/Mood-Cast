@@ -86,6 +86,8 @@ class CommunityService {
     required String songTitle,
     required String artist,
     required int moodColorValue,
+    String? videoId,
+    String? coverUrl,
   }) async {
     if (uid == null) return;
 
@@ -94,6 +96,8 @@ class CommunityService {
       userName: displayName!,
       songTitle: songTitle,
       artist: artist,
+      videoId: videoId,
+      coverUrl: coverUrl,
       moodColorValue: moodColorValue,
       timestamp: DateTime.now(),
     );

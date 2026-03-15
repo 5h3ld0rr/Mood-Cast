@@ -33,6 +33,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   StreamSubscription? _supportListener;
   int _lastResponseCount = 0;
+  bool _isFirstLoad = true;
 
   final Map<String, Tribe> _moodToTribe = {
     'Happy': Tribe(
@@ -87,20 +88,30 @@ class _CommunityScreenState extends State<CommunityScreen>
     ) {
       if (post != null) {
         final newResponses = post.supportResponses.length;
+
         // Check if a new vibe was dropped
-        if (newResponses > _lastResponseCount) {
+        if (!_isFirstLoad && newResponses > _lastResponseCount) {
           final latestResponse = post.supportResponses.last;
+          debugPrint('DEBUG: New vibe detected from ${latestResponse.userName}');
+          
           // Notify ONLY if someone else dropped the vibe
           if (latestResponse.userId != _communityService.uid) {
+            debugPrint('DEBUG: Triggering system notification for vibe');
             NotificationService().showSimpleNotification(
-              title: 'New Vibe Recieved! 💖',
-              body: '${latestResponse.userName} just dropped a vibe for your lift.',
+              title: 'New Vibe Received! 💖',
+              body:
+                  '${latestResponse.userName} just dropped a vibe for your lift.',
             );
+          } else {
+            debugPrint('DEBUG: Vibe was dropped by current user, skipping notification');
           }
         }
+
         _lastResponseCount = newResponses;
+        _isFirstLoad = false;
       } else {
         _lastResponseCount = 0;
+        _isFirstLoad = false;
       }
     });
   }
@@ -126,14 +137,35 @@ class _CommunityScreenState extends State<CommunityScreen>
     _communityService.toggleJoinTribe(tribeId);
   }
 
-  void _dropAVibe(String postId) {
+  void _dropAVibe(CommunityPost post) {
+    if (post.userId == _communityService.uid) {
+      _showFeedback(
+        'You cannot drop a vibe for your own post! ✨',
+        icon: Icons.info_outline,
+      );
+      return;
+    }
+
     final currentMood = _moodService.currentMood.value;
     if (currentMood != 'Happy' && currentMood != 'Natural') {
       _showFeedback('Switch to a Happy mood to Drop a Vibe! ✨');
       return;
     }
 
-    _showDropAVibeDialog(postId);
+    // Check how many vibes this user has already dropped for this post
+    final userVibeCount = post.supportResponses
+        .where((r) => r.userId == _communityService.uid)
+        .length;
+
+    if (userVibeCount >= 3) {
+      _showFeedback(
+        'You have already dropped 3 vibes for this post! 💖',
+        icon: Icons.info_outline,
+      );
+      return;
+    }
+
+    _showDropAVibeDialog(post.id);
   }
 
   void _showDropAVibeDialog(String postId) {
@@ -293,6 +325,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                                   postId: postId,
                                   songTitle: song.title,
                                   artist: song.artist,
+                                  videoId: song.videoId,
+                                  coverUrl: song.artworkUrl,
                                   moodColorValue: Colors.amber.toARGB32(),
                                 );
                                 Navigator.pop(context);
@@ -1269,79 +1303,110 @@ class _CommunityScreenState extends State<CommunityScreen>
                                       activePost.supportResponses.reversed.toList()[index];
                                   final color = Color(vibe.moodColorValue);
 
-                                  return Container(
-                                    width: 200,
-                                    margin: const EdgeInsets.only(right: 12),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: color.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: color.withValues(alpha: 0.2),
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (vibe.videoId != null) {
+                                        _playerService.play(
+                                          SongInfo(
+                                            title: vibe.songTitle,
+                                            artist: vibe.artist,
+                                            coverUrl: vibe.coverUrl,
+                                            videoId: vibe.videoId!,
+                                          ),
+                                        );
+                                        _showFeedback(
+                                          'Playing vibe from ${vibe.userName} 🎵',
+                                          icon: Icons.play_circle_outline,
+                                        );
+                                      } else {
+                                        _showFeedback('Vibing with this track!');
+                                      }
+                                    },
+                                    child: Container(
+                                      width: 200,
+                                      margin: const EdgeInsets.only(right: 12),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: color.withValues(alpha: 0.2),
+                                        ),
                                       ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: color.withValues(alpha: 0.2),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: Icon(
-                                            Icons.music_note_rounded,
-                                            color: color,
-                                            size: 20,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                vibe.songTitle,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                              Text(
-                                                vibe.artist,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  color: Colors.white.withValues(
-                                                    alpha: 0.5,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: color.withValues(alpha: 0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: vibe.coverUrl != null
+                                                ? ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                    child: Image.network(
+                                                      vibe.coverUrl!,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  )
+                                                : Icon(
+                                                    Icons.music_note_rounded,
+                                                    color: color,
+                                                    size: 20,
                                                   ),
-                                                  fontSize: 11,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                'from ${vibe.userName}',
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  color: color.withValues(
-                                                    alpha: 0.8,
-                                                  ),
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  vibe.songTitle,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  vibe.artist,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    color: Colors.white.withValues(
+                                                      alpha: 0.5,
+                                                    ),
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  'from ${vibe.userName}',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    color: color.withValues(
+                                                      alpha: 0.8,
+                                                    ),
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   );
                                 },
@@ -1700,42 +1765,43 @@ class _CommunityScreenState extends State<CommunityScreen>
             const SizedBox(height: 16),
           ],
 
-          // Reaction Bar
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildReactionButton(
-                  post.id,
-                  post.reactions,
-                  'Relatable',
-                  '🫂',
-                  Colors.blueAccent,
-                ),
-                _buildReactionButton(
-                  post.id,
-                  post.reactions,
-                  'Vibing',
-                  '🔥',
-                  Colors.amber,
-                ),
-                _buildReactionButton(
-                  post.id,
-                  post.reactions,
-                  'Healing',
-                  '🌿',
-                  Colors.greenAccent,
-                ),
-                _buildReactionButton(
-                  post.id,
-                  post.reactions,
-                  'Powerful',
-                  '⚡',
-                  Colors.redAccent,
-                ),
-              ],
+          // Reaction Bar - only show if NOT a support request
+          if (!post.isSupportRequest)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildReactionButton(
+                    post.id,
+                    post.reactions,
+                    'Relatable',
+                    '🫂',
+                    Colors.blueAccent,
+                  ),
+                  _buildReactionButton(
+                    post.id,
+                    post.reactions,
+                    'Vibing',
+                    '🔥',
+                    Colors.amber,
+                  ),
+                  _buildReactionButton(
+                    post.id,
+                    post.reactions,
+                    'Healing',
+                    '🌿',
+                    Colors.greenAccent,
+                  ),
+                  _buildReactionButton(
+                    post.id,
+                    post.reactions,
+                    'Powerful',
+                    '⚡',
+                    Colors.redAccent,
+                  ),
+                ],
+              ),
             ),
-          ),
 
           const SizedBox(height: 16),
           ValueListenableBuilder<String>(
@@ -1748,7 +1814,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                 width: double.infinity,
                 height: 44,
                 child: OutlinedButton.icon(
-                  onPressed: () => _dropAVibe(post.id),
+                  onPressed: () => _dropAVibe(post),
                   icon: const Icon(Icons.volunteer_activism, size: 18),
                   label: const Text(
                     'DROP A VIBE',

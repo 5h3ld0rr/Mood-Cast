@@ -51,6 +51,8 @@ class SupportResponse {
   final String userName;
   final String songTitle;
   final String artist;
+  final String? videoId;
+  final String? coverUrl;
   final int moodColorValue;
   final DateTime timestamp;
 
@@ -59,6 +61,8 @@ class SupportResponse {
     required this.userName,
     required this.songTitle,
     required this.artist,
+    this.videoId,
+    this.coverUrl,
     required this.moodColorValue,
     required this.timestamp,
   });
@@ -71,6 +75,8 @@ class SupportResponse {
       userName: data['userName'] ?? 'Anonymous',
       songTitle: data['songTitle'] ?? '',
       artist: data['artist'] ?? '',
+      videoId: data['videoId'],
+      coverUrl: data['coverUrl'],
       moodColorValue: data['moodColorValue'] ?? Colors.blue.toARGB32(),
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -82,8 +88,10 @@ class SupportResponse {
       'userName': userName,
       'songTitle': songTitle,
       'artist': artist,
+      'videoId': videoId,
+      'coverUrl': coverUrl,
       'moodColorValue': moodColorValue,
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': timestamp,
     };
   }
 }
