@@ -30,8 +30,14 @@ class CachedImage extends StatelessWidget {
       return _buildErrorWidget();
     }
 
+    // Attempt to upscale the image if it's a known thumbnail provider
+    String finalUrl = imageUrl!;
+    if (width != null && width! > 200 || height != null && height! > 200) {
+      finalUrl = _getHighResUrl(finalUrl);
+    }
+
     Widget image = CachedNetworkImage(
-      imageUrl: imageUrl!,
+      imageUrl: finalUrl,
       width: width,
       height: height,
       fit: fit,
@@ -46,6 +52,30 @@ class CachedImage extends StatelessWidget {
     }
 
     return image;
+  }
+
+  String _getHighResUrl(String url) {
+    if (url.contains('googleusercontent.com') || url.contains('ggpht.com')) {
+      // YouTube Music thumbnails often have =w120-h120 or similar
+      final regExp = RegExp(r'=w\d+-h\d+');
+      if (regExp.hasMatch(url)) {
+        return url.replaceFirst(regExp, '=w1024-h1024');
+      }
+      
+      // Some URLs might have s120-c or similar
+      final sRegExp = RegExp(r'/s\d+-c/');
+      if (sRegExp.hasMatch(url)) {
+        return url.replaceFirst(sRegExp, '/s1024-c/');
+      }
+    } else if (url.contains('i.ytimg.com')) {
+      // Video thumbnails
+      if (url.contains('default.jpg')) {
+        return url.replaceFirst('default.jpg', 'maxresdefault.jpg');
+      } else if (url.contains('hqdefault.jpg')) {
+        return url.replaceFirst('hqdefault.jpg', 'maxresdefault.jpg');
+      }
+    }
+    return url;
   }
 
   Widget _buildPlaceholder() {

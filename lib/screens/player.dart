@@ -23,6 +23,9 @@ class PlayerScreen extends StatefulWidget {
 class _PlayerScreenState extends State<PlayerScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
+  double _dragOffset = 0;
+  double _dragOpacity = 1.0;
+  double _dragScale = 1.0;
 
   @override
   void initState() {
@@ -45,24 +48,62 @@ class _PlayerScreenState extends State<PlayerScreen>
     return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
+  void _handleVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset += details.primaryDelta!;
+      if (_dragOffset < 0) _dragOffset = 0;
+      
+      // Calculate opacity and scale based on drag distance
+      _dragOpacity = (1 - (_dragOffset / 500)).clamp(0.5, 1.0);
+      _dragScale = (1 - (_dragOffset / 2000)).clamp(0.85, 1.0);
+    });
+  }
+
+  void _handleVerticalDragEnd(DragEndDetails details) {
+    if (_dragOffset > 100 || details.primaryVelocity! > 500) {
+      // Small vibration for tactile feedback
+      HapticFeedback.lightImpact();
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _dragOffset = 0;
+        _dragOpacity = 1.0;
+        _dragScale = 1.0;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).canvasColor,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).primaryColor.withValues(alpha: 0.1),
-              Theme.of(context).canvasColor.withValues(alpha: 0.8),
-              Theme.of(context).canvasColor,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onVerticalDragUpdate: _handleVerticalDragUpdate,
+      onVerticalDragEnd: _handleVerticalDragEnd,
+      child: AnimatedContainer(
+        duration: _dragOffset == 0 ? const Duration(milliseconds: 300) : Duration.zero,
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.identity()
+          ..translate(0.0, _dragOffset)
+          ..scale(_dragScale, _dragScale),
+        child: Opacity(
+          opacity: _dragOpacity,
+          child: Scaffold(
+            backgroundColor: Theme.of(context).canvasColor,
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                    Theme.of(context).canvasColor,
+                    Theme.of(context).canvasColor,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: SafeArea(
           child: CustomScrollView(
+            physics: const NeverScrollableScrollPhysics(),
             slivers: [
               SliverFillRemaining(
                 hasScrollBody: false,
@@ -250,22 +291,44 @@ class _PlayerScreenState extends State<PlayerScreen>
 
                     // Song Info Area (Now at Top)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
                       child: ValueListenableBuilder<SongInfo?>(
                         valueListenable: PlayerService().currentSong,
                         builder: (context, song, _) {
-                          return Column(
-                            children: [
-                              Hero(
-                                tag: 'player_art',
-                                child: CachedImage(
-                                  imageUrl: song?.coverUrl,
-                                  width: 300,
-                                  height: 300,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                            ],
+                          final size = MediaQuery.of(context).size.width * 0.88;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 20, bottom: 40),
+                            child: AnimatedBuilder(
+                              animation: _animationController,
+                              builder: (context, child) {
+                                final scale = 1.0 + (_animationController.value * 0.02);
+                                return Transform.scale(
+                                  scale: scale,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(32),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.5),
+                                          blurRadius: 40,
+                                          spreadRadius: 2,
+                                          offset: const Offset(0, 20),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Hero(
+                                      tag: 'player_art',
+                                      child: CachedImage(
+                                        imageUrl: song?.coverUrl,
+                                        width: size,
+                                        height: size,
+                                        borderRadius: BorderRadius.circular(32),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           );
                         },
                       ),
@@ -675,8 +738,11 @@ class _PlayerScreenState extends State<PlayerScreen>
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+),
+);
+}
 
   void _showAddedToPlaylist() {
     final song = PlayerService().currentSong.value;

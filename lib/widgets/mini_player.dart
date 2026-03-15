@@ -61,22 +61,27 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
       onTap: () {
         Navigator.of(context).push(
           PageRouteBuilder(
+            opaque: false,
+            barrierColor: Colors.black.withValues(alpha: 0.5),
             pageBuilder: (context, animation, secondaryAnimation) =>
                 const PlayerScreen(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position:
-                        Tween<Offset>(
-                          begin: const Offset(0, 1),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOutCubic,
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ),
                           ),
-                        ),
-                    child: child,
+                      child: child,
+                    ),
                   );
                 },
           ),
