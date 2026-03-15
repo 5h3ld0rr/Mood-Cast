@@ -296,6 +296,7 @@ class _CommunityScreenState extends State<CommunityScreen>
           ? Colors.blue.toARGB32()
           : Colors.red.toARGB32(),
       isSupportRequest: true,
+      overrideUserName: 'Anonymous',
     );
 
     _showError('Your support request is now live! 🫂');
@@ -1035,13 +1036,24 @@ class _CommunityScreenState extends State<CommunityScreen>
                           ),
                         ],
                       ),
-                      TextButton.icon(
-                        onPressed: _postNeedALift,
-                        icon: const Icon(Icons.add_circle_outline, size: 18),
-                        label: const Text('NEED A LIFT'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.blueAccent,
-                        ),
+                      ValueListenableBuilder<String>(
+                        valueListenable: _moodService.currentMood,
+                        builder: (context, mood, _) {
+                          final isSadOrAngry = mood == 'Sad' || mood == 'Angry';
+                          if (!isSadOrAngry) return const SizedBox.shrink();
+
+                          return TextButton.icon(
+                            onPressed: _postNeedALift,
+                            icon: const Icon(
+                              Icons.add_circle_outline,
+                              size: 18,
+                            ),
+                            label: const Text('NEED A LIFT'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.blueAccent,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -1362,24 +1374,35 @@ class _CommunityScreenState extends State<CommunityScreen>
           ),
 
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: OutlinedButton.icon(
-              onPressed: () => _dropAVibe(post.id),
-              icon: const Icon(Icons.volunteer_activism, size: 18),
-              label: const Text(
-                'DROP A VIBE',
-                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.pinkAccent,
-                side: const BorderSide(color: Colors.pinkAccent),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          ValueListenableBuilder<String>(
+            valueListenable: _moodService.currentMood,
+            builder: (context, mood, _) {
+              final isHappyOrNatural = mood == 'Happy' || mood == 'Natural';
+              if (!isHappyOrNatural) return const SizedBox.shrink();
+
+              return SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: OutlinedButton.icon(
+                  onPressed: () => _dropAVibe(post.id),
+                  icon: const Icon(Icons.volunteer_activism, size: 18),
+                  label: const Text(
+                    'DROP A VIBE',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.pinkAccent,
+                    side: const BorderSide(color: Colors.pinkAccent),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),

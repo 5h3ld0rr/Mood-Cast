@@ -27,13 +27,14 @@ class CommunityService {
     required String userMood,
     required int moodColorValue,
     bool isSupportRequest = false,
+    String? overrideUserName,
   }) async {
     if (uid == null) return;
 
     final post = CommunityPost(
       id: '', // Firestore will generate this
       userId: uid!,
-      userName: displayName!,
+      userName: overrideUserName ?? displayName!,
       userMood: userMood,
       content: content,
       timestamp: DateTime.now(),
