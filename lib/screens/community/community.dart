@@ -114,12 +114,32 @@ class _CommunityScreenState extends State<CommunityScreen>
         _isFirstLoad = false;
       }
     });
+
+    _moodService.currentMood.addListener(_handleMoodChange);
+  }
+
+  void _handleMoodChange() async {
+    final mood = _moodService.currentMood.value;
+    final isSadOrAngry = mood == 'Sad' || mood == 'Angry';
+
+    // If mood is no longer Sad/Angry, remove active support request
+    if (!isSadOrAngry) {
+      final activePost = await _communityService.getActiveSupportRequest().first;
+      if (activePost != null) {
+        await _communityService.deletePost(activePost.id);
+        _showFeedback(
+          'Mood improved! Support request removed.',
+          icon: Icons.auto_awesome_rounded,
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _supportListener?.cancel();
+    _moodService.currentMood.removeListener(_handleMoodChange);
     super.dispose();
   }
 

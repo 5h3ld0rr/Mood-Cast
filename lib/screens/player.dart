@@ -308,7 +308,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                               valueListenable: PlayerService().currentSong,
                               builder: (context, song, _) {
                                 final size =
-                                    MediaQuery.of(context).size.width * 0.88;
+                                    MediaQuery.of(context).size.width * 0.75;
                                 return Padding(
                                   padding: const EdgeInsets.only(
                                     top: 20,
