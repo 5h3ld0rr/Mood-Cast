@@ -12,6 +12,7 @@ import '../../services/player_service.dart';
 import '../../widgets/cached_image.dart';
 
 import '../../services/metrics_service.dart';
+import '../../services/community_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -22,6 +23,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
+  final CommunityService _communityService = CommunityService();
 
   void _refreshProfile() {
     setState(() {});
@@ -144,6 +146,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             return _buildStatItem(
                               '${snapshot.data ?? 0}🔥',
                               'Streak',
+                            );
+                          },
+                        ),
+                        _buildVerticalDivider(),
+                        StreamBuilder<int>(
+                          stream: _communityService.getPoints(),
+                          builder: (context, snapshot) {
+                            return _buildStatItem(
+                              '${snapshot.data ?? 0}',
+                              'Points',
                             );
                           },
                         ),

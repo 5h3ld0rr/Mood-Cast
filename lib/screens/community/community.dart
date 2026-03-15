@@ -351,7 +351,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                                 );
                                 Navigator.pop(context);
                                 _showFeedback(
-                                  'Vibe Dropped! +50 Empathy Points 💖',
+                                  'Vibe Dropped! +50 Points 💖',
                                   icon: Icons.volunteer_activism,
                                 );
                               },
@@ -877,47 +877,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                     vertical: 16,
                   ),
                 ),
-                actions: [
-                  Center(
-                    child: StreamBuilder<int>(
-                      stream: _communityService.getEmpathyPoints(),
-                      builder: (context, snapshot) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          margin: const EdgeInsets.only(right: 24),
-                          decoration: BoxDecoration(
-                            color: Colors.pinkAccent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.pinkAccent.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.volunteer_activism,
-                                color: Colors.pinkAccent,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${snapshot.data ?? 0}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                actions: const [],
               ),
 
               SliverToBoxAdapter(

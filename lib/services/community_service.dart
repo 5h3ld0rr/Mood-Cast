@@ -106,8 +106,8 @@ class CommunityService {
       'supportResponses': FieldValue.arrayUnion([response.toMap()]),
     });
 
-    // Award empathy points
-    await awardEmpathyPoints(50);
+    // Award points
+    await awardPoints(50);
   }
 
   // --- Moodboards ---
@@ -158,22 +158,22 @@ class CommunityService {
         .doc(songId)
         .update({'vibes': FieldValue.increment(1)});
 
-    await awardEmpathyPoints(5);
+    await awardPoints(5);
   }
 
-  // --- User Empathy Points & Tribes ---
-  Future<void> awardEmpathyPoints(int points) async {
+  // --- User Mood Points & Tribes ---
+  Future<void> awardPoints(int points) async {
     if (uid == null) return;
     await _firestore.collection('users').doc(uid).set({
-      'empathyPoints': FieldValue.increment(points),
+      'moodPoints': FieldValue.increment(points),
     }, SetOptions(merge: true));
   }
 
-  Stream<int> getEmpathyPoints() {
+  Stream<int> getPoints() {
     if (uid == null) return Stream.value(0);
     return _firestore.collection('users').doc(uid).snapshots().map((doc) {
       if (!doc.exists) return 0;
-      return doc.data()?['empathyPoints'] ?? 0;
+      return doc.data()?['moodPoints'] ?? 0;
     });
   }
 
