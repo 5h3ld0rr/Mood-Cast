@@ -6,6 +6,7 @@ import '../../theme.dart';
 import '../../services/mood_service.dart';
 import '../../services/community_service.dart';
 import '../../services/youtube_music_service.dart';
+import '../../services/player_service.dart';
 import '../../models/community_models.dart';
 
 // MoodboardSong class is now in community_models.dart
@@ -23,6 +24,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   final MoodService _moodService = MoodService();
   final CommunityService _communityService = CommunityService();
   final YouTubeMusicService _ytmService = YouTubeMusicService();
+  final PlayerService _playerService = PlayerService();
   final ValueNotifier<Color?> _screenGlowColor = ValueNotifier<Color?>(null);
 
   final Map<String, Tribe> _moodToTribe = {
@@ -399,108 +401,197 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   void _showMoodSnippet(String mood, String region) {
+    YouTubeMusicMetadata? snippetMetadata;
+    bool isFetching = true;
+    bool hasError = false;
+
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => Center(
-        child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppTheme.backgroundDark,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color:
-                  AppTheme.moodColors[mood]?.withValues(alpha: 0.3) ??
-                  Colors.white10,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color:
-                    AppTheme.moodColors[mood]?.withValues(alpha: 0.2) ??
-                    Colors.transparent,
-                blurRadius: 30,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Mood Snippet: $region',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          if (isFetching && !hasError) {
+            _ytmService.getRecommendationsByMood(mood).then((results) async {
+              if (results.isNotEmpty && mounted) {
+                final song = results.first;
+                setDialogState(() {
+                  snippetMetadata = song;
+                  isFetching = false;
+                });
+                // Start playback
+                await _playerService.play(
+                  SongInfo(
+                    title: song.title,
+                    artist: song.artist,
+                    coverUrl: song.artworkUrl,
+                    videoId: song.videoId,
+                  ),
+                );
+              } else {
+                setDialogState(() {
+                  isFetching = false;
+                  hasError = true;
+                });
+              }
+            }).catchError((e) {
+              if (mounted) {
+                setDialogState(() {
+                  isFetching = false;
+                  hasError = true;
+                });
+              }
+            });
+          }
+
+          final themeColor = AppTheme.moodColors[mood] ?? Colors.white;
+
+          return Center(
+            child: Container(
+              width: 300,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundDark,
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: themeColor.withValues(alpha: 0.3),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: themeColor.withValues(alpha: 0.2),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Collective $mood frequency',
-                style: TextStyle(
-                  color: AppTheme.moodColors[mood],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  10,
-                  (i) => Container(
-                    width: 4,
-                    height: 20 + (i % 3 * 10),
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.moodColors[mood],
-                      borderRadius: BorderRadius.circular(2),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Mood Snippet: $region',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'Mashup: Starboy x Blinding Lights',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              const SizedBox(height: 24),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(seconds: 10),
-                onEnd: () => Navigator.pop(context),
-                builder: (context, value, _) => Column(
-                  children: [
-                    LinearProgressIndicator(
-                      value: value,
-                      backgroundColor: Colors.white10,
-                      valueColor: AlwaysStoppedAnimation(
-                        AppTheme.moodColors[mood],
-                      ),
-                      borderRadius: BorderRadius.circular(2),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Collective $mood frequency',
+                    style: TextStyle(
+                      color: themeColor,
+                      fontSize: 14,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${(value * 10).toInt()}s / 10s',
-                      style: const TextStyle(
-                        color: Colors.white24,
-                        fontSize: 10,
+                  ),
+                  const SizedBox(height: 32),
+                  // Animated Frequency Bars
+                  SizedBox(
+                    height: 40,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        10,
+                        (i) => TweenAnimationBuilder<double>(
+                          duration: Duration(milliseconds: 300 + (i * 100)),
+                          tween: Tween(begin: 10, end: isFetching ? 15 : 40),
+                          curve: Curves.easeInOut,
+                          builder: (context, val, _) => Container(
+                            width: 6,
+                            height: val * (isFetching ? 1 : (math.Random().nextDouble() + 0.5)),
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: themeColor.withValues(alpha: isFetching ? 0.3 : 1.0),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    isFetching
+                        ? 'Tuning into frequency...'
+                        : hasError
+                            ? 'Failed to catch the vibe ⚠️'
+                            : 'Mashup: ${snippetMetadata?.title ?? 'Unknown Vibz'}',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 24),
+                  if (!isFetching && !hasError)
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(seconds: 10),
+                      onEnd: () {
+                        _playerService.stop();
+                        if (Navigator.canPop(context)) Navigator.pop(context);
+                      },
+                      builder: (context, value, _) => Column(
+                        children: [
+                          LinearProgressIndicator(
+                            value: value,
+                            backgroundColor: Colors.white10,
+                            valueColor: AlwaysStoppedAnimation(themeColor),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'PLAYING FREQUENCY • ${(value * 10).toInt()}s',
+                            style: const TextStyle(
+                              color: Colors.white24,
+                              fontSize: 10,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (hasError)
+                    ElevatedButton(
+                      onPressed: () {
+                        setDialogState(() {
+                          isFetching = true;
+                          hasError = false;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: themeColor.withValues(alpha: 0.2),
+                        foregroundColor: themeColor,
+                      ),
+                      child: const Text('RETRY'),
+                    )
+                  else
+                    const SizedBox(
+                      height: 40,
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white24),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      _playerService.stop();
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'CLOSE',
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'STOP LISTENING',
-                  style: TextStyle(color: Colors.white54),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

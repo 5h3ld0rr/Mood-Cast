@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
+import '../../theme.dart';
 import '../../services/mood_service.dart';
 import '../../services/metrics_service.dart';
 import '../home/recommendations.dart';
@@ -237,6 +239,107 @@ class _AnalysisScreenState extends State<AnalysisScreen>
         _detectedMood = 'Natural';
       });
     }
+  }
+
+  Widget _buildManualMoodSync() {
+    final moods = ['Happy', 'Sad', 'Angry', 'Natural'];
+    final icons = {
+      'Happy': Icons.wb_sunny_rounded,
+      'Sad': Icons.cloudy_snowing,
+      'Angry': Icons.bolt_rounded,
+      'Natural': Icons.spa_rounded,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 32),
+        Text(
+          'MANUAL MOOD SYNC',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.4),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ValueListenableBuilder<String>(
+          valueListenable: MoodService().currentMood,
+          builder: (context, currentMood, _) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: moods.map((mood) {
+                final isSelected = currentMood == mood;
+                final color = AppTheme.moodColors[mood] ?? Colors.white;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _detectedMood = mood;
+                      _progress = 1.0;
+                      _isScanning = false;
+                    });
+                    MoodService().updateMood(mood);
+                    MetricsService.saveMoodScan(mood);
+                    HapticFeedback.mediumImpact();
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? color.withValues(alpha: 0.15)
+                          : Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isSelected
+                            ? color.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.1),
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.2),
+                                blurRadius: 10,
+                                spreadRadius: 0,
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icons[mood],
+                          color: isSelected ? color : Colors.white38,
+                          size: 18,
+                        ),
+                        if (isSelected) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            mood.toUpperCase(),
+                            style: TextStyle(
+                              color: color,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   @override
@@ -644,6 +747,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         ),
                       ),
                     ),
+
+                  _buildManualMoodSync(),
 
                   if (_detectedMood != null) ...[
                     const SizedBox(height: 20),
