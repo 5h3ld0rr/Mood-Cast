@@ -16,9 +16,27 @@ class CommunityService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => CommunityPost.fromFirestore(doc))
-              .toList(),
+          (snapshot) {
+            final now = DateTime.now();
+            final validPosts = <CommunityPost>[];
+            
+            for (var doc in snapshot.docs) {
+              final post = CommunityPost.fromFirestore(doc);
+              
+              // If it's a support request, hide and schedule delete it after 1 hour
+              if (post.isSupportRequest) {
+                final isExpired = now.difference(post.timestamp).inHours >= 1;
+                if (isExpired) {
+                  // Lazy delete the expired post off of Firebase
+                  deletePost(post.id);
+                  continue; // skip adding to UI
+                }
+              }
+              validPosts.add(post);
+            }
+            
+            return validPosts;
+          },
         );
   }
 
@@ -57,7 +75,16 @@ class CommunityService {
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) return null;
-      return CommunityPost.fromFirestore(snapshot.docs.first);
+      final post = CommunityPost.fromFirestore(snapshot.docs.first);
+       // Check if post is older than 1 hour
+      final now = DateTime.now();
+      if (now.difference(post.timestamp).inHours >= 1) {
+        // Lazy delete expired post that was just loaded
+        deletePost(post.id);
+        return null;
+      }
+      
+      return post;
     });
   }
 
