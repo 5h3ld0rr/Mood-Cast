@@ -12,7 +12,10 @@ class MetricsService {
   }
 
   // Scans
-  static Future<void> saveMoodScan(String mood) async {
+  static Future<void> saveMoodScan(
+    String mood, {
+    Map<String, double>? confidence,
+  }) async {
     final docRef = _userDoc;
     if (docRef == null) return;
 
@@ -54,6 +57,7 @@ class MetricsService {
     // Save to history
     await docRef.collection('mood_history').add({
       'mood': mood,
+      'confidence': confidence,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }

@@ -79,12 +79,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
       final mood = m['mood'];
       if (mood == 'Happy') {
         sumIntensity += 0.9;
-      } else if (mood == 'Natural')
+      } else if (mood == 'Natural') {
         sumIntensity += 0.6;
-      else if (mood == 'Angry')
+      } else if (mood == 'Angry') {
         sumIntensity += 0.8;
-      else if (mood == 'Sad')
+      } else if (mood == 'Sad') {
         sumIntensity += 0.3;
+      }
     }
     double avg = total > 0 ? sumIntensity / total : 0.0;
 
@@ -106,12 +107,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
         final mood = m['mood'];
         if (mood == 'Happy') {
           dSum += 0.9;
-        } else if (mood == 'Natural')
+        } else if (mood == 'Natural') {
           dSum += 0.6;
-        else if (mood == 'Angry')
+        } else if (mood == 'Angry') {
           dSum += 0.8;
-        else if (mood == 'Sad')
+        } else if (mood == 'Sad') {
           dSum += 0.3;
+        }
       }
       return (dSum / dayMoods.length).clamp(0.1, 1.0);
     });

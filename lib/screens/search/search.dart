@@ -8,7 +8,6 @@ import 'artist_details.dart';
 import 'category_details.dart';
 import '../library/playlist_details.dart';
 import '../../services/database_service.dart';
-import '../home/discover_artists.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/song_options.dart';
 import '../../widgets/cached_image.dart';
@@ -31,9 +30,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<YouTubeMusicMetadata> _searchResults = [];
   List<YouTubeArtistMetadata> _artistResults = [];
   List<Map<String, dynamic>> _playlistResults = [];
-  List<YouTubeArtistMetadata> _suggestedArtists = [];
   bool _isLoading = false;
-  bool _isArtistsLoading = false;
   Timer? _debounce;
   bool _isFocused = false;
   final FocusNode _focusNode = FocusNode();
@@ -102,24 +99,6 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     });
     ConnectivityService().isOnline.addListener(_onConnectivityChanged);
-    _fetchSuggestedArtists();
-  }
-
-  Future<void> _fetchSuggestedArtists() async {
-    if (mounted) setState(() => _isArtistsLoading = true);
-    try {
-      final artists = await _ytmService.searchArtists(
-        'Top 2024 Popular Artists',
-      );
-      if (mounted) {
-        setState(() {
-          _suggestedArtists = artists.take(10).toList();
-          _isArtistsLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isArtistsLoading = false);
-    }
   }
 
   @override
@@ -352,13 +331,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         SliverToBoxAdapter(
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
-              _buildSuggestedArtistsSection(),
-              const SizedBox(height: 100), // Padding for bottom
-            ],
-          ),
+          child: const SizedBox(height: 100), // Padding for bottom
         ),
       ],
     );
@@ -729,119 +702,6 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.white24),
       ),
-    );
-  }
-
-  Widget _buildSuggestedArtistsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Suggested Artists',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DiscoverArtistsScreen(
-                        mood:
-                            'Natural', // Search suggestions are generally natural/popular
-                        initialArtists: _suggestedArtists,
-                      ),
-                    ),
-                  );
-                },
-                child: Text(
-                  'See All',
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 140,
-          child: _isArtistsLoading
-              ? ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: 5,
-                  itemBuilder: (context, index) => Container(
-                    width: 100,
-                    margin: const EdgeInsets.only(right: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                )
-              : ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: _suggestedArtists.length,
-                  itemBuilder: (context, index) {
-                    final artist = _suggestedArtists[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ArtistDetailsScreen(artist: artist),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        width: 100,
-                        margin: const EdgeInsets.only(right: 16),
-                        child: Column(
-                          children: [
-                            CachedImage(
-                              imageUrl: artist.artworkUrl,
-                              width: 80,
-                              height: 80,
-                              isCircle: true,
-                              errorWidget: const Icon(
-                                Icons.person,
-                                color: Colors.white24,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              artist.name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
     );
   }
 
