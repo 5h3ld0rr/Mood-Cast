@@ -148,6 +148,8 @@ class PlayerService {
   final ValueNotifier<Duration> position = ValueNotifier<Duration>(
     Duration.zero,
   );
+  
+  VoidCallback? onUserPlaybackAction;
   final ValueNotifier<Duration> duration = ValueNotifier<Duration>(
     const Duration(seconds: 1),
   );
@@ -156,6 +158,8 @@ class PlayerService {
   final ValueNotifier<AudioQuality> audioQuality = ValueNotifier<AudioQuality>(
     AudioQuality.high,
   );
+
+  Stream<ProcessingState> get processingStateStream => _audioPlayer.processingStateStream;
 
   List<SongInfo> currentQueue = [];
   List<SongInfo> _originalQueue = [];
@@ -204,7 +208,9 @@ class PlayerService {
     });
   }
 
-  Future<void> playQueue(List<SongInfo> queue, {int initialIndex = 0}) async {
+  Future<void> playQueue(List<SongInfo> queue, {int initialIndex = 0, bool isTribeSync = false}) async {
+    if (!isTribeSync) onUserPlaybackAction?.call();
+    
     if (queue.isEmpty) return;
     _originalQueue = List.from(queue);
     currentQueue = List.from(queue);
@@ -220,7 +226,9 @@ class PlayerService {
     await play(currentQueue[currentIndex]);
   }
 
-  Future<void> skipToNext({bool autoPlay = false}) async {
+  Future<void> skipToNext({bool autoPlay = false, bool isTribeSync = false}) async {
+    if (!autoPlay && !isTribeSync) onUserPlaybackAction?.call();
+
     if (currentQueue.isEmpty || currentIndex < 0) return;
 
     if (autoPlay && isLooping.value) {
@@ -238,10 +246,12 @@ class PlayerService {
     await play(currentQueue[currentIndex]);
   }
 
-  Future<void> skipToPrevious() async {
+  Future<void> skipToPrevious({bool isTribeSync = false}) async {
+    if (!isTribeSync) onUserPlaybackAction?.call();
+
     if (currentQueue.isEmpty || currentIndex < 0) return;
     if (position.value.inSeconds > 3) {
-      await seek(0.0);
+      await seek(0.0, isTribeSync: isTribeSync);
       return;
     }
     if (currentIndex > 0) {
@@ -273,7 +283,9 @@ class PlayerService {
     audioQuality.value = quality;
   }
 
-  Future<void> play(SongInfo song) async {
+  Future<void> play(SongInfo song, {bool isTribeSync = false}) async {
+    if (!isTribeSync) onUserPlaybackAction?.call();
+
     currentSong.value = song;
     isLiked.value = await _db.isSongLiked(song);
     progress.value = 0.0;
@@ -358,7 +370,9 @@ class PlayerService {
     }
   }
 
-  Future<void> togglePlay() async {
+  Future<void> togglePlay({bool isTribeSync = false}) async {
+    if (!isTribeSync) onUserPlaybackAction?.call();
+
     if (_audioPlayer.playing) {
       await _audioPlayer.pause();
     } else {
@@ -366,7 +380,9 @@ class PlayerService {
     }
   }
 
-  Future<void> stop() async {
+  Future<void> stop({bool isTribeSync = false}) async {
+    if (!isTribeSync) onUserPlaybackAction?.call();
+
     await _audioPlayer.stop();
     isPlaying.value = false;
     currentSong.value = null;
@@ -375,12 +391,25 @@ class PlayerService {
     duration.value = const Duration(seconds: 1);
   }
 
-  Future<void> seek(double value) async {
+  Future<void> seek(double value, {bool isTribeSync = false}) async {
+    if (!isTribeSync) onUserPlaybackAction?.call();
+
     final dur = _audioPlayer.duration;
     if (dur != null && dur.inMilliseconds > 0) {
       final pos = value * dur.inMilliseconds;
       await _audioPlayer.seek(Duration(milliseconds: pos.round()));
     }
+  }
+
+  Future<void> seekToPosition(Duration targetPosition, {bool isTribeSync = false}) async {
+    if (!isTribeSync) onUserPlaybackAction?.call();
+    await _audioPlayer.seek(targetPosition);
+  }
+
+  void clearQueue() {
+    currentQueue.clear();
+    _originalQueue.clear();
+    currentIndex = -1;
   }
 
   void dispose() {

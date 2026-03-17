@@ -10,8 +10,11 @@ import '../../services/community_service.dart';
 import '../../services/youtube_music_service.dart';
 import '../../services/player_service.dart';
 import '../../models/community_models.dart';
+import '../../models/tribe_models.dart';
 import '../../services/notification_service.dart';
+import '../../services/tribe_service.dart';
 import '../../utils/ui_utils.dart';
+import 'tribe_session_screen.dart';
 
 // MoodboardSong class is now in community_models.dart
 
@@ -153,8 +156,34 @@ class _CommunityScreenState extends State<CommunityScreen>
     return 'Just now';
   }
 
-  void _toggleJoinTribe(String tribeId, String tribeName) {
-    _communityService.toggleJoinTribe(tribeId);
+  void _enterTribeSession(Tribe tribe) {
+    if (TribeService().currentTribeId != null &&
+        TribeService().currentTribeId != tribe.id) {
+      _showFeedback(
+        'You must leave your current tribe to join a new one!',
+        icon: Icons.warning_amber_rounded,
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TribeSessionScreen(
+          tribeId: tribe.id,
+          tribeName: tribe.name,
+          tribeColor: tribe.color,
+        ),
+      ),
+    );
+  }
+
+  void _leaveTribeSession() {
+    TribeService().leaveTribeSession();
+    _showFeedback(
+      'You left the tribe session.',
+      icon: Icons.logout,
+    );
   }
 
   void _dropAVibe(CommunityPost post) {
@@ -887,11 +916,10 @@ class _CommunityScreenState extends State<CommunityScreen>
                     final tribe =
                         _moodToTribe[mood] ?? _moodToTribe['Natural']!;
 
-                    return StreamBuilder<List<String>>(
-                      stream: _communityService.getJoinedTribes(),
-                      builder: (context, snapshot) {
-                        final joinedTribes = snapshot.data ?? [];
-                        final isJoined = joinedTribes.contains(tribe.id);
+                    return ValueListenableBuilder<String?>(
+                      valueListenable: TribeService().currentTribeIdNotifier,
+                      builder: (context, currentTribeId, _) {
+                        final isJoined = currentTribeId == tribe.id;
 
                         return Padding(
                           padding: const EdgeInsets.all(24.0),
@@ -946,9 +974,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            isJoined
-                                                ? 'Welcome To Tribe'
-                                                : 'Your Mood Tribe',
+                                            isJoined ? 'Welcome To Tribe' : 'Your Mood Tribe',
                                             style: TextStyle(
                                               color: tribe.color,
                                               fontSize: 12,
@@ -1006,47 +1032,79 @@ class _CommunityScreenState extends State<CommunityScreen>
                                       ),
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      '${tribe.members} others vibing right now',
-                                      style: const TextStyle(
-                                        color: Colors.white54,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                    StreamBuilder<List<TribeMember>>(
+                                      stream: TribeService().getActiveMembersStream(tribe.id),
+                                      builder: (context, snapshot) {
+                                        final activeCount = snapshot.data?.length ?? 0;
+                                        
+                                        return Text(
+                                          activeCount > 0
+                                              ? '$activeCount others vibing right now'
+                                              : 'Be the first to vibe!',
+                                          style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 24),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 56,
-                                  child: ElevatedButton(
-                                    onPressed: () =>
-                                        _toggleJoinTribe(tribe.id, tribe.name),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isJoined
-                                          ? Colors.white.withValues(alpha: 0.1)
-                                          : tribe.color,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      elevation: isJoined ? 0 : 8,
-                                      shadowColor: tribe.color.withValues(
-                                        alpha: 0.5,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 56,
+                                        child: ElevatedButton(
+                                          onPressed: () =>
+                                              _enterTribeSession(tribe),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isJoined
+                                                ? Colors.white.withValues(alpha: 0.1)
+                                                : tribe.color,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                            elevation: isJoined ? 0 : 8,
+                                            shadowColor: tribe.color.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            isJoined ? 'RETURN TO SESSION' : 'JOIN TRIBE',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                              letterSpacing: 1,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    child: Text(
-                                      isJoined
-                                          ? 'LEAVE TRIBE'
-                                          : 'JOIN THE SESSION',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        letterSpacing: 1,
+                                    if (isJoined) ...[
+                                      const SizedBox(width: 12),
+                                      SizedBox(
+                                        height: 56,
+                                        width: 56,
+                                        child: ElevatedButton(
+                                          onPressed: _leaveTribeSession,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.redAccent.withValues(alpha: 0.2),
+                                            foregroundColor: Colors.redAccent,
+                                            padding: EdgeInsets.zero,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                          child: const Icon(Icons.logout),
+                                        ),
                                       ),
-                                    ),
-                                  ),
+                                    ],
+                                  ],
                                 ),
                               ],
                             ),
