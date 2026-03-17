@@ -171,6 +171,7 @@ class YouTubeMusicService {
     required List<SongInfo> likedSongs,
     List<SongInfo> recentTracks = const [],
     String? country,
+    String? weather,
   }) async {
     List<YouTubeMusicMetadata> finalResults = [];
 
@@ -187,7 +188,7 @@ class YouTubeMusicService {
     }
 
     // 2. Discover based on Mood
-    final moodQuery = _getQueryForMood(mood);
+    final moodQuery = _getQueryForMood(mood, weather: weather);
     final moodResults = await searchTracks(moodQuery);
     finalResults.addAll(moodResults.take(10));
 
@@ -223,35 +224,55 @@ class YouTubeMusicService {
     return countries[code.toUpperCase()] ?? code;
   }
 
-  String _getQueryForMood(String mood) {
+  String _getQueryForMood(String mood, {String? weather}) {
+    String baseQuery;
     switch (mood.toLowerCase()) {
       case 'happy':
-        return "feel good anthems charts 2024";
+        baseQuery = "feel good anthems charts 2024";
+        break;
       case 'sad':
-        return "slow bittersweet acoustic piano ballads";
+        baseQuery = "slow bittersweet acoustic piano ballads";
+        break;
       case 'energetic':
-        return "high energy gym phonk edm shuffle";
+        baseQuery = "high energy gym phonk edm shuffle";
+        break;
       case 'calm':
-        return "peaceful meditation nature ambient soundscapes";
+        baseQuery = "peaceful meditation nature ambient soundscapes";
+        break;
       case 'focused':
-        return "lofi hip hop radio beats to study/relax to";
+        baseQuery = "lofi hip hop radio beats to study/relax to";
+        break;
       case 'relaxing':
-        return "chill r&b soul evening vibes";
+        baseQuery = "chill r&b soul evening vibes";
+        break;
       case 'inspired':
-        return "epic cinematic orchestral motivation tracks";
+        baseQuery = "epic cinematic orchestral motivation tracks";
+        break;
       case 'angry':
-        return "heavy metal breakdown aggressive hardcore";
+        baseQuery = "heavy metal breakdown aggressive hardcore";
+        break;
       default:
-        return "popular $mood songs 2024";
+        baseQuery = "popular $mood songs 2024";
+        break;
     }
+
+    if (weather != null && weather.isNotEmpty) {
+      baseQuery += " for $weather weather";
+    }
+    return baseQuery;
   }
 
   Future<List<YouTubeMusicMetadata>> getRecommendationsByMood(
-    String mood,
-  ) async {
+    String mood, {
+    String? weather,
+  }) async {
     // Reuse smart recommendations logic but without liked songs context
     // This provides better variety than a single literal search
-    return await getSmartRecommendations(mood: mood, likedSongs: []);
+    return await getSmartRecommendations(
+      mood: mood,
+      weather: weather,
+      likedSongs: [],
+    );
   }
 
   Future<List<YouTubeArtistMetadata>> getSmartArtistRecommendations({
@@ -259,6 +280,7 @@ class YouTubeMusicService {
     List<SongInfo> likedSongs = const [],
     List<SongInfo> recentTracks = const [],
     String? country,
+    String? weather,
   }) async {
     final List<YouTubeArtistMetadata> finalArtists = [];
     final seenIds = <String>{};
@@ -278,7 +300,7 @@ class YouTubeMusicService {
       }
 
       // 2. Mood-Based Discovery
-      final moodQuery = _getArtistQueryForMood(mood);
+      final moodQuery = _getArtistQueryForMood(mood, weather: weather);
       final moodArtists = await searchArtists(moodQuery);
       for (var artist in moodArtists) {
         if (seenIds.add(artist.browseId)) finalArtists.add(artist);
@@ -304,26 +326,41 @@ class YouTubeMusicService {
     }
   }
 
-  String _getArtistQueryForMood(String mood) {
+  String _getArtistQueryForMood(String mood, {String? weather}) {
+    String baseQuery;
     switch (mood.toLowerCase()) {
       case 'happy':
-        return 'Mainstream Pop';
+        baseQuery = 'Mainstream Pop';
+        break;
       case 'sad':
-        return 'Indie Alternative';
+        baseQuery = 'Indie Alternative';
+        break;
       case 'energetic':
-        return 'Dance Electronic';
+        baseQuery = 'Dance Electronic';
+        break;
       case 'calm':
-        return 'Classical Ambient';
+        baseQuery = 'Classical Ambient';
+        break;
       case 'focused':
-        return 'Lo-fi Beats';
+        baseQuery = 'Lo-fi Beats';
+        break;
       case 'relaxing':
-        return 'Neo-Soul Jazz';
+        baseQuery = 'Neo-Soul Jazz';
+        break;
       case 'inspired':
-        return 'Cinematic Composers';
+        baseQuery = 'Cinematic Composers';
+        break;
       case 'angry':
-        return 'Hard Rock Metal';
+        baseQuery = 'Hard Rock Metal';
+        break;
       default:
-        return 'Trending';
+        baseQuery = 'Trending';
+        break;
     }
+
+    if (weather != null && weather.isNotEmpty) {
+      baseQuery += " for $weather weather";
+    }
+    return baseQuery;
   }
 }

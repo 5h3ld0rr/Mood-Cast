@@ -80,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
         likedSongs: likedSongs,
         recentTracks: recentTracks,
         country: country,
+        weather: weather?.condition,
       );
 
       // 4. Get Smart Recommendations (Artists)
@@ -88,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         likedSongs: likedSongs,
         recentTracks: recentTracks,
         country: country,
+        weather: weather?.condition,
       );
 
       if (mounted) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme.dart';
 import '../../services/player_service.dart';
 import '../../services/youtube_music_service.dart';
+import '../../services/weather_service.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/song_options.dart';
 import '../../widgets/cached_image.dart';
@@ -33,8 +34,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     });
 
     try {
+      final weather = WeatherService().currentWeather.value?.condition;
       final mood = widget.mood ?? 'Happy'; // Fallback
-      final tracks = await _ytmService.getRecommendationsByMood(mood);
+      final tracks = await _ytmService.getRecommendationsByMood(mood, weather: weather);
 
       if (mounted) {
         setState(() {
