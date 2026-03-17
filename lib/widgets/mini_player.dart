@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../services/player_service.dart';
+import '../services/tribe_service.dart';
 
 import '../screens/player.dart';
 import 'cached_image.dart';
@@ -52,6 +53,15 @@ class _MiniPlayerContent extends StatefulWidget {
 
 class _MiniPlayerContentState extends State<_MiniPlayerContent> {
   bool _isPressed = false;
+
+  /// Returns true when the user is in a tribe but is NOT the DJ.
+  /// In that state all playback controls should be locked (no-op).
+  bool get _isTribeLocked {
+    final tribeId = TribeService().currentTribeId;
+    if (tribeId == null) return false;
+    return true;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -245,7 +255,7 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      PlayerService().togglePlay();
+                                      if (!_isTribeLocked) PlayerService().togglePlay();
                                     },
                                   );
                                 },
