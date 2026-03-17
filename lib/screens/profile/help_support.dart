@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme.dart';
 import '../../utils/ui_utils.dart';
+import 'chat_screen.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -142,11 +143,13 @@ class HelpSupportScreen extends StatelessWidget {
                           context,
                           icon: Icons.chat_bubble_outline,
                           title: 'Live Chat',
-                          subtitle: 'Available 9 AM - 5 PM EST',
+                          subtitle: 'Available 24/7',
                           onTap: () {
-                            UIUtils.showSnackBar(
+                            Navigator.push(
                               context,
-                              'Connecting to Live Chat support agent... Please wait.',
+                              MaterialPageRoute(
+                                builder: (context) => const ChatScreen(),
+                              ),
                             );
                           },
                         ),
