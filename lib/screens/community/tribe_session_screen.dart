@@ -86,19 +86,34 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
         coverUrl: track.coverUrl,
         videoId: track.videoId,
       );
-      
+
+      // Record join time BEFORE buffering starts so elapsed calc is accurate
+      final joinedAtMs = DateTime.now().millisecondsSinceEpoch;
+
       await _playerService.play(songInfo, isTribeSync: true);
-      
-      // Calculate how far into the song we are 
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final elapsedMs = now - session.startTime;
-      if (elapsedMs > 0) {
-        // small delay to let player initialize
-        await Future.delayed(const Duration(milliseconds: 500)); 
-        await _playerService.seekToPosition(Duration(milliseconds: elapsedMs), isTribeSync: true);
-      }
+
+      // Wait until the audio engine is ready, then seek to the correct position
+      _playerService.processingStateStream
+          .firstWhere((state) =>
+              state == ProcessingState.ready ||
+              state == ProcessingState.completed)
+          .then((_) async {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        // Account for time elapsed since the session's startTime INCLUDING buffering delay
+        final elapsedMs = now - session.startTime;
+        if (elapsedMs > 0) {
+          await _playerService.seekToPosition(
+            Duration(milliseconds: elapsedMs),
+            isTribeSync: true,
+          );
+          debugPrint('TribeSync: Seeked to ${elapsedMs}ms (joined ${now - joinedAtMs}ms after play)');
+        }
+      }).catchError((e) {
+        debugPrint('TribeSync: Seek error – $e');
+      });
     }
   }
+
 
   @override
   void dispose() {
