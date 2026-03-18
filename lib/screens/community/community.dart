@@ -26,8 +26,9 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _pulseController;
+  late AnimationController _globeController; // slow continuous globe rotation
   final MoodService _moodService = MoodService();
   final CommunityService _communityService = CommunityService();
   final YouTubeMusicService _ytmService = YouTubeMusicService();
@@ -82,8 +83,13 @@ class _CommunityScreenState extends State<CommunityScreen>
     super.initState();
     _pulseController = AnimationController(
                                 vsync: this,
-                                duration: const Duration(seconds: 2),
+                                duration: const Duration(seconds: 4),
                               )..repeat(reverse: true);
+
+    _globeController = AnimationController(
+                                vsync: this,
+                                duration: const Duration(seconds: 25), // one full rotation
+                              )..repeat();
 
     // Listen for vibes dropped for user's own active request
     _supportListener = _communityService.getActiveSupportRequest().listen((
@@ -141,6 +147,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   @override
   void dispose() {
     _pulseController.dispose();
+    _globeController.dispose();
     _supportListener?.cancel();
     _moodService.currentMood.removeListener(_handleMoodChange);
     super.dispose();
@@ -1497,151 +1504,136 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   Widget _buildGlobalMoodPulse() {
     return Container(
-      height: 320,
+      height: 340,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(32),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.05),
+            Colors.deepPurple.withValues(alpha: 0.08),
+          ],
+        ),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Outer glow
           AnimatedBuilder(
             animation: _pulseController,
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: List.generate(3, (index) {
-                  final size =
-                      150.0 + (index * 60) + (_pulseController.value * 30);
-                  final opacity =
-                      (0.1 - (index * 0.03)) * (1.0 - _pulseController.value);
-                  return Container(
-                    width: size,
-                    height: size,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.amber.withValues(
-                          alpha: opacity.clamp(0, 1),
-                        ),
-                        width: 1,
-                      ),
+            builder: (context, _) {
+              return Container(
+                width: 280 + (_pulseController.value * 20),
+                height: 280 + (_pulseController.value * 20),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.amber.withValues(alpha: 0.06 + _pulseController.value * 0.06),
+                      blurRadius: 60,
+                      spreadRadius: 10,
                     ),
-                  );
-                }),
+                  ],
+                ),
               );
             },
           ),
 
-          _buildRegionalNode('US', 'Happy', 110, 0.5),
-          _buildRegionalNode('EU', 'Sad', 120, 2.8),
-          _buildRegionalNode('ASIA', 'Natural', 100, 4.5),
-
-          GestureDetector(
-            onTap: () => _showMoodSnippet('Happy', 'Global'),
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Container(
-                  width: 100 + (_pulseController.value * 10),
-                  height: 100 + (_pulseController.value * 10),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        Colors.amber.withValues(alpha: 0.9),
-                        Colors.orange.withValues(alpha: 0.4),
-                        Colors.transparent,
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withValues(
-                          alpha: 0.3 * _pulseController.value + 0.2,
-                        ),
-                        blurRadius: 30 * _pulseController.value + 20,
-                        spreadRadius: 10 * _pulseController.value,
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.wb_sunny_rounded,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'GLOBAL',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+          // Globe painter — driven by slow globe controller
+          AnimatedBuilder(
+            animation: _globeController,
+            builder: (context, _) {
+              return CustomPaint(
+                size: const Size(260, 260),
+                painter: _GlobePainter(rotation: _globeController.value * 2 * math.pi),
+              );
+            },
           ),
+
+          // Nodes pinned to continent centroids — same projection as _GlobePainter
+          _buildRegionalNode('US',   'Happy',     38.0, -97.0),  // continental US
+          _buildRegionalNode('EU',   'Sad',       51.0,  10.0),  // central Europe
+          _buildRegionalNode('ASIA', 'Natural',   40.0,  95.0),  // central Asia
+          _buildRegionalNode('LA',   'Angry',    -15.0, -55.0),  // South America
+          _buildRegionalNode('AF',   'Natural',    2.0,  20.0),  // Africa
         ],
       ),
     );
   }
 
+  /// Places a mood label exactly on the continent centroid [latDeg, lngDeg],
+  /// using the same orthographic projection as [_GlobePainter].
   Widget _buildRegionalNode(
     String label,
     String mood,
-    double radius,
-    double initialAngle,
+    double latDeg,
+    double lngDeg,
   ) {
     return AnimatedBuilder(
-      animation: _pulseController,
+      animation: _globeController,
       builder: (context, child) {
-        final angle = initialAngle + (_pulseController.value * 0.1);
+        const double r = 130.0; // must match CustomPaint size 260×260 → r = 260/2
+        final globeRot = _globeController.value * 2 * math.pi;
+
+        // ── Same formula as _GlobePainter ──────────────────────────────────
+        final lat = latDeg * math.pi / 180;
+        final lng = (lngDeg * math.pi / 180) + globeRot;
+        final cosLat = math.cos(lat);
+
+        // Visibility: positive means front hemisphere (same as painter's _project)
+        final vis = cosLat * math.cos(lng);
+        if (vis < 0.08) return const SizedBox.shrink(); // behind globe
+
+        // Projected screen offset from globe centre
+        final x = r * cosLat * math.sin(lng);
+        final y = -r * math.sin(lat); // negative because screen y is inverted
+
         final color = AppTheme.moodColors[mood] ?? Colors.white;
+        final opacity = vis.clamp(0.2, 1.0);
+        final scale  = 0.72 + vis * 0.28; // perspective scale: smaller at limb
 
         return Transform.translate(
-          offset: Offset(radius * math.cos(angle), radius * math.sin(angle)),
-          child: GestureDetector(
-            onTap: () => _showMoodSnippet(mood, label),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
+          offset: Offset(x, y),
+          child: Transform.scale(
+            scale: scale,
+            child: Opacity(
+              opacity: opacity,
+              child: GestureDetector(
+                onTap: () => _showMoodSnippet(mood, label),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: color.withValues(alpha: 0.4)),
+                    color: color.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: color.withValues(alpha: 0.55), width: 0.8),
+                    boxShadow: [
+                      BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 6),
+                    ],
                   ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5, height: 5,
+                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -2013,4 +2005,217 @@ class _CommunityScreenState extends State<CommunityScreen>
       ),
     );
   }
+}
+
+/// Renders a rotating globe with a lat/lng wire-frame grid using perspective projection.
+class _GlobePainter extends CustomPainter {
+  final double rotation;
+  _GlobePainter({required this.rotation});
+
+  // Projects a [lat°, lng°] point onto screen given globe centre/radius/rotation.
+  // Returns null when the point is on the back hemisphere.
+  Offset? _project(double latDeg, double lngDeg, double cx, double cy, double r) {
+    final lat = latDeg * math.pi / 180;
+    final lng = (lngDeg * math.pi / 180) + rotation;
+    final cosLat = math.cos(lat);
+    final vis = cosLat * math.cos(lng); // positive = front hemisphere
+    if (vis < -0.15) return null; // cull back-side
+    final x = cx + r * cosLat * math.sin(lng);
+    final y = cy - r * math.sin(lat);
+    return Offset(x, y);
+  }
+
+  // Draws a polygon land mass from [lat,lng] pairs, fading by avg visibility.
+  void _drawLandPoly(
+    Canvas canvas, double cx, double cy, double r,
+    List<List<double>> pts, Color fill, Color stroke,
+  ) {
+    final path = Path();
+    bool started = false;
+    double visSum = 0;
+    int visCount = 0;
+
+    for (final pt in pts) {
+      final proj = _project(pt[0], pt[1], cx, cy, r);
+      if (proj == null) {
+        // Gap in polygon when crossing limb — restart path segment
+        if (started) { path.close(); started = false; }
+        continue;
+      }
+      // Accumulate average visibility for opacity
+      final lat = pt[0] * math.pi / 180;
+      final lng = (pt[1] * math.pi / 180) + rotation;
+      visSum += math.cos(lat) * math.cos(lng);
+      visCount++;
+
+      if (!started) { path.moveTo(proj.dx, proj.dy); started = true; }
+      else path.lineTo(proj.dx, proj.dy);
+    }
+    if (started) path.close();
+
+    final avgVis = visCount > 0 ? (visSum / visCount).clamp(0.0, 1.0) : 0.0;
+    if (avgVis <= 0) return;
+
+    canvas.drawPath(path, Paint()..color = fill.withValues(alpha: fill.a * avgVis)..style = PaintingStyle.fill);
+    canvas.drawPath(path, Paint()..color = stroke.withValues(alpha: stroke.a * avgVis)..style = PaintingStyle.stroke..strokeWidth = 0.7);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width / 2;
+
+    // ── Atmosphere ──────────────────────────────────────────────────────────
+    canvas.drawCircle(
+      Offset(cx, cy), r * 1.06,
+      Paint()..shader = RadialGradient(
+        colors: [Colors.transparent, Colors.blueAccent.withValues(alpha: 0.12), Colors.transparent],
+        stops: const [0.88, 0.96, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r * 1.06)),
+    );
+
+    // ── Ocean ───────────────────────────────────────────────────────────────
+    canvas.drawCircle(
+      Offset(cx, cy), r,
+      Paint()..shader = RadialGradient(
+        center: const Alignment(-0.3, -0.4),
+        colors: [const Color(0xFF1b3a6b), const Color(0xFF071428)],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
+    );
+
+    // ── Clip everything inside sphere ────────────────────────────────────────
+    canvas.save();
+    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: r - 0.5)));
+
+    // ── Grid lines ──────────────────────────────────────────────────────────
+    // Latitude
+    for (int lat = -60; lat <= 60; lat += 30) {
+      final latRad = lat * math.pi / 180;
+      final ry = math.cos(latRad) * r;
+      final yy = cy - math.sin(latRad) * r;
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(cx, yy), width: ry * 2, height: ry * 0.55),
+        Paint()..color = Colors.white.withValues(alpha: 0.06)..style = PaintingStyle.stroke..strokeWidth = 0.6,
+      );
+    }
+    // Equator slightly brighter
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(cx, cy), width: r * 2, height: r * 0.55),
+      Paint()..color = Colors.white.withValues(alpha: 0.14)..style = PaintingStyle.stroke..strokeWidth = 0.8,
+    );
+    // Longitude meridians
+    for (int lng = 0; lng < 180; lng += 30) {
+      final lngRad = (lng * math.pi / 180) + rotation;
+      final sinL = math.sin(lngRad);
+      final vis = math.cos(lngRad); // front = positive
+      final gridAlpha = (vis * 0.10).clamp(0.02, 0.12);
+      final path = Path();
+      bool first = true;
+      for (int lat = -88; lat <= 88; lat += 4) {
+        final latRad2 = lat * math.pi / 180;
+        final x = cx + r * math.cos(latRad2) * sinL;
+        final y = cy - r * math.sin(latRad2);
+        if (first) { path.moveTo(x, y); first = false; } else path.lineTo(x, y);
+      }
+      canvas.drawPath(path, Paint()..color = Colors.lightBlueAccent.withValues(alpha: gridAlpha)..style = PaintingStyle.stroke..strokeWidth = 0.6);
+    }
+
+    // ── Continents ──────────────────────────────────────────────────────────
+    const landFill   = Color(0xFF2dbd7e);
+    const landStroke = Color(0xFF5fffc0);
+
+    // ▸ North America (simplified outline)
+    _drawLandPoly(canvas, cx, cy, r, [
+      [70,-140],[72,-120],[70,-95],[65,-85],[60,-75],[55,-65],[50,-55],[47,-53],
+      [45,-60],[43,-66],[41,-70],[37,-76],[30,-81],[25,-80],[24,-82],[28,-90],
+      [29,-94],[26,-97],[22,-97],[20,-87],[15,-83],[12,-83],[8,-77],[8,-77],
+      [9,-79],[11,-84],[14,-87],[16,-88],[21,-86],[25,-90],[30,-89],[34,-89],
+      [36,-90],[38,-90],[40,-88],[42,-83],[46,-84],[48,-88],[47,-92],[46,-95],
+      [47,-99],[47,-104],[47,-110],[46,-117],[48,-122],[54,-130],[58,-134],
+      [60,-142],[61,-150],[60,-152],[56,-158],[57,-161],[64,-165],[66,-168],
+      [68,-166],[70,-162],[72,-157],[72,-152],[72,-140],[70,-140],
+    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+
+    // ▸ Greenland
+    _drawLandPoly(canvas, cx, cy, r, [
+      [76,-68],[74,-55],[70,-52],[68,-52],[66,-53],[64,-52],[62,-48],[61,-44],
+      [64,-40],[67,-34],[70,-25],[72,-22],[75,-20],[77,-18],[80,-18],[83,-30],
+      [83,-38],[82,-45],[80,-52],[79,-60],[76,-68],
+    ], landFill.withValues(alpha: 0.22), landStroke.withValues(alpha: 0.4));
+
+    // ▸ South America
+    _drawLandPoly(canvas, cx, cy, r, [
+      [12,-72],[11,-62],[10,-63],[8,-60],[5,-52],[2,-50],[0,-50],[-3,-41],
+      [-5,-35],[-8,-35],[-10,-38],[-12,-40],[-15,-40],[-18,-39],[-22,-42],
+      [-23,-43],[-28,-48],[-30,-50],[-33,-53],[-38,-57],[-42,-62],[-46,-65],
+      [-50,-69],[-53,-70],[-55,-64],[-55,-66],[-52,-68],[-47,-65],[-44,-65],
+      [-40,-62],[-35,-57],[-28,-50],[-22,-43],[-18,-40],[-15,-75],[-10,-76],
+      [-5,-80],[0,-78],[5,-77],[10,-75],[12,-72],
+    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+
+    // ▸ Europe (simplified)
+    _drawLandPoly(canvas, cx, cy, r, [
+      [36,-9],[38,-9],[40,-8],[44,-8],[44,-1],[46,2],[47,7],[47,13],[45,13],
+      [44,15],[42,18],[40,18],[38,16],[37,14],[37,15],[38,20],[40,20],[41,22],
+      [42,28],[44,28],[45,29],[46,30],[48,30],[48,22],[52,21],[54,18],[54,14],
+      [55,12],[57,10],[58,7],[58,5],[56,4],[54,10],[54,14],[54,18],[57,22],
+      [60,25],[62,25],[65,25],[68,28],[70,28],[71,26],[70,20],[68,16],[64,14],
+      [62,6],[60,5],[58,5],[56,4],[51,2],[50,-2],[48,-5],[45,-2],[44,0],[43,-2],
+      [40,-8],[38,-9],[36,-9],
+    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+
+    // ▸ Africa
+    _drawLandPoly(canvas, cx, cy, r, [
+      [37,10],[34,12],[30,32],[28,34],[22,37],[18,38],[12,42],[10,44],[8,48],
+      [12,50],[14,50],[12,44],[12,42],[15,38],[18,38],[22,36],[24,32],[24,18],
+      [22,14],[16,12],[12,14],[8,16],[6,2],[4,2],[2,10],[0,10],[-5,10],
+      [-5,14],[-8,14],[-10,16],[-12,14],[-15,12],[-17,12],[-18,30],[-20,34],
+      [-22,36],[-26,33],[-28,30],[-30,28],[-34,26],[-34,18],[-30,16],
+      [-26,14],[-20,12],[-16,6],[-12,2],[-5,-2],[0,-3],[4,8],[8,2],[12,-2],
+      [16,-2],[20,2],[24,10],[28,8],[32,2],[36,10],[37,10],
+    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+
+    // ▸ Asia (coarse approximation)
+    _drawLandPoly(canvas, cx, cy, r, [
+      [70,30],[72,50],[72,70],[70,80],[68,90],[68,100],[66,110],[60,120],
+      [55,130],[52,140],[48,140],[44,132],[40,128],[36,126],[34,120],[28,120],
+      [22,114],[20,110],[16,100],[10,100],[8,98],[6,100],[4,102],[2,104],
+      [0,109],[-2,110],[-6,106],[-4,102],[0,100],[4,96],[8,90],[12,80],
+      [18,72],[22,68],[24,60],[24,54],[26,50],[28,48],[32,36],[36,36],[38,28],
+      [42,28],[44,40],[44,50],[44,52],[48,50],[52,50],[56,40],[60,30],[64,30],
+      [68,30],[70,30],
+    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+
+    // ▸ Australia
+    _drawLandPoly(canvas, cx, cy, r, [
+      [-14,128],[-16,136],[-14,136],[-12,136],[-12,140],[-14,142],[-18,146],
+      [-22,152],[-24,153],[-28,154],[-32,152],[-34,150],[-38,146],[-38,140],
+      [-36,136],[-34,116],[-30,114],[-26,114],[-22,114],[-18,122],[-14,128],
+    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+
+    // ▸ Antarctica (just top edge visible at bottom of globe)
+    _drawLandPoly(canvas, cx, cy, r, [
+      [-70,-180],[-75,-120],[-72,-60],[-74,0],[-72,60],[-75,120],[-70,180],
+    ], landFill.withValues(alpha: 0.18), landStroke.withValues(alpha: 0.3));
+
+    canvas.restore();
+
+    // ── Specular / rim ──────────────────────────────────────────────────────
+    canvas.drawCircle(
+      Offset(cx, cy), r,
+      Paint()..shader = RadialGradient(
+        center: const Alignment(-0.48, -0.48),
+        radius: 0.7,
+        colors: [Colors.white.withValues(alpha: 0.14), Colors.transparent],
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
+    );
+    canvas.drawCircle(
+      Offset(cx, cy), r,
+      Paint()..color = Colors.blueAccent.withValues(alpha: 0.28)..style = PaintingStyle.stroke..strokeWidth = 1.2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GlobePainter old) => old.rotation != rotation;
 }
