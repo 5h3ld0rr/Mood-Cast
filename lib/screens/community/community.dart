@@ -593,64 +593,6 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  void _showAddSongDialog(String mood) {
-    final titleController = TextEditingController();
-    final artistController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.backgroundDark,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          'Add to the $mood Vibe',
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Song Title',
-                labelStyle: TextStyle(color: Colors.white54),
-              ),
-            ),
-            TextField(
-              controller: artistController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Artist',
-                labelStyle: TextStyle(color: Colors.white54),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (titleController.text.isNotEmpty &&
-                  artistController.text.isNotEmpty) {
-                _communityService.addSongToMoodboard(
-                  mood: mood,
-                  title: titleController.text,
-                  artist: artistController.text,
-                );
-                Navigator.pop(context);
-                _showFeedback('Song added to the Live Moodboard! 🎵');
-              }
-            },
-            child: const Text('ADD VIBE'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showMoodSnippet(String mood, String region) {
     YouTubeMusicMetadata? snippetMetadata;
@@ -1149,6 +1091,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               ),
 
               // Collaborative Moodboards Section
+              // Songs Leaderboard Section
               SliverToBoxAdapter(
                 child: ValueListenableBuilder<String>(
                   valueListenable: _moodService.currentMood,
@@ -1163,78 +1106,78 @@ class _CommunityScreenState extends State<CommunityScreen>
                       stream: _communityService.getMoodboardSongs(boardMood),
                       builder: (context, snapshot) {
                         final songs = snapshot.data ?? [];
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                        
+                        return Container(
+                          margin: const EdgeInsets.only(top: 8, bottom: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Live ${boardMood}board',
+                                        '$boardMood Tribe Anthem',
                                         style: const TextStyle(
                                           color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: -0.5,
                                         ),
                                       ),
-                                      const Text(
-                                        'Ranked by the community',
+                                      Text(
+                                        'TOP SONGS RIGHT NOW',
                                         style: TextStyle(
-                                          color: Colors.white54,
-                                          fontSize: 13,
+                                          color: themeColor.withValues(alpha: 0.7),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 1.5,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  IconButton(
-                                    onPressed: () =>
-                                        _showAddSongDialog(boardMood),
-                                    icon: Icon(
-                                      Icons.add_box_rounded,
-                                      color: themeColor,
-                                    ),
-                                  ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 180,
-                              child: songs.isEmpty
-                                  ? const Center(
-                                      child: Text(
-                                        'No songs added yet. Be the first!',
-                                        style: TextStyle(color: Colors.white24),
-                                      ),
-                                    )
-                                  : ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                      ),
-                                      itemCount: songs.length,
-                                      itemBuilder: (context, index) {
-                                        final song = songs[index];
-                                        return _buildMoodboardItem(
-                                          song,
-                                          boardMood,
-                                          index,
-                                        );
-                                      },
+                              const SizedBox(height: 32),
+                              if (songs.isEmpty)
+                                Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(32),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.05),
+                                      borderRadius: BorderRadius.circular(24),
                                     ),
-                            ),
-                            const SizedBox(height: 32),
-                          ],
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.leaderboard_outlined, color: themeColor.withValues(alpha: 0.3), size: 48),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'The board is empty.\nSet the vibe for your tribe!',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(color: Colors.white38, fontSize: 13),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else ...[
+                                _buildLeaderboardPodium(songs.take(3).toList(), boardMood),
+                                if (songs.length > 3) ...[
+                                  const SizedBox(height: 24),
+                                  ...songs.skip(3).take(7).toList().asMap().entries.map((entry) {
+                                    return _buildLeaderboardChartItem(
+                                      entry.value,
+                                      boardMood,
+                                      entry.key + 3,
+                                    );
+                                  }),
+                                ],
+                              ],
+                            ],
+                          ),
                         );
                       },
                     );
@@ -1905,103 +1848,250 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  Widget _buildMoodboardItem(MoodboardSong song, String mood, int index) {
-    final color = AppTheme.moodColors[mood] ?? Colors.amber;
+  Widget _buildLeaderboardPodium(List<MoodboardSong> topSongs, String mood) {
+    // Sort for podium order: [2nd, 1st, 3rd]
+    List<MoodboardSong?> podiumItems = [null, null, null];
+    if (topSongs.length > 1) podiumItems[0] = topSongs[1]; // 2nd
+    if (topSongs.isNotEmpty) podiumItems[1] = topSongs[0]; // 1st
+    if (topSongs.length > 2) podiumItems[2] = topSongs[2]; // 3rd
 
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withValues(alpha: 0.1)),
-      ),
-      child: Stack(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // 2nd Place
+        if (podiumItems[0] != null)
+          Expanded(child: _buildPodiumMember(podiumItems[0]!, mood, 2, 100)),
+        const SizedBox(width: 12),
+        // 1st Place
+        if (podiumItems[1] != null)
+          Expanded(child: _buildPodiumMember(podiumItems[1]!, mood, 1, 140)),
+        const SizedBox(width: 12),
+        // 3rd Place
+        if (podiumItems[2] != null)
+          Expanded(child: _buildPodiumMember(podiumItems[2]!, mood, 3, 90)),
+      ],
+    );
+  }
+
+  Widget _buildPodiumMember(MoodboardSong song, String mood, int rank, double height) {
+    final color = AppTheme.moodColors[mood] ?? Colors.amber;
+    final isFirst = rank == 1;
+
+    return GestureDetector(
+      onTap: () {
+        if (song.videoId != null) {
+          _playerService.play(SongInfo(
+            videoId: song.videoId!,
+            title: song.title,
+            artist: song.artist,
+            coverUrl: song.coverUrl,
+          ));
+        } else {
+          _showFeedback('Unable to play this track 😔');
+        }
+      },
+      child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.music_note,
-                      color: color.withValues(alpha: 0.5),
-                      size: 32,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  song.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  song.artist,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: GestureDetector(
-              onTap: () => _vibeWithSong(mood, song.id),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Container(
+                width: isFirst ? 110 : 90,
+                height: isFirst ? 110 : 90,
                 decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      color.withValues(alpha: 0.8),
+                      color.withValues(alpha: 0.2),
+                    ],
+                  ),
+                  boxShadow: isFirst ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    )
+                  ] : [],
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.flash_on, color: color, size: 10),
-                    const SizedBox(width: 2),
-                    Text(
-                      song.vibes > 999
-                          ? '${(song.vibes / 1000).toStringAsFixed(1)}k'
-                          : '${song.vibes}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                child: Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF1E1E1E),
+                      shape: BoxShape.circle,
                     ),
-                  ],
+                    child: ClipOval(
+                      child: song.coverUrl != null
+                          ? Image.network(song.coverUrl!, fit: BoxFit.cover)
+                          : Icon(Icons.music_note, color: color.withValues(alpha: 0.5), size: isFirst ? 40 : 30),
+                    ),
+                  ),
                 ),
               ),
+              if (isFirst)
+                Positioned(
+                  top: -5,
+                  child: Icon(Icons.emoji_events, color: color, size: 24),
+                ),
+              Positioned(
+                bottom: -5,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '#$rank',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            song.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isFirst ? 14 : 12,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          Positioned(
-            bottom: 35,
-            right: 5,
-            child: Text(
-              '#${index + 1}',
-              style: TextStyle(
-                color: color.withValues(alpha: 0.2),
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                fontStyle: FontStyle.italic,
+          Text(
+            song.artist,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white54, fontSize: 10),
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => _vibeWithSong(mood, song.id),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.flash_on, color: color, size: 12),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${song.vibes}',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardChartItem(MoodboardSong song, String mood, int index) {
+    final color = AppTheme.moodColors[mood] ?? Colors.amber;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: ListTile(
+        onTap: () {
+          if (song.videoId != null) {
+            _playerService.play(SongInfo(
+              videoId: song.videoId!,
+              title: song.title,
+              artist: song.artist,
+              coverUrl: song.coverUrl,
+            ));
+          } else {
+            _showFeedback('Unable to play this track 😔');
+          }
+        },
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: SizedBox(
+          width: 60,
+          child: Row(
+            children: [
+              Text(
+                '#${index + 1}',
+                style: const TextStyle(
+                  color: Colors.white24,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.white10,
+                ),
+                child: song.coverUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(song.coverUrl!, fit: BoxFit.cover),
+                      )
+                    : const Icon(Icons.music_note, color: Colors.white24, size: 16),
+              ),
+            ],
+          ),
+        ),
+        title: Text(
+          song.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          song.artist,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        trailing: GestureDetector(
+          onTap: () => _vibeWithSong(mood, song.id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.flash_on, color: color, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  '${song.vibes}',
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -2049,7 +2139,9 @@ class _GlobePainter extends CustomPainter {
       visCount++;
 
       if (!started) { path.moveTo(proj.dx, proj.dy); started = true; }
-      else path.lineTo(proj.dx, proj.dy);
+      else {
+        path.lineTo(proj.dx, proj.dy);
+      }
     }
     if (started) path.close();
 
@@ -2116,7 +2208,9 @@ class _GlobePainter extends CustomPainter {
         final latRad2 = lat * math.pi / 180;
         final x = cx + r * math.cos(latRad2) * sinL;
         final y = cy - r * math.sin(latRad2);
-        if (first) { path.moveTo(x, y); first = false; } else path.lineTo(x, y);
+        if (first) { path.moveTo(x, y); first = false; } else {
+          path.lineTo(x, y);
+        }
       }
       canvas.drawPath(path, Paint()..color = Colors.lightBlueAccent.withValues(alpha: gridAlpha)..style = PaintingStyle.stroke..strokeWidth = 0.6);
     }

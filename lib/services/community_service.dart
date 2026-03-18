@@ -157,16 +157,36 @@ class CommunityService {
     required String title,
     required String artist,
     String? coverUrl,
+    String? videoId,
   }) async {
     if (uid == null) return;
+
+    if (videoId != null && videoId.isNotEmpty) {
+      final query = await _firestore
+          .collection('moodboards')
+          .doc(mood)
+          .collection('songs')
+          .where('videoId', isEqualTo: videoId)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        // Song already on the board, just naturally boost its vibes!
+        await query.docs.first.reference.update({
+          'vibes': FieldValue.increment(1),
+        });
+        return;
+      }
+    }
 
     final song = MoodboardSong(
       id: '',
       title: title,
       artist: artist,
       coverUrl: coverUrl,
+      videoId: videoId,
       vibes: 1,
-      addedBy: displayName!,
+      addedBy: displayName ?? 'Organic Pick',
       addedById: uid!,
     );
 

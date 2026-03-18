@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'database_service.dart';
 import 'download_service.dart';
 import 'metrics_service.dart';
+import 'mood_service.dart';
+import 'community_service.dart';
 
 enum AudioQuality { low, medium, high }
 
@@ -422,6 +424,26 @@ class PlayerService {
     if (song != null) {
       await _db.toggleLikedSong(song);
       isLiked.value = !isLiked.value;
+      
+      // Automatically add/vibe to leaderboard if it is now "Liked"
+      if (isLiked.value) {
+        try {
+          final currentMood = MoodService().currentMood.value;
+          final validMoods = ['Happy', 'Sad', 'Angry', 'Chill', 'Focused'];
+          final boardMood = validMoods.contains(currentMood) ? currentMood : 'Happy';
+
+          await CommunityService().addSongToMoodboard(
+            mood: boardMood,
+            title: song.title,
+            artist: song.artist,
+            coverUrl: song.coverUrl,
+            videoId: song.videoId,
+          );
+          debugPrint("PlayerService: Added/Vibed song automatically to $boardMood leaderboard");
+        } catch (e) {
+          debugPrint("PlayerService: Failed to auto-add to leaderboard: $e");
+        }
+      }
     }
   }
 

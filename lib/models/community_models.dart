@@ -169,6 +169,7 @@ class MoodboardSong {
   final String title;
   final String artist;
   final String? coverUrl;
+  final String? videoId;
   final int vibes;
   final String addedBy;
   final String addedById;
@@ -178,6 +179,7 @@ class MoodboardSong {
     required this.title,
     required this.artist,
     this.coverUrl,
+    this.videoId,
     this.vibes = 0,
     required this.addedBy,
     required this.addedById,
@@ -190,6 +192,7 @@ class MoodboardSong {
       title: data['title'] ?? '',
       artist: data['artist'] ?? '',
       coverUrl: data['coverUrl'],
+      videoId: data['videoId'],
       vibes: data['vibes'] ?? 0,
       addedBy: data['addedBy'] ?? 'Anonymous',
       addedById: data['addedById'] ?? '',
@@ -201,6 +204,7 @@ class MoodboardSong {
       'title': title,
       'artist': artist,
       'coverUrl': coverUrl,
+      'videoId': videoId,
       'vibes': vibes,
       'addedBy': addedBy,
       'addedById': addedById,
