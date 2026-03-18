@@ -380,8 +380,11 @@ class PlayerService {
         "PlayerService: Streaming videoId=$targetVideoId via StreamAudioSource...",
       );
 
-      // Using the androidVr client and StreamAudioSource avoids the 403 errors
-      // and eliminates the need to download the entire file before playing.
+      // Eagerly resolve the manifest BEFORE setAudioSource.
+      // Without this, just_audio calls request() lazily mid-buffering,
+      // causing 2-3s of silence. With this, _initStream() is a cache hit → instant.
+      await prewarm(targetVideoId);
+
       await _audioPlayer.setAudioSource(
         _YouTubeStreamAudioSource(
           videoId: targetVideoId,

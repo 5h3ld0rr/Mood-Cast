@@ -43,6 +43,13 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
           _tracks = tracks;
           _isLoading = false;
         });
+
+        // Pre-warm the first 3 tracks in background so tapping them starts instantly
+        for (final track in tracks.take(3)) {
+          if (track.videoId.isNotEmpty) {
+            PlayerService().prewarm(track.videoId); // fire and forget
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
