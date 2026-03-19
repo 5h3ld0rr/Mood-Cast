@@ -22,6 +22,20 @@ class TribeService {
   set currentTribeId(String? value) => currentTribeIdNotifier.value = value;
   Timer? _heartbeatTimer;
   StreamSubscription? _sessionSubscription;
+  TribeSession? _lastKnownSession;
+
+  /// Returns true if the current user is the DJ of the tribe they are in.
+  bool get isDJ {
+    if (currentTribeId == null || uid == null) return false;
+    return _lastKnownSession?.currentDJUid == uid;
+  }
+
+  /// Whether the user is currently in a live tribe session.
+  bool get isTribeActive => currentTribeId != null;
+
+  /// Whether the user is blocked from manually controlling playback.
+  /// (True for tribe members, False for the DJ and independent users)
+  bool get isInteractionLocked => isTribeActive && !isDJ;
 
   /// Joins a tribe session, enforcing only 1 active tribe per user.
   Future<void> joinTribeSession(String tribeId) async {
@@ -48,11 +62,29 @@ class TribeService {
 
     currentTribeId = tribeId;
 
+    // Start a global listener to keep isDJ and session state fresh across the app
+    _sessionSubscription?.cancel();
+    _sessionSubscription = getSessionStream(tribeId).listen((session) {
+      _lastKnownSession = session;
+    });
+
     // Register a callback: if user manually changes playback, auto-leave tribe
+    // UNLESS the user is the DJ, in which case we SYNC the playback to the tribe.
     _playerService.onUserPlaybackAction = () {
       if (currentTribeId != null) {
-        debugPrint('TribeService: User triggered manual playback – auto-leaving tribe.');
-        leaveTribeSession();
+        if (isDJ) {
+          debugPrint('TribeService: DJ triggered playback action – syncing to session.');
+          // Use a slight delay to allow the local player state to update first
+          Future.delayed(const Duration(milliseconds: 100), () {
+            syncPlaybackState(
+              isPaused: !_playerService.isPlaying.value,
+              positionMs: _playerService.position.value.inMilliseconds,
+            );
+          });
+        } else {
+          debugPrint('TribeService: Listener triggered manual playback – auto-leaving tribe.');
+          leaveTribeSession();
+        }
       }
     };
 
@@ -169,7 +201,30 @@ class TribeService {
         .collection('tribe_sessions')
         .doc(tribeId)
         .snapshots()
-        .map((doc) => doc.exists ? TribeSession.fromFirestore(doc) : null);
+        .map((doc) {
+      if (doc.exists) {
+        _lastKnownSession = TribeSession.fromFirestore(doc);
+        return _lastKnownSession;
+      }
+      return null;
+    });
+  }
+
+  /// Syncs the current playback state (play/pause/position) to the tribe session.
+  /// Only the DJ should call this.
+  Future<void> syncPlaybackState({required bool isPaused, int? positionMs}) async {
+    if (currentTribeId == null || !isDJ) return;
+
+    final data = {
+      'isPaused': isPaused,
+      'lastPositionMs': positionMs ?? 0,
+    };
+
+    try {
+      await _firestore.collection('tribe_sessions').doc(currentTribeId).update(data);
+    } catch (e) {
+      debugPrint('TribeService: Failed to sync playback state: $e');
+    }
   }
 
   /// Streams active members (seen within the last 45 seconds)
@@ -204,6 +259,8 @@ class TribeService {
         transaction.update(sessionRef, {
           'currentTrack': track.toMap(),
           'startTime': DateTime.now().millisecondsSinceEpoch,
+          'isPaused': false,
+          'lastPositionMs': 0,
           'skipVotes': [],
         });
       } else {
@@ -234,6 +291,8 @@ class TribeService {
           'currentTrack': nextTrack.toMap(),
           'queue': currentQueue.map((t) => t.toMap()).toList(),
           'startTime': DateTime.now().millisecondsSinceEpoch,
+          'isPaused': false,
+          'lastPositionMs': 0,
           'skipVotes': [],
         });
       } else {

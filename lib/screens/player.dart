@@ -29,7 +29,8 @@ class _PlayerScreenState extends State<PlayerScreen>
   double _dragScale = 1.0;
 
   /// True when user is in a tribe — all local playback controls are locked.
-  bool get _isTribeLocked => TribeService().currentTribeId != null;
+  /// True when the user is restricted from manual playback control.
+  bool get _isInteractionLocked => TribeService().isInteractionLocked;
 
   @override
   void initState() {
@@ -590,7 +591,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         GestureDetector(
                                           behavior: HitTestBehavior.opaque,
                                           onHorizontalDragUpdate: (details) {
-                                            if (_isTribeLocked) return;
+                                            if (_isInteractionLocked) return;
                                             final RenderBox box =
                                                 context.findRenderObject()
                                                     as RenderBox;
@@ -603,7 +604,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             );
                                           },
                                           onTapUp: (details) {
-                                            if (_isTribeLocked) return;
+                                            if (_isInteractionLocked) return;
                                             final RenderBox box =
                                                 context.findRenderObject()
                                                     as RenderBox;
@@ -721,13 +722,13 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             size: 32,
                                           ),
                                           onPressed: () {
-                                            if (!_isTribeLocked) PlayerService().skipToPrevious();
+                                            if (!_isInteractionLocked) PlayerService().skipToPrevious();
                                           },
                                         ),
                                         const SizedBox(width: 16),
                                         GestureDetector(
                                           onTap: () {
-                                            if (!_isTribeLocked) PlayerService().togglePlay();
+                                            if (!_isInteractionLocked) PlayerService().togglePlay();
                                           },
                                           child: Container(
                                             width: 64,
@@ -791,7 +792,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             size: 32,
                                           ),
                                           onPressed: () {
-                                            if (!_isTribeLocked) PlayerService().skipToNext();
+                                            if (!_isInteractionLocked) PlayerService().skipToNext();
                                           },
                                         ),
                                       ],

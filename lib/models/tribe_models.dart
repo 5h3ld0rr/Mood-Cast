@@ -46,6 +46,8 @@ class TribeSession {
   final String? currentDJName;
   final TribeTrack? currentTrack;
   final int startTime; // Epoch milliseconds, so everyone syncs
+  final bool isPaused;
+  final int lastPositionMs; // Position when paused
   final List<TribeTrack> queue;
   final List<String> skipVotes; // UIDs of people who voted to skip
 
@@ -55,6 +57,8 @@ class TribeSession {
     this.currentDJName,
     this.currentTrack,
     this.startTime = 0,
+    this.isPaused = false,
+    this.lastPositionMs = 0,
     this.queue = const [],
     this.skipVotes = const [],
   });
@@ -69,6 +73,8 @@ class TribeSession {
           ? TribeTrack.fromMap(Map<String, dynamic>.from(data['currentTrack']))
           : null,
       startTime: data['startTime'] ?? 0,
+      isPaused: data['isPaused'] ?? false,
+      lastPositionMs: data['lastPositionMs'] ?? 0,
       queue: (data['queue'] as List<dynamic>? ?? [])
           .map((e) => TribeTrack.fromMap(Map<String, dynamic>.from(e)))
           .toList(),
