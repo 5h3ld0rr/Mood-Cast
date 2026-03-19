@@ -839,7 +839,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                 expandedHeight: 120.0,
                 floating: false,
                 pinned: true,
-                backgroundColor: AppTheme.backgroundDark.withValues(alpha: 0.9),
+                backgroundColor: Colors.transparent,
                 elevation: 0,
                 flexibleSpace: FlexibleSpaceBar(
                   title: const Text(

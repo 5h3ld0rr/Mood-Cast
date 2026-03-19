@@ -78,6 +78,11 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
       return;
     }
 
+    // Capture states before we potentially change anything
+    final bool isLocallyPlaying = _playerService.isPlaying.value;
+    final bool shouldBePaused = session.isPaused;
+
+    // 1. Handle Track Changes
     if (_currentlyPlayingTrackId != track.id) {
       _currentlyPlayingTrackId = track.id;
       final songInfo = SongInfo(
@@ -87,31 +92,69 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
         videoId: track.videoId,
       );
 
-      // Record join time BEFORE buffering starts so elapsed calc is accurate
-      final joinedAtMs = DateTime.now().millisecondsSinceEpoch;
-
+      // Start playback (isTribeSync=true prevents recursion/leaving tribe)
       await _playerService.play(songInfo, isTribeSync: true);
+      
+      // If the session says it's paused, pause it immediately after setting source
+      if (shouldBePaused) {
+        await _playerService.togglePlay(isTribeSync: true); // This will call pause
+      }
 
-      // Wait until the audio engine is ready, then seek to the correct position
-      _playerService.processingStateStream
-          .firstWhere((state) =>
-              state == ProcessingState.ready ||
-              state == ProcessingState.completed)
-          .then((_) async {
-        final now = DateTime.now().millisecondsSinceEpoch;
-        // Account for time elapsed since the session's startTime INCLUDING buffering delay
-        final elapsedMs = now - session.startTime;
-        if (elapsedMs > 0) {
-          await _playerService.seekToPosition(
-            Duration(milliseconds: elapsedMs),
-            isTribeSync: true,
-          );
-          debugPrint('TribeSync: Seeked to ${elapsedMs}ms (joined ${now - joinedAtMs}ms after play)');
-        }
-      }).catchError((e) {
-        debugPrint('TribeSync: Seek error – $e');
-      });
+      // Sync position
+      _syncPosition(session);
+    } 
+    // 2. Handle Play/Pause Sync for current track
+    else {
+      // ONLY toggle if we are out of sync
+      if (isLocallyPlaying && shouldBePaused) {
+        debugPrint('TribeSync: DJ paused – pausing locally.');
+        await _playerService.togglePlay(isTribeSync: true);
+      } else if (!isLocallyPlaying && !shouldBePaused) {
+        debugPrint('TribeSync: DJ resumed – resuming locally.');
+        await _playerService.togglePlay(isTribeSync: true);
+      }
+      
+      // Always sync position if we are resuming or if we are far out of sync
+      if (!shouldBePaused) {
+         // Optionally check if we are > 2s off
+         _syncPosition(session);
+      } else if (session.lastPositionMs > 0) {
+        // Sync to the exact pause point
+        await _playerService.seekToPosition(
+          Duration(milliseconds: session.lastPositionMs),
+          isTribeSync: true,
+        );
+      }
     }
+  }
+
+  Future<void> _syncPosition(TribeSession session) async {
+    // Wait until audio engine is ready to seek
+    _playerService.processingStateStream
+        .firstWhere((state) =>
+            state == ProcessingState.ready ||
+            state == ProcessingState.completed)
+        .then((_) async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      
+      int targetMs;
+      if (session.isPaused) {
+        targetMs = session.lastPositionMs;
+      } else {
+        // Dynamic calc from startTime
+        targetMs = now - session.startTime;
+      }
+
+      if (targetMs > 0) {
+        await _playerService.seekToPosition(
+          Duration(milliseconds: targetMs),
+          isTribeSync: true,
+        );
+        debugPrint('TribeSync: Position synced to ${targetMs}ms');
+      }
+    }).catchError((e) {
+      debugPrint('TribeSync: Position sync error – $e');
+    });
   }
 
 

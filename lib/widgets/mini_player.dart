@@ -54,13 +54,8 @@ class _MiniPlayerContent extends StatefulWidget {
 class _MiniPlayerContentState extends State<_MiniPlayerContent> {
   bool _isPressed = false;
 
-  /// Returns true when the user is in a tribe but is NOT the DJ.
-  /// In that state all playback controls should be locked (no-op).
-  bool get _isTribeLocked {
-    final tribeId = TribeService().currentTribeId;
-    if (tribeId == null) return false;
-    return true;
-  }
+  /// Returns true when the user is restricted from manual playback control.
+  bool get _isInteractionLocked => TribeService().isInteractionLocked;
 
 
   @override
@@ -255,7 +250,7 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      if (!_isTribeLocked) PlayerService().togglePlay();
+                                      if (!_isInteractionLocked) PlayerService().togglePlay();
                                     },
                                   );
                                 },
