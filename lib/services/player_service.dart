@@ -8,6 +8,7 @@ import 'download_service.dart';
 import 'metrics_service.dart';
 import 'mood_service.dart';
 import 'community_service.dart';
+import '../main.dart';
 
 enum AudioQuality { low, medium, high }
 
@@ -511,8 +512,15 @@ class PlayerService {
     _fadeTimer = Timer.periodic(const Duration(milliseconds: stepMs), (timer) {
       volume -= volumeStep;
       if (volume <= 0) {
+        timer.cancel(); // Don't forget to cancel the periodic timer!
         _audioPlayer.setVolume(0.0);
         stop();
+        
+        // Use Global Navigator Key to close the PlayerScreen if it's currently showing
+        // We look for the navigator state and pop since PlayerScreen is usually pushed as a full-screen route
+        if (navigatorKey.currentState?.canPop() ?? false) {
+          navigatorKey.currentState?.pop();
+        }
       } else {
         _audioPlayer.setVolume(volume);
       }
