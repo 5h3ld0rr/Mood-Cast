@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 import 'package:flutter/services.dart';
@@ -100,12 +101,12 @@ class _PlayerScreenState extends State<PlayerScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.1),
                     Theme.of(context).canvasColor,
-                    Theme.of(context).canvasColor,
+                    AppTheme.backgroundDeep,
                   ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
               child: SafeArea(
@@ -160,9 +161,16 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     color: Colors.white,
                                     size: 28,
                                   ),
-                                  color: const Color(0xFF1E293B),
+                                  color: AppTheme.backgroundDeep.withValues(alpha: 0.98),
+                                  surfaceTintColor: Colors.transparent,
+                                  elevation: 20,
+                                  shadowColor: Colors.black45,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
+                                    side: BorderSide(
+                                      color: Colors.white.withValues(alpha: 0.05),
+                                      width: 0.5,
+                                    ),
                                   ),
                                   onSelected: (value) {
                                     switch (value) {
@@ -182,10 +190,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       value: 'playlist',
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.playlist_add,
                                             size: 20,
-                                            color: Colors.white70,
+                                            color: Theme.of(context).primaryColor,
                                           ),
                                           const SizedBox(width: 12),
                                           const Text(
@@ -203,10 +211,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       value: 'sleep',
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.timer_outlined,
                                             size: 20,
-                                            color: Colors.white70,
+                                            color: Theme.of(context).primaryColor,
                                           ),
                                           const SizedBox(width: 12),
                                           const Text(
@@ -224,10 +232,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                                       value: 'share',
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.share_outlined,
                                             size: 20,
-                                            color: Colors.white70,
+                                            color: Theme.of(context).primaryColor,
                                           ),
                                           const SizedBox(width: 12),
                                           const Text(
@@ -851,38 +859,59 @@ class _PlayerScreenState extends State<PlayerScreen>
   void _showSleepTimerDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Sleep Timer', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTimerOption('15 Minutes', 15),
-            _buildTimerOption('30 Minutes', 30),
-            _buildTimerOption('60 Minutes', 60),
-            _buildTimerOption('Custom', 0),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'CANCEL',
-              style: TextStyle(
-                color:
-                    Theme.of(context).textTheme.bodyMedium?.color ??
-                    AppTheme.textMuted,
-              ),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: Theme.of(context).canvasColor.withValues(alpha: 0.9),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          title: const Text(
+            'Sleep Timer',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
-        ],
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTimerOption('15 Minutes', 15),
+              _buildTimerOption('30 Minutes', 30),
+              _buildTimerOption('60 Minutes', 60),
+              _buildTimerOption('Custom', 0),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'CANCEL',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      AppTheme.textMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTimerOption(String label, int minutes) {
     return ListTile(
-      title: Text(label, style: const TextStyle(color: Colors.white70)),
+      title: Text(label),
+      leading: Icon(
+        minutes == 0 ? Icons.edit_outlined : Icons.timer_outlined,
+        color: Theme.of(context).primaryColor,
+        size: 20,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: () {
         Navigator.pop(context);
         if (minutes == 0) {
@@ -898,51 +927,62 @@ class _PlayerScreenState extends State<PlayerScreen>
     final TextEditingController controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text(
-          'Custom Timer',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: 'Enter minutes',
-            hintStyle: const TextStyle(color: Colors.white38),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: Theme.of(context).canvasColor.withValues(alpha: 0.9),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          title: const Text(
+            'Custom Timer',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
-          onSubmitted: (value) {
-            _processCustomTime(dialogContext, value);
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(
-              'CANCEL',
-              style: TextStyle(
-                color:
-                    Theme.of(context).textTheme.bodyMedium?.color ??
-                    AppTheme.textMuted,
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Enter minutes',
+              hintStyle: const TextStyle(color: Colors.white38),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _processCustomTime(dialogContext, controller.text);
+            onSubmitted: (value) {
+              _processCustomTime(dialogContext, value);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('OK'),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'CANCEL',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      AppTheme.textMuted,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _processCustomTime(dialogContext, controller.text);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       ),
     );
   }
