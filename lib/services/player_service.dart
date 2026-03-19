@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
@@ -180,6 +181,10 @@ class PlayerService {
   final ValueNotifier<AudioQuality> audioQuality = ValueNotifier<AudioQuality>(
     AudioQuality.high,
   );
+
+  Timer? _sleepTimer;
+  Timer? _fadeTimer;
+  final ValueNotifier<Duration?> sleepTimerRemaining = ValueNotifier<Duration?>(null);
 
   Stream<ProcessingState> get processingStateStream => _audioPlayer.processingStateStream;
 
@@ -461,11 +466,57 @@ class PlayerService {
     if (!isTribeSync) onUserPlaybackAction?.call();
 
     await _audioPlayer.stop();
+    cancelSleepTimer();
     isPlaying.value = false;
     currentSong.value = null;
     progress.value = 0.0;
     position.value = Duration.zero;
     duration.value = const Duration(seconds: 1);
+  }
+
+  void startSleepTimer(Duration duration) {
+    cancelSleepTimer();
+    sleepTimerRemaining.value = duration;
+
+    _sleepTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (sleepTimerRemaining.value != null) {
+        final remaining = sleepTimerRemaining.value! - const Duration(seconds: 1);
+        
+        if (remaining.inSeconds <= 0) {
+          timer.cancel();
+          _initiateFadeOut();
+        } else {
+          sleepTimerRemaining.value = remaining;
+        }
+      }
+    });
+  }
+
+  void cancelSleepTimer() {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _fadeTimer?.cancel();
+    _fadeTimer = null;
+    sleepTimerRemaining.value = null;
+    _audioPlayer.setVolume(1.0); // Reset volume just in case
+  }
+
+  void _initiateFadeOut() {
+    sleepTimerRemaining.value = const Duration(seconds: 0);
+    double volume = _audioPlayer.volume;
+    const int fadeOutDurationMs = 5000; // 5 seconds fade out
+    const int stepMs = 100;
+    final double volumeStep = volume / (fadeOutDurationMs / stepMs);
+
+    _fadeTimer = Timer.periodic(const Duration(milliseconds: stepMs), (timer) {
+      volume -= volumeStep;
+      if (volume <= 0) {
+        _audioPlayer.setVolume(0.0);
+        stop();
+      } else {
+        _audioPlayer.setVolume(volume);
+      }
+    });
   }
 
   Future<void> seek(double value, {bool isTribeSync = false}) async {

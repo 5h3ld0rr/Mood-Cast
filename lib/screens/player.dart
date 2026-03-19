@@ -198,27 +198,38 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         ],
                                       ),
                                     ),
-                                    PopupMenuItem<String>(
-                                      value: 'sleep',
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.timer_outlined,
-                                            size: 20,
-                                            color: Colors.white70,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          const Text(
-                                            'Sleep Timer',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
+                                      PopupMenuItem<String>(
+                                        value: 'sleep',
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.timer_outlined,
+                                              size: 20,
+                                              color: Colors.white70,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 12),
+                                            ValueListenableBuilder<Duration?>(
+                                              valueListenable: PlayerService().sleepTimerRemaining,
+                                              builder: (context, remaining, _) {
+                                                String text = 'Sleep Timer';
+                                                if (remaining != null) {
+                                                  final int mins = remaining.inMinutes;
+                                                  final int secs = remaining.inSeconds % 60;
+                                                  text = 'Sleep Timer ($mins:${secs.toString().padLeft(2, '0')})';
+                                                }
+                                                return Text(
+                                                  text,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
                                     PopupMenuItem<String>(
                                       value: 'share',
                                       child: Row(
@@ -856,6 +867,10 @@ class _PlayerScreenState extends State<PlayerScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (PlayerService().sleepTimerRemaining.value != null) ...[
+              _buildTimerOption('Turn Off', -1),
+              const Divider(color: Colors.white24),
+            ],
             _buildTimerOption('15 Minutes', 15),
             _buildTimerOption('30 Minutes', 30),
             _buildTimerOption('60 Minutes', 60),
@@ -957,11 +972,21 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _setTimer(String label, int minutes) {
-    UIUtils.showSnackBar(
-      context,
-      'Sleep timer set for $label',
-      icon: Icons.timer_outlined,
-    );
+    if (minutes > 0) {
+      PlayerService().startSleepTimer(Duration(minutes: minutes));
+      UIUtils.showSnackBar(
+        context,
+        'Sleep timer set for $label',
+        icon: Icons.timer_outlined,
+      );
+    } else {
+      PlayerService().cancelSleepTimer();
+      UIUtils.showSnackBar(
+        context,
+        'Sleep timer turned off',
+        icon: Icons.timer_off_outlined,
+      );
+    }
   }
 
   void _handleShare() {
