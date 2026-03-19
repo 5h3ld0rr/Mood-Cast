@@ -4,7 +4,6 @@ import '../../../theme.dart';
 import '../../../services/metrics_service.dart';
 import 'package:intl/intl.dart';
 import 'recent_sessions.dart';
-import 'weekly_wrapped.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -21,12 +20,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     'Natural': '😐',
   };
 
-  Map<String, Color> _getMoodColors(BuildContext context) => {
-    'Happy': Colors.purpleAccent,
-    'Angry': Colors.redAccent,
-    'Sad': Colors.blueAccent,
-    'Natural': Theme.of(context).primaryColor,
-  };
+
 
   Map<String, dynamic> _calculateStats(
     List<Map<String, dynamic>> history,
@@ -90,33 +84,69 @@ class _InsightsScreenState extends State<InsightsScreen> {
     }
     double avg = total > 0 ? sumIntensity / total : 0.0;
 
-    // Last 7 days intensity bars
-    List<double> bars = List.generate(7, (index) {
-      final day = now.subtract(Duration(days: 6 - index));
-      final dayMoods = history.where((m) {
-        final ts = m['timestamp'] as Timestamp?;
-        if (ts == null) return false;
-        final date = ts.toDate();
-        return date.year == day.year &&
-            date.month == day.month &&
-            date.day == day.day;
-      }).toList();
+    int blocksCount = 7;
+    if (range == 'Month') blocksCount = 30;
+    else if (range == 'Day') blocksCount = 24;
 
-      if (dayMoods.isEmpty) return 0.1;
-      double dSum = 0;
-      for (var m in dayMoods) {
-        final mood = m['mood'];
-        if (mood == 'Happy') {
-          dSum += 0.9;
-        } else if (mood == 'Natural') {
-          dSum += 0.6;
-        } else if (mood == 'Angry') {
-          dSum += 0.8;
-        } else if (mood == 'Sad') {
-          dSum += 0.3;
+    List<Map<String, dynamic>> bars = List.generate(blocksCount, (index) {
+      if (range == 'Day') {
+        final hour = now.subtract(Duration(hours: 23 - index));
+        final hourMoods = history.where((m) {
+          final ts = m['timestamp'] as Timestamp?;
+          if (ts == null) return false;
+          final date = ts.toDate();
+          return date.year == hour.year &&
+              date.month == hour.month &&
+              date.day == hour.day &&
+              date.hour == hour.hour;
+        }).toList();
+
+        double intensity = 0.05;
+        String dominantMood = 'Natural';
+        if (hourMoods.isNotEmpty) {
+          double dSum = 0;
+          Map<String, int> localCounts = {};
+          for (var m in hourMoods) {
+            final mood = m['mood'];
+            localCounts[mood] = (localCounts[mood] ?? 0) + 1;
+            if (mood == 'Happy') dSum += 0.9;
+            else if (mood == 'Natural') dSum += 0.6;
+            else if (mood == 'Angry') dSum += 0.8;
+            else if (mood == 'Sad') dSum += 0.3;
+          }
+          intensity = (dSum / hourMoods.length).clamp(0.05, 1.0);
+          dominantMood = localCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
         }
+        return {'intensity': intensity, 'mood': dominantMood};
+      } else {
+        final day = now.subtract(Duration(days: blocksCount - 1 - index));
+        final dayMoods = history.where((m) {
+          final ts = m['timestamp'] as Timestamp?;
+          if (ts == null) return false;
+          final date = ts.toDate();
+          return date.year == day.year &&
+              date.month == day.month &&
+              date.day == day.day;
+        }).toList();
+
+        double intensity = 0.05;
+        String dominantMood = 'Natural';
+        if (dayMoods.isNotEmpty) {
+          double dSum = 0;
+          Map<String, int> localCounts = {};
+          for (var m in dayMoods) {
+            final mood = m['mood'];
+            localCounts[mood] = (localCounts[mood] ?? 0) + 1;
+            if (mood == 'Happy') dSum += 0.9;
+            else if (mood == 'Natural') dSum += 0.6;
+            else if (mood == 'Angry') dSum += 0.8;
+            else if (mood == 'Sad') dSum += 0.3;
+          }
+          intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
+          dominantMood = localCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+        }
+        return {'intensity': intensity, 'mood': dominantMood};
       }
-      return (dSum / dayMoods.length).clamp(0.1, 1.0);
     });
 
     return {
@@ -190,22 +220,28 @@ class _InsightsScreenState extends State<InsightsScreen> {
                         ),
                       ),
                       Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                          ),
+                          color: Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: TabBar(
-                          indicatorColor: Theme.of(context).primaryColor,
-                          labelColor: Theme.of(context).primaryColor,
+                          indicator: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.4), blurRadius: 10)
+                            ],
+                          ),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          labelColor: Colors.white,
                           unselectedLabelColor: AppTheme.textMuted,
+                          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                           dividerColor: Colors.transparent,
                           tabs: const [
-                            Tab(text: 'Day'),
-                            Tab(text: 'Week'),
-                            Tab(text: 'Month'),
+                            Tab(text: 'Day', height: 40),
+                            Tab(text: 'Week', height: 40),
+                            Tab(text: 'Month', height: 40),
                           ],
                         ),
                       ),
@@ -235,6 +271,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
   ) {
     final stats = _calculateStats(history, tabType);
     final breakdown = stats['breakdown'] as Map<String, int>;
+    int totalMoods = breakdown.values.fold(0, (sum, count) => sum + count);
+
+    String topMood = 'None';
+    if (breakdown.isNotEmpty) {
+      topMood = breakdown.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+    }
+    final topMoodColor = AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -261,41 +304,73 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ),
             child: Column(
               children: [
-                Stack(
-                  alignment: Alignment.center,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 140,
-                      height: 140,
-                      child: CircularProgressIndicator(
-                        value:
-                            double.tryParse(
-                              stats['positive'].replaceAll('%', ''),
-                            )! /
-                            100,
-                        strokeWidth: 12,
-                        backgroundColor: Colors.white.withValues(alpha: 0.05),
-                        valueColor: AlwaysStoppedAnimation(
-                          Theme.of(context).primaryColor,
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          height: 120,
+                          child: CircularProgressIndicator(
+                            value: double.tryParse(stats['positive'].replaceAll('%', ''))! / 100,
+                            strokeWidth: 10,
+                            backgroundColor: Colors.white.withValues(alpha: 0.05),
+                            valueColor: AlwaysStoppedAnimation(topMoodColor),
+                          ),
                         ),
-                      ),
+                        Column(
+                          children: [
+                            Text(
+                              stats['positive'],
+                              style: TextStyle(
+                                color: topMoodColor,
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text(
+                              'POSITIVE',
+                              style: TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 9,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                     Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const Text('Dominant Mood', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                        const SizedBox(height: 4),
                         Text(
-                          stats['positive'],
+                          topMood,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 32,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const Text(
-                          'POSITIVE',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 10,
-                            letterSpacing: 1,
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: topMoodColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: topMoodColor.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            'Highest records: ${breakdown[topMood] ?? 0}',
+                            style: TextStyle(
+                              color: topMoodColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -303,38 +378,63 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
-                Wrap(
-                  spacing: 20,
-                  runSpacing: 12,
-                  children: _moodEmojis.keys.map((mood) {
+                Column(
+                  children: breakdown.keys.map((mood) {
                     final count = breakdown[mood] ?? 0;
-                    return SizedBox(
-                      width: (MediaQuery.of(context).size.width - 100) / 2,
+                    final percentage = totalMoods > 0 ? (count / totalMoods) : 0.0;
+                    final moodColor = AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
                       child: Row(
                         children: [
                           Container(
-                            width: 8,
-                            height: 8,
+                            width: 12,
+                            height: 12,
                             decoration: BoxDecoration(
-                              color: _getMoodColors(context)[mood],
+                              color: moodColor,
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: moodColor.withValues(alpha: 0.3),
+                                  blurRadius: 6,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            mood,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 70,
+                            child: Text(
+                              mood,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                          const Spacer(),
-                          Text(
-                            count.toString(),
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: percentage,
+                                backgroundColor: Colors.white.withValues(alpha: 0.05),
+                                valueColor: AlwaysStoppedAnimation(moodColor),
+                                minHeight: 8,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 30,
+                            child: Text(
+                              count.toString(),
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(
+                                color: AppTheme.textMuted,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -345,36 +445,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ],
             ),
           ),
-          if (tabType == 'Week') ...[
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.star_rounded, color: Colors.amber),
-                label: const Text(
-                  'VIEW WEEKLY WRAPPED',
-                  style: TextStyle(letterSpacing: 1.5, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                  foregroundColor: Theme.of(context).primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.5)),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WeeklyWrappedScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -400,8 +471,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
           ),
           const SizedBox(height: 16),
           Container(
-            height: 160,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            height: 180,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
             decoration: BoxDecoration(
               color: AppTheme.cardBg,
               borderRadius: BorderRadius.circular(20),
@@ -409,12 +481,14 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: (stats['bars'] as List<double>)
-                  .map((val) => _buildBar(val))
-                  .toList(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              child: CustomPaint(
+                painter: _SplineChartPainter(
+                  stats['bars'] as List<Map<String, dynamic>>,
+                  Theme.of(context).primaryColor,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 32),
@@ -460,8 +534,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
               child: _buildSessionTile(
                 mood,
                 dateStr,
-                _moodEmojis[mood]!,
-                _getMoodColors(context)[mood]!,
+                _moodEmojis[mood] ?? '✨',
+                AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor,
               ),
             );
           }),
@@ -471,23 +545,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
-  Widget _buildBar(double heightFactor) {
-    return Container(
-      width: 14,
-      height: 100 * heightFactor,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).primaryColor.withValues(alpha: 0.3),
-            Theme.of(context).primaryColor,
-          ],
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-        ),
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
+
 
   Widget _buildSessionTile(
     String title,
@@ -534,4 +592,89 @@ class _InsightsScreenState extends State<InsightsScreen> {
       ),
     );
   }
+}
+
+class _SplineChartPainter extends CustomPainter {
+  final List<Map<String, dynamic>> data;
+  final Color baseColor;
+
+  _SplineChartPainter(this.data, this.baseColor);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    final paint = Paint()
+      ..color = baseColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    final widthStep = size.width / (data.length - 1 == 0 ? 1 : data.length - 1);
+    
+    // Normalizing values
+    List<Offset> points = [];
+    for (int i = 0; i < data.length; i++) {
+        final x = i * widthStep;
+        final intensity = data[i]['intensity'] as double;
+        // Invert Y so 1.0 is at top (0.0 height) and 0.0 is at bottom (size.height)
+        final y = size.height - (intensity * size.height);
+        points.add(Offset(x, y));
+    }
+
+    if (points.length == 1) {
+       canvas.drawCircle(points[0], 4, paint..style=PaintingStyle.fill);
+       return;
+    }
+
+    path.moveTo(points[0].dx, points[0].dy);
+    
+    // Smooth bezier curve calculation
+    for (int i = 0; i < points.length - 1; i++) {
+        final p0 = points[i];
+        final p1 = points[i + 1];
+        
+        final controlPoint1 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p0.dy);
+        final controlPoint2 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p1.dy);
+        
+        path.cubicTo(
+           controlPoint1.dx, controlPoint1.dy,
+           controlPoint2.dx, controlPoint2.dy,
+           p1.dx, p1.dy
+        );
+    }
+
+    // Draw the Gradient Area below the curve
+    final areaPath = Path.from(path);
+    areaPath.lineTo(points.last.dx, size.height);
+    areaPath.lineTo(points.first.dx, size.height);
+    areaPath.close();
+
+    final gradientPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          baseColor.withValues(alpha: 0.6),
+          baseColor.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+      
+    canvas.drawPath(areaPath, gradientPaint);
+
+    // Draw the Line itself
+    canvas.drawPath(path, paint);
+    
+    // Draw tiny glowing dots on nodes
+    final dotPaint = Paint()..color = Colors.white;
+    for (var point in points) {
+       canvas.drawCircle(point, 6, Paint()..color=baseColor.withValues(alpha:0.3)..style=PaintingStyle.fill);
+       canvas.drawCircle(point, 3, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
