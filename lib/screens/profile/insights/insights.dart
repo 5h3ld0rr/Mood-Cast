@@ -4,6 +4,7 @@ import '../../../theme.dart';
 import '../../../services/metrics_service.dart';
 import 'package:intl/intl.dart';
 import 'recent_sessions.dart';
+import 'weekly_wrapped.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -344,6 +345,36 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ],
             ),
           ),
+          if (tabType == 'Week') ...[
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.star_rounded, color: Colors.amber),
+                label: const Text(
+                  'VIEW WEEKLY WRAPPED',
+                  style: TextStyle(letterSpacing: 1.5, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                  foregroundColor: Theme.of(context).primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.5)),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WeeklyWrappedScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

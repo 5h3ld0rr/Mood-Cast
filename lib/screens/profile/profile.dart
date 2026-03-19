@@ -8,6 +8,7 @@ import 'privacy_security.dart';
 import 'subscription.dart';
 import 'help_support.dart';
 import 'insights/insights.dart';
+import '../alarm/smart_alarm.dart';
 import '../../services/player_service.dart';
 import '../../widgets/cached_image.dart';
 
@@ -282,6 +283,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               },
                             ),
                             onTap: _showAudioQualityDialog,
+                          ),
+                          _buildDivider(),
+                          _buildMenuItem(
+                            icon: Icons.alarm,
+                            title: 'Smart Wake-Up Alarm',
+                            subtitle: 'Daily morning mood scan',
+                            onTap: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const SmartAlarmScreen(),
+                                ),
+                              );
+                            },
                           ),
                           _buildDivider(),
                           _buildMenuItem(
