@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
@@ -21,6 +23,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     with WidgetsBindingObserver {
   CameraController? _controller;
   bool _isCameraInitialized = false;
+  Face? _detectedFace;
   bool _isScanning = false;
   double _progress = 0.0;
   double _zoomScale = 1.3;
@@ -33,6 +36,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     options: FaceDetectorOptions(
       enableClassification: true,
       enableTracking: true,
+      enableLandmarks: true,
       performanceMode: FaceDetectorMode.accurate,
     ),
   );
@@ -191,13 +195,17 @@ class _AnalysisScreenState extends State<AnalysisScreen>
       _isScanning = true;
       _progress = 0.0;
       _zoomScale = 1.5;
+      _detectedFace = null;
       _detectedMood = null;
       _confidenceScores = {};
       _simulatedHeartRate = 72;
     });
 
     _startHeartRateSimulation();
-
+    
+    // Phase 1: Locking Phase with Haptics and Zoom
+    HapticFeedback.vibrate();
+    
     try {
       final XFile image = await _controller!.takePicture();
 
@@ -220,6 +228,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
       if (faces.isNotEmpty) {
         final face = faces.first;
+        _detectedFace = face;
         final smileProb = face.smilingProbability ?? 0.0;
         final leftEyeOpenProb = face.leftEyeOpenProbability ?? 1.0;
         final rightEyeOpenProb = face.rightEyeOpenProbability ?? 1.0;
@@ -421,27 +430,42 @@ class _AnalysisScreenState extends State<AnalysisScreen>
               children: [
                 if (_isCameraInitialized && _controller != null)
                   Positioned.fill(
-                    child: ClipRect(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return Center(
-                            child: Transform.scale(
-                              scale: _zoomScale,
-                              child: FittedBox(
-                                fit: BoxFit.cover,
-                                child: SizedBox(
-                                  width: constraints.maxWidth,
-                                  height: constraints.maxWidth /
-                                      (_controller!.value.aspectRatio < 1
-                                          ? _controller!.value.aspectRatio
-                                          : 1 / _controller!.value.aspectRatio),
-                                  child: CameraPreview(_controller!),
-                                ),
-                              ),
+                    child: Stack(
+                      children: [
+                        // Lens Iris Mask
+                        Center(
+                          child: ClipPath(
+                            clipper: _LensClipper(),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                return Transform.scale(
+                                  scale: _zoomScale,
+                                  child: FittedBox(
+                                    fit: BoxFit.cover,
+                                    child: SizedBox(
+                                      width: constraints.maxWidth,
+                                      height: constraints.maxWidth /
+                                          (_controller!.value.aspectRatio < 1
+                                              ? _controller!.value.aspectRatio
+                                              : 1 /
+                                                  _controller!
+                                                      .value.aspectRatio),
+                                      child: CameraPreview(_controller!),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                        // Circular Lens HUD & Border
+                        Center(
+                          child: _LensHUD(
+                            isScanning: _isScanning,
+                            progress: _progress,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 else
@@ -876,71 +900,76 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   }
 
   Widget _buildBioRow(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('$label: ',
-              style: const TextStyle(color: Colors.white38, fontSize: 9)),
-          Text(
-            value,
-            style: TextStyle(
-              color: Theme.of(context).primaryColor,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+              width: 0.5,
             ),
           ),
-          const SizedBox(width: 8),
-          Icon(icon, color: Theme.of(context).primaryColor, size: 10),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$label: ',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.4),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(
+                icon,
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                size: 12,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   List<Widget> _buildNeuralNodes(double cameraH) {
-    final positions = [
-      {'t': 140.0, 'l': 100.0},
-      {'t': 220.0, 'l': 250.0},
-      {'t': 300.0, 'l': 80.0},
-      {'t': 180.0, 'l': 320.0},
-    ];
-
-    return positions.map((p) {
-      return Positioned(
-        top: p['t'],
-        left: p['l'],
-        child: Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).primaryColor,
-                blurRadius: 10,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
+    if (!_isScanning) return [];
+    
+    return [
+      CustomPaint(
+        size: Size(double.infinity, cameraH),
+        painter: _NeuralConnectionPainter(
+          progress: _progress,
+          color: Theme.of(context).primaryColor,
+          face: _detectedFace,
         ),
-      );
-    }).toList();
+      ),
+    ];
   }
 
   Widget _buildMoodBreakdown() {
     return Column(
       children: _confidenceScores.entries.map((e) {
         if (e.value < 0.05) return const SizedBox.shrink();
+        final color = AppTheme.moodColors[e.key] ?? Colors.white;
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -949,34 +978,55 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                 children: [
                   Text(
                     e.key.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: color.withValues(alpha: 0.8),
                       fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
                     ),
                   ),
                   Text(
                     '${(e.value * 100).toInt()}%',
                     style: TextStyle(
-                      color: AppTheme.moodColors[e.key],
-                      fontSize: 11,
+                      color: color,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: e.value,
-                  backgroundColor: Colors.white.withValues(alpha: 0.05),
-                  valueColor: AlwaysStoppedAnimation(
-                    AppTheme.moodColors[e.key] ?? Colors.white,
+              const SizedBox(height: 8),
+              Stack(
+                children: [
+                  Container(
+                    height: 6,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
-                  minHeight: 4,
-                ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeOutCubic,
+                    height: 6,
+                    width: MediaQuery.of(context).size.width * 0.7 * e.value,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [color.withValues(alpha: 0.3), color],
+                      ),
+                      borderRadius: BorderRadius.circular(3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -988,34 +1038,254 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   Widget _buildCorner(BuildContext context,
       {required bool isTop, required bool isLeft}) {
     return Container(
-      width: 25,
-      height: 25,
+      width: 35,
+      height: 35,
       decoration: BoxDecoration(
         border: Border(
           top: isTop
               ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  width: 2)
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
+                  width: 3)
               : BorderSide.none,
           bottom: !isTop
               ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  width: 2)
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
+                  width: 3)
               : BorderSide.none,
           left: isLeft
               ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  width: 2)
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
+                  width: 3)
               : BorderSide.none,
           right: !isLeft
               ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                  width: 2)
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
+                  width: 3)
               : BorderSide.none,
         ),
       ),
     );
   }
+}
+
+class _LensClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()
+      ..addOval(Rect.fromCircle(
+        center: Offset(size.width / 2, size.height / 2),
+        radius: (size.width / 2) * 0.85,
+      ));
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _LensHUD extends StatefulWidget {
+  final bool isScanning;
+  final double progress;
+
+  const _LensHUD({required this.isScanning, required this.progress});
+
+  @override
+  State<_LensHUD> createState() => _LensHUDState();
+}
+
+class _LensHUDState extends State<_LensHUD> with SingleTickerProviderStateMixin {
+  late AnimationController _rotationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).primaryColor;
+    final size = MediaQuery.of(context).size.width;
+    final radius = (size / 2) * 0.85;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer Rotating HUD
+          RotationTransition(
+            turns: _rotationController,
+            child: CustomPaint(
+              size: Size(radius * 2.4, radius * 2.4),
+              painter: _HUDPainter(color: color.withValues(alpha: 0.3)),
+            ),
+          ),
+          // Inner Glowing Border
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 500),
+            width: radius * 2,
+            height: radius * 2,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: widget.isScanning ? color : color.withValues(alpha: 0.4),
+                width: widget.isScanning ? 4 : 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: widget.isScanning ? 0.6 : 0.2),
+                  blurRadius: widget.isScanning ? 25 : 15,
+                  spreadRadius: widget.isScanning ? 5 : 2,
+                ),
+              ],
+            ),
+          ),
+          if (widget.isScanning)
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(seconds: 2),
+              builder: (context, value, child) {
+                return Container(
+                  width: radius * 2.1,
+                  height: radius * 2.1,
+                  child: CircularProgressIndicator(
+                    value: widget.progress,
+                    strokeWidth: 2,
+                    color: color,
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HUDPainter extends CustomPainter {
+  final Color color;
+  _HUDPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // Draw 4 dashed arcs
+    for (int i = 0; i < 4; i++) {
+      final startAngle = (i * 90 + 10) * (math.pi / 180);
+      const sweepAngle = 70 * (math.pi / 180);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        paint,
+      );
+    }
+
+    // Draw small ticks
+    for (int i = 0; i < 24; i++) {
+      final angle = (i * 15) * (math.pi / 180);
+      final p1 = Offset(
+        center.dx + (radius - 5) * math.cos(angle),
+        center.dy + (radius - 5) * math.sin(angle),
+      );
+      final p2 = Offset(
+        center.dx + (radius + 5) * math.cos(angle),
+        center.dy + (radius + 5) * math.sin(angle),
+      );
+      canvas.drawLine(p1, p2, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _NeuralConnectionPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Face? face;
+
+  _NeuralConnectionPainter({
+    required this.progress,
+    required this.color,
+    this.face,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress < 0.1) return;
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: (1 - progress).clamp(0, 1) * 0.4)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    final random = math.Random(42);
+    final points = List.generate(15, (index) {
+      return Offset(
+        random.nextDouble() * size.width,
+        random.nextDouble() * size.height,
+      );
+    });
+
+    for (int i = 0; i < points.length; i++) {
+      for (int j = i + 1; j < points.length; j++) {
+        final dist = (points[i] - points[j]).distance;
+        if (dist < 150 && random.nextDouble() > 0.5) {
+          canvas.drawLine(points[i], points[j], paint);
+        }
+      }
+    }
+    
+    // Draw dots at points
+    final dotPaint = Paint()..color = color.withValues(alpha: 0.6);
+    for (var p in points) {
+      canvas.drawCircle(p, 2 * (1 + progress), dotPaint);
+    }
+
+    // Highlight face if detected (simulate landmark connections)
+    if (face != null && progress > 0.4) {
+      final facePaint = Paint()
+        ..color = color.withValues(alpha: 0.8)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+      
+      // Map ML Kit coordinates to preview size (simplified)
+      final previewRect = Rect.fromLTWH(
+        size.width * 0.2, 
+        size.height * 0.2, 
+        size.width * 0.6, 
+        size.height * 0.4
+      );
+      
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(previewRect, const Radius.circular(20)), 
+        facePaint
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class _PulseCircle extends StatefulWidget {
