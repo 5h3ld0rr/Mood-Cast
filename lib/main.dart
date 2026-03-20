@@ -11,6 +11,7 @@ import 'services/weather_service.dart';
 import 'services/download_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/mood_service.dart';
+import 'services/player_service.dart';
 import 'widgets/mood_background.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -18,6 +19,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Initialize Audio & Player
+  await PlayerService().init();
 
   // Initialize Google Sign In (Required for 7.0.0+)
   await GoogleSignIn.instance.initialize();

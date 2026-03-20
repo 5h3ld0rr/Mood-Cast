@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:http/http.dart' as http;
+import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
+import 'audio_handler.dart';
 import 'database_service.dart';
 import 'download_service.dart';
 import 'metrics_service.dart';
@@ -20,6 +24,15 @@ class SongInfo {
   final String? videoId;
   final String? localPath;
   final bool isPinned;
+
+  String? get highResCoverUrl {
+    if (coverUrl == null) return null;
+    if (videoId != null && coverUrl!.contains('img.youtube.com')) {
+      // Try to get maxresdefault for best quality
+      return "https://img.youtube.com/vi/$videoId/maxresdefault.jpg";
+    }
+    return coverUrl;
+  }
 
   SongInfo({
     required this.title,
@@ -163,6 +176,7 @@ class PlayerService {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final yt.YoutubeExplode _yt = yt.YoutubeExplode();
   final DatabaseService _db = DatabaseService();
+  late MyAudioHandler _audioHandler;
 
   final ValueNotifier<SongInfo?> currentSong = ValueNotifier<SongInfo?>(null);
   final ValueNotifier<bool> isPlaying = ValueNotifier<bool>(false);
@@ -240,7 +254,13 @@ class PlayerService {
     });
 
     _audioPlayer.durationStream.listen((d) {
-      if (d != null) duration.value = d;
+      if (d != null) {
+        duration.value = d;
+        // Update MediaItem when duration is resolved
+        if (currentSong.value != null) {
+          _audioHandler.updateMediaItemFromSong(currentSong.value!);
+        }
+      }
     });
 
     _audioPlayer.processingStateStream.listen((state) {
@@ -251,6 +271,22 @@ class PlayerService {
         skipToNext(autoPlay: true);
       }
     });
+  }
+
+  Future<void> init() async {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.music());
+
+    _audioHandler = await AudioService.init(
+      builder: () => MyAudioHandler(_audioPlayer),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.moodcast.audio.v3',
+        androidNotificationChannelName: 'MoodCast',
+        androidNotificationOngoing: false,
+        androidStopForegroundOnPause: true,
+        notificationColor: Color(0xFF00C2FF),
+      ),
+    );
   }
 
   Future<void> playQueue(List<SongInfo> queue, {int initialIndex = 0, bool isTribeSync = false}) async {
@@ -332,12 +368,18 @@ class PlayerService {
     if (!isTribeSync) onUserPlaybackAction?.call();
 
     currentSong.value = song;
+    _audioHandler.updateMediaItemFromSong(song);
     isLiked.value = await _db.isSongLiked(song);
     progress.value = 0.0;
     position.value = Duration.zero;
     duration.value = const Duration(seconds: 1);
     isBuffering.value = true;
     _db.saveRecentTrack(song);
+
+    // Update MediaItem immediately for the system notification.
+    // We don't await this as it might involve an image download,
+    // and we want playback to start instantly.
+    unawaited(_audioHandler.updateMediaItemFromSong(song));
 
     try {
       await _audioPlayer.stop();
@@ -370,6 +412,34 @@ class PlayerService {
         debugPrint("PlayerService: No videoId found, cannot play.");
         isBuffering.value = false;
         return;
+      }
+
+      if (targetVideoId != null && targetVideoId.isNotEmpty) {
+        try {
+          // Fetch the full video object to get the highest resolution thumbnail
+          final video = await _yt.videos.get(targetVideoId);
+          final bestThumb = video.thumbnails.maxResUrl.isNotEmpty 
+              ? video.thumbnails.maxResUrl 
+              : video.thumbnails.standardResUrl.isNotEmpty 
+                  ? video.thumbnails.standardResUrl 
+                  : video.thumbnails.highResUrl;
+          
+          if (bestThumb.isNotEmpty && bestThumb != song.coverUrl) {
+            // Update the song object with the better thumbnail
+            final updatedSong = SongInfo(
+              title: song.title,
+              artist: song.artist,
+              coverUrl: bestThumb,
+              videoId: targetVideoId,
+              localPath: song.localPath,
+              isPinned: song.isPinned,
+            );
+            currentSong.value = updatedSong;
+            unawaited(_audioHandler.updateMediaItemFromSong(updatedSong));
+          }
+        } catch (e) {
+          debugPrint("PlayerService: Could not fetch video metadata for $targetVideoId: $e");
+        }
       }
 
       // 1. Check if song is downloaded
@@ -425,7 +495,7 @@ class PlayerService {
     }
   }
 
-  void toggleLiked() async {
+  Future<void> toggleLiked() async {
     final song = currentSong.value;
     if (song != null) {
       await _db.toggleLikedSong(song);

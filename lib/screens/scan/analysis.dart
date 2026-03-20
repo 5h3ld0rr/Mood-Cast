@@ -1156,7 +1156,7 @@ class _LensHUDState extends State<_LensHUD> with SingleTickerProviderStateMixin 
               tween: Tween(begin: 0, end: 1),
               duration: const Duration(seconds: 2),
               builder: (context, value, child) {
-                return Container(
+                return SizedBox(
                   width: radius * 2.1,
                   height: radius * 2.1,
                   child: CircularProgressIndicator(

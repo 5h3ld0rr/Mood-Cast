@@ -1,8 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../theme.dart';
 import '../../services/notification_service.dart';
-import '../../utils/ui_utils.dart';
 import 'notification_details.dart';
 
 class NotificationListScreen extends StatefulWidget {
@@ -32,263 +32,273 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF080C14),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Glassmorphic App Bar
+          SliverAppBar(
+            expandedHeight: 140,
+            floating: false,
+            pinned: true,
+            backgroundColor: const Color(0xFF080C14).withValues(alpha: 0.8),
+            elevation: 0,
+            flexibleSpace: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: FlexibleSpaceBar(
+                  centerTitle: false,
+                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+                  title: const Text(
+                    'Activity',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  background: Stack(
+                    children: [
+                      Positioned(
+                        top: -50,
+                        right: -50,
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.primary.withValues(alpha: 0.08),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              if (notifications.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.clear_all, color: Colors.white),
+                  onPressed: () => _showClearConfirmation(context),
+                ),
+            ],
           ),
-        ),
-        actions: [
-          if (notifications.isNotEmpty)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onSelected: (value) {
-                if (value == 'clear') {
-                  setState(() {
-                    NotificationService().clearHistory();
-                  });
-                  UIUtils.showSnackBar(context, 'Notification history cleared');
-                } else if (value == 'read_all') {
-                  setState(() {
-                    NotificationService().markAllAsRead();
-                  });
-                  UIUtils.showSnackBar(context, 'All marked as read');
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'read_all',
-                  child: Row(
-                    children: [
-                      Icon(Icons.done_all, size: 20, color: AppTheme.primary),
-                      SizedBox(width: 8),
-                      Text('Mark all as read'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'clear',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.delete_outline,
-                        size: 20,
-                        color: Colors.redAccent,
+
+          // Notification Content
+          if (notifications.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.05),
+                        shape: BoxShape.circle,
                       ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Clear all',
-                        style: TextStyle(color: Colors.redAccent),
+                      child: Icon(
+                        Icons.notifications_none_rounded,
+                        size: 64,
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Quiet for now',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your latest updates will appear here.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final notification = notifications[notifications.length - 1 - index];
+                    return _NotificationTile(
+                      notification: notification,
+                      timeAgo: _getTimeAgo(notification['timestamp'] ?? DateTime.now()),
+                      onTap: () => _openDetails(context, notification),
+                    );
+                  },
+                  childCount: notifications.length,
+                ),
+              ),
             ),
         ],
       ),
-      body: notifications.isEmpty
-          ? Center(
+    );
+  }
+
+  void _showClearConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1F2B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Clear All?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'This will permanently remove your activity history.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL', style: TextStyle(color: Colors.white38)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => NotificationService().clearHistory());
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('CLEAR'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openDetails(BuildContext context, Map<String, dynamic> notification) {
+    NotificationService().markAsRead(notification['id']);
+    setState(() {});
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NotificationDetailsScreen(
+          id: notification['id'],
+          title: notification['title'] ?? '',
+          body: notification['body'] ?? '',
+          payload: notification['data']?.toString(),
+          timestamp: notification['timestamp'] ?? DateTime.now(),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationTile extends StatelessWidget {
+  final Map<String, dynamic> notification;
+  final String timeAgo;
+  final VoidCallback onTap;
+
+  const _NotificationTile({
+    required this.notification,
+    required this.timeAgo,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isRead = notification['isRead'] ?? false;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isRead ? Colors.white.withValues(alpha: 0.03) : Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isRead ? Colors.white.withValues(alpha: 0.05) : AppTheme.primary.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isRead ? Colors.white.withValues(alpha: 0.05) : AppTheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                _getIconForTitle(notification['title'] ?? ''),
+                color: isRead ? Colors.white24 : AppTheme.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withValues(alpha: 0.05),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.notifications_off_outlined,
-                      size: 64,
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notification['title'] ?? '',
+                          style: TextStyle(
+                            color: isRead ? Colors.white54 : Colors.white,
+                            fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        timeAgo,
+                        style: TextStyle(
+                          color: Colors.white24,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 4),
                   Text(
-                    'All caught up!',
+                    notification['body'] ?? '',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      color: isRead ? Colors.white24 : Colors.white70,
+                      fontSize: 13,
+                      height: 1.3,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No new notifications at the moment.',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontSize: 14,
-                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: notifications.length,
-              itemBuilder: (context, index) {
-                // Show latest first
-                final notification =
-                    notifications[notifications.length - 1 - index];
-                final bool isRead = notification['isRead'] ?? false;
-                final DateTime timestamp = notification['timestamp'] is DateTime
-                    ? notification['timestamp']
-                    : DateTime.now();
-
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      NotificationService().markAsRead(notification['id']);
-                    });
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NotificationDetailsScreen(
-                          id: notification['id'],
-                          title: notification['title'] ?? '',
-                          body: notification['body'] ?? '',
-                          payload: notification['data']?.toString(),
-                          timestamp: timestamp,
-                        ),
-                      ),
-                    );
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isRead
-                          ? AppTheme.cardBg.withValues(alpha: 0.1)
-                          : AppTheme.cardBg,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isRead
-                            ? Colors.white.withValues(alpha: 0.03)
-                            : AppTheme.primary.withValues(alpha: 0.2),
-                        width: 1,
-                      ),
-                      boxShadow: isRead
-                          ? []
-                          : [
-                              BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Stack(
-                          children: [
-                            Hero(
-                              tag: 'notif_icon_${notification['id']}',
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: isRead
-                                      ? Colors.white.withValues(alpha: 0.05)
-                                      : AppTheme.primary.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Icon(
-                                  _getIconForTitle(notification['title'] ?? ''),
-                                  color: isRead
-                                      ? AppTheme.textMuted
-                                      : AppTheme.primary,
-                                  size: 24,
-                                ),
-                              ),
-                            ),
-                            if (!isRead)
-                              Positioned(
-                                top: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 12,
-                                  height: 12,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: const Color(0xFF080C14),
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      notification['title'] ?? '',
-                                      style: TextStyle(
-                                        color: isRead
-                                            ? Colors.white70
-                                            : Colors.white,
-                                        fontWeight: isRead
-                                            ? FontWeight.w500
-                                            : FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    _getTimeAgo(timestamp),
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                notification['body'] ?? '',
-                                style: TextStyle(
-                                  color: isRead
-                                      ? Colors.white.withValues(alpha: 0.4)
-                                      : Colors.white.withValues(alpha: 0.7),
-                                  fontSize: 14,
-                                  height: 1.4,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
             ),
+            if (!isRead)
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(left: 12),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 

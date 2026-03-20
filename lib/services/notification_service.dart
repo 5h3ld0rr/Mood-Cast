@@ -26,7 +26,7 @@ class NotificationService {
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'high_importance_channel', // id
-    'High Importance Notifications', // title
+    'MoodCast Notifications', // title
     description: 'This channel is used for important notifications.',
     importance: Importance.max,
   );
@@ -167,7 +167,7 @@ class NotificationService {
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'high_importance_channel',
-          'High Importance Notifications',
+          'MoodCast Notifications',
           channelDescription:
               'This channel is used for important notifications.',
           importance: Importance.max,
