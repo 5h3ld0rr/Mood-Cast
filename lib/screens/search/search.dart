@@ -166,6 +166,12 @@ class _SearchScreenState extends State<SearchScreen> {
             _searchHistoryService.addSearch(query);
           }
         });
+
+        // Eagerly pre-warm the top 3 results!
+        // This makes them play instantly when the user clicks them.
+        for (var i = 0; i < 3 && i < results.length; i++) {
+          _playerService.prewarm(results[i].videoId);
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);

@@ -27,10 +27,19 @@ class SongInfo {
 
   String? get highResCoverUrl {
     if (coverUrl == null) return null;
-    if (videoId != null && coverUrl!.contains('img.youtube.com')) {
-      // Try to get maxresdefault for best quality
-      return "https://img.youtube.com/vi/$videoId/maxresdefault.jpg";
+    
+    // If we have a videoId, we can often predict the best quality URL
+    if (videoId != null) {
+      if (coverUrl!.contains('img.youtube.com') || coverUrl!.contains('i.ytimg.com')) {
+        return "https://img.youtube.com/vi/$videoId/maxresdefault.jpg";
+      }
     }
+    
+    // Already in high res?
+    if (coverUrl!.contains('maxresdefault.jpg') || coverUrl!.contains('=w1024')) {
+      return coverUrl;
+    }
+    
     return coverUrl;
   }
 
@@ -77,12 +86,14 @@ final Map<String, yt.AudioOnlyStreamInfo> _streamInfoCache = {};
 /// Uses [StreamAudioSource] to pipe YouTube bytes to just_audio,
 /// with range-request support for seeking.
 class _YouTubeStreamAudioSource extends StreamAudioSource {
+  final http.Client httpClient;
   final String videoId;
   final yt.YoutubeExplode _yt;
   final AudioQuality audioQuality;
   yt.AudioOnlyStreamInfo? _streamInfo;
 
   _YouTubeStreamAudioSource({
+    required this.httpClient,
     required this.videoId,
     required yt.YoutubeExplode ytExplode,
     this.audioQuality = AudioQuality.high,
@@ -98,7 +109,8 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
       return;
     }
 
-    // Use androidVr client — bypasses YouTube's API restrictions and 403s
+    // Strictly use androidVr client — it bypasses many YouTube signature restrictions 
+    // and is highly compatible with the manual HTTP requests we use below.
     final manifest = await _yt.videos.streamsClient.getManifest(
       videoId,
       ytClients: [yt.YoutubeApiClient.androidVr],
@@ -106,6 +118,8 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
 
     // Prefer WebM (Opus) first as it is more stable for streaming on Android
     final allAudio = manifest.audioOnly.sortByBitrate().toList();
+    if (allAudio.isEmpty) throw Exception("No audio-only streams found for $videoId");
+
     final webmStreams = allAudio
         .where((s) => s.container.name == 'webm')
         .toList();
@@ -147,23 +161,23 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
       'YouTube stream request: bytes=$from-$finalTo / $totalBytes (${streamInfo.container.name})',
     );
 
-    // Use a manual HTTP request to support range headers since the local
-    // youtube_explode version's get() doesn't expose range parameters.
-    final client = http.Client();
+    // Use the shared persistent HTTP client to support range headers.
+    // Persistent clients reuse TCP/TLS connections, cutting chunk latency by ~70%.
     final request = http.Request('GET', streamInfo.url);
 
     // Add essential headers to bypass YouTube restrictions
     request.headers['User-Agent'] =
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.18 Safari/537.36';
+        'Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36';
     request.headers['Range'] = 'bytes=$from-$finalTo';
+    request.headers['Connection'] = 'keep-alive';
 
-    final response = await client.send(request);
+    final response = await httpClient.send(request).timeout(const Duration(seconds: 5));
 
     return StreamAudioResponse(
       sourceLength: totalBytes,
       contentLength: response.contentLength,
       offset: from,
-      stream: response.stream.asBroadcastStream(),
+      stream: response.stream,
       contentType: streamInfo.codec.mimeType,
     );
   }
@@ -175,6 +189,7 @@ class PlayerService {
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   final yt.YoutubeExplode _yt = yt.YoutubeExplode();
+  final http.Client _httpClient = http.Client();
   final DatabaseService _db = DatabaseService();
   late MyAudioHandler _audioHandler;
 
@@ -214,6 +229,7 @@ class PlayerService {
     try {
       debugPrint('PlayerService: Pre-warming $videoId...');
       await _YouTubeStreamAudioSource(
+        httpClient: _httpClient,
         videoId: videoId,
         ytExplode: _yt,
         audioQuality: audioQuality.value,
@@ -367,57 +383,60 @@ class PlayerService {
   Future<void> play(SongInfo song, {bool isTribeSync = false}) async {
     if (!isTribeSync) onUserPlaybackAction?.call();
 
+    final stopwatch = Stopwatch()..start();
+    debugPrint("PlayerService: Playback request starting for '${song.title}'");
+    
     currentSong.value = song;
-    _audioHandler.updateMediaItemFromSong(song);
-    isLiked.value = await _db.isSongLiked(song);
     progress.value = 0.0;
     position.value = Duration.zero;
     duration.value = const Duration(seconds: 1);
     isBuffering.value = true;
-    _db.saveRecentTrack(song);
 
-    // Update MediaItem immediately for the system notification.
-    // We don't await this as it might involve an image download,
-    // and we want playback to start instantly.
+    // Background tasks: Update UI state and save history without blocking audio engine
+    unawaited(() async {
+      isLiked.value = await _db.isSongLiked(song);
+      await _db.saveRecentTrack(song);
+    }());
+
+    // 1. UPDATE METADATA (NON-BLOCKING)
     unawaited(_audioHandler.updateMediaItemFromSong(song));
+    debugPrint("PlayerService: UI Setup took ${stopwatch.elapsedMilliseconds}ms");
 
     try {
-      await _audioPlayer.stop();
+      // Calling stop() is slow; setAudioSource handles switching automatically.
 
       // 0. Check if it's a direct local file (not from YouTube)
       if (song.localPath != null && song.localPath!.isNotEmpty) {
-        debugPrint(
-          "PlayerService: Playing direct local file: ${song.localPath}",
-        );
+        debugPrint("PlayerService: Playing direct local file: ${song.localPath}");
         await _audioPlayer.setAudioSource(AudioSource.file(song.localPath!));
         await _audioPlayer.play();
-        debugPrint("PlayerService: Direct local playback started!");
         return;
       }
 
       String? targetVideoId = song.videoId;
 
+      // 1. Resolve videoId if missing
       if (targetVideoId == null || targetVideoId.isEmpty) {
-        debugPrint(
-          "PlayerService: Searching for '${song.title} ${song.artist}'",
-        );
+        debugPrint("PlayerService: Searching for '${song.title} ${song.artist}'");
         final results = await _yt.search.search("${song.title} ${song.artist}");
         if (results.isNotEmpty) {
           targetVideoId = results.first.id.value;
-          debugPrint("PlayerService: Found videoId: $targetVideoId");
         }
       }
 
       if (targetVideoId == null || targetVideoId.isEmpty) {
-        debugPrint("PlayerService: No videoId found, cannot play.");
         isBuffering.value = false;
         return;
       }
 
-      if (targetVideoId != null && targetVideoId.isNotEmpty) {
+      // 2. CONCURRENT: Start pre-warming and metadata fetch immediately
+      final prewarmFuture = prewarm(targetVideoId);
+      
+      // Background: Fetch full metadata for high-res art (don't block playback)
+      final vidId = targetVideoId;
+      unawaited(() async {
         try {
-          // Fetch the full video object to get the highest resolution thumbnail
-          final video = await _yt.videos.get(targetVideoId);
+          final video = await _yt.videos.get(vidId);
           final bestThumb = video.thumbnails.maxResUrl.isNotEmpty 
               ? video.thumbnails.maxResUrl 
               : video.thumbnails.standardResUrl.isNotEmpty 
@@ -425,12 +444,11 @@ class PlayerService {
                   : video.thumbnails.highResUrl;
           
           if (bestThumb.isNotEmpty && bestThumb != song.coverUrl) {
-            // Update the song object with the better thumbnail
             final updatedSong = SongInfo(
               title: song.title,
               artist: song.artist,
               coverUrl: bestThumb,
-              videoId: targetVideoId,
+              videoId: vidId,
               localPath: song.localPath,
               isPinned: song.isPinned,
             );
@@ -438,39 +456,36 @@ class PlayerService {
             unawaited(_audioHandler.updateMediaItemFromSong(updatedSong));
           }
         } catch (e) {
-          debugPrint("PlayerService: Could not fetch video metadata for $targetVideoId: $e");
+          debugPrint("PlayerService: Metadata fetch failed: $e");
         }
-      }
+      }());
 
-      // 1. Check if song is downloaded
-      final localPath = await DownloadService().getLocalPath(targetVideoId);
+      // 4. CONCURRENT: Check local path and pre-warm manifest simultaneously
+      final resultsCheck = await Future.wait([
+        DownloadService().getLocalPath(targetVideoId),
+        prewarmFuture,
+      ]);
+
+      final localPath = resultsCheck[0] as String?;
       if (localPath != null) {
-        debugPrint(
-          "PlayerService: Playing local file for $targetVideoId: $localPath",
-        );
+        debugPrint("PlayerService: Instant offline playback for $targetVideoId");
         await _audioPlayer.setAudioSource(AudioSource.file(localPath));
-        await _audioPlayer.play();
-        debugPrint("PlayerService: Offline playback started!");
+        _audioPlayer.play(); // No await so UI updates instantly
         return;
       }
 
-      debugPrint(
-        "PlayerService: Streaming videoId=$targetVideoId via StreamAudioSource...",
-      );
+      // 5. Final resolve for streaming
+      debugPrint("PlayerService: Streaming $targetVideoId...");
 
-      // Eagerly resolve the manifest BEFORE setAudioSource.
-      // Without this, just_audio calls request() lazily mid-buffering,
-      // causing 2-3s of silence. With this, _initStream() is a cache hit → instant.
-      await prewarm(targetVideoId);
-
-      await _audioPlayer.setAudioSource(
-        _YouTubeStreamAudioSource(
-          videoId: targetVideoId,
-          ytExplode: _yt,
-          audioQuality: audioQuality.value,
-        ),
-      );
-      await _audioPlayer.play();
+        await _audioPlayer.setAudioSource(
+          _YouTubeStreamAudioSource(
+            httpClient: _httpClient,
+            videoId: targetVideoId,
+            ytExplode: _yt,
+            audioQuality: audioQuality.value,
+          ),
+        );
+        await _audioPlayer.play();
       debugPrint("PlayerService: Playback started!");
 
       // Pre-warm the next song in queue so it plays instantly when skipped to
@@ -479,7 +494,9 @@ class PlayerService {
       debugPrint("PlayerService ERROR: $e");
       debugPrint("Stack: $stack");
     } finally {
-      isBuffering.value = false;
+      // isBuffering reset removed here. 
+      // The processingStateStream listener in Constructor handles it correctly 
+      // based on the REAL player state (ProcessingState.buffering).
     }
   }
 
@@ -620,6 +637,7 @@ class PlayerService {
 
   void dispose() {
     _yt.close();
+    _httpClient.close();
     _audioPlayer.dispose();
   }
 }

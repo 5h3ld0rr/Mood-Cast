@@ -99,6 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
           _isArtistsLoading = false;
         });
+
+        // Eagerly pre-warm the top 3 recommendations!
+        final playerService = PlayerService();
+        for (var i = 0; i < 3 && i < tracks.length; i++) {
+          playerService.prewarm(tracks[i].videoId);
+        }
       }
     } catch (e) {
       debugPrint('Error fetching home recommendations: $e');
