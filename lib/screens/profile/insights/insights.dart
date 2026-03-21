@@ -4,6 +4,10 @@ import '../../../theme.dart';
 import '../../../services/metrics_service.dart';
 import 'package:intl/intl.dart';
 import 'recent_sessions.dart';
+import '../../../services/database_service.dart';
+import '../../../services/player_service.dart';
+import '../../../widgets/cached_image.dart';
+import 'dart:ui' as ui;
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -27,9 +31,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
     if (history.isEmpty) {
       return {
         'positive': '0%',
-        'breakdown': {'Natural': 100},
+        'breakdown': <String, int>{'Natural': 0},
         'avg': '0.0',
-        'bars': List.generate(7, (_) => 0.1),
+        'bars': List.generate(7, (_) => {'intensity': 0.05, 'mood': 'Natural'}),
         'recent': <Map<String, dynamic>>[],
       };
     }
@@ -162,12 +166,67 @@ class _InsightsScreenState extends State<InsightsScreen> {
       }
     });
 
+    // Time of day pattern
+    Map<String, Map<String, int>> timeOfDayCounts = {
+      'Morning': {},
+      'Afternoon': {},
+      'Evening': {},
+      'Night': {},
+    };
+
+    for (var m in filtered) {
+       final ts = m['timestamp'] as Timestamp?;
+       if (ts == null) continue;
+       final hour = ts.toDate().hour;
+       String tod;
+       if (hour >= 5 && hour < 12) tod = 'Morning';
+       else if (hour >= 12 && hour < 17) tod = 'Afternoon';
+       else if (hour >= 17 && hour < 21) tod = 'Evening';
+       else tod = 'Night';
+
+       final mood = m['mood'] as String;
+       timeOfDayCounts[tod]![mood] = (timeOfDayCounts[tod]![mood] ?? 0) + 1;
+    }
+
+    Map<String, String> actionableInsights = {};
+    if (filtered.isNotEmpty) {
+      int maxHappy = -1;
+      String happyTod = '';
+      int maxSad = -1;
+      String sadTod = '';
+      
+      timeOfDayCounts.forEach((tod, moods) {
+        int h = moods['Happy'] ?? 0;
+        if (h > maxHappy) {
+          maxHappy = h;
+          happyTod = tod;
+        }
+        int s = moods['Sad'] ?? 0;
+        if (s > maxSad) {
+          maxSad = s;
+          sadTod = tod;
+        }
+      });
+      
+      if (maxHappy > 0) {
+        actionableInsights['Peak Positivity'] = 'You usually feel great in the $happyTod.';
+      }
+      if (maxSad > 0) {
+        actionableInsights['Needs a Boost'] = 'You tend to feel down in the $sadTod. Try listening to upbeat music then!';
+      }
+      if (actionableInsights.isEmpty && counts.isNotEmpty) {
+        // Fallback
+        actionableInsights['Mood Pattern'] = 'Your mood remains relatively stable throughout the day.';
+      }
+    }
+
     return {
       'positive': positivePercent,
       'breakdown': counts,
       'avg': (avg * 10).toStringAsFixed(1),
       'bars': bars,
       'recent': history.take(5).toList(),
+      'actionableInsights': actionableInsights,
     };
   }
 
@@ -176,6 +235,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: MetricsService.getMoodHistoryStream(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF0F172A),
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         final history = snapshot.data ?? [];
 
         return DefaultTabController(
@@ -320,15 +385,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
+          _buildGlassCard(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.cardBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-              ),
-            ),
             child: Column(
               children: [
                 Row(
@@ -338,21 +396,40 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     Stack(
                       alignment: Alignment.center,
                       children: [
-                        SizedBox(
-                          width: 120,
-                          height: 120,
-                          child: CircularProgressIndicator(
-                            value:
-                                double.tryParse(
-                                  stats['positive'].replaceAll('%', ''),
-                                )! /
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(
+                            begin: 0.0,
+                            end: (double.tryParse(
+                                      stats['positive'].replaceAll('%', ''),
+                                    ) ??
+                                    0.0) /
                                 100,
-                            strokeWidth: 10,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.05,
-                            ),
-                            valueColor: AlwaysStoppedAnimation(topMoodColor),
                           ),
+                          duration: const Duration(milliseconds: 1500),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, _) {
+                            return SizedBox(
+                              width: 130,
+                              height: 130,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  CircularProgressIndicator(
+                                    value: 1.0,
+                                    strokeWidth: 10,
+                                    valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.02)),
+                                  ),
+                                  CircularProgressIndicator(
+                                    value: value,
+                                    strokeWidth: 10,
+                                    strokeCap: StrokeCap.round,
+                                    backgroundColor: Colors.transparent,
+                                    valueColor: AlwaysStoppedAnimation(topMoodColor),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                         Column(
                           children: [
@@ -360,16 +437,24 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               stats['positive'],
                               style: TextStyle(
                                 color: topMoodColor,
-                                fontSize: 26,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: topMoodColor.withValues(alpha: 0.5),
+                                    blurRadius: 10,
+                                  ),
+                                ],
                               ),
                             ),
+                            const SizedBox(height: 4),
                             const Text(
                               'POSITIVE',
                               style: TextStyle(
                                 color: AppTheme.textMuted,
-                                fontSize: 9,
-                                letterSpacing: 1,
+                                fontSize: 10,
+                                letterSpacing: 2,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -520,31 +605,91 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Container(
-            height: 180,
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
-            decoration: BoxDecoration(
-              color: AppTheme.cardBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 8.0,
-              ),
-              child: CustomPaint(
-                painter: _SplineChartPainter(
-                  stats['bars'] as List<Map<String, dynamic>>,
-                  Theme.of(context).primaryColor,
+          _buildGlassCard(
+            child: SizedBox(
+              height: 180,
+              width: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 32.0,
+                ),
+                child: CustomPaint(
+                  painter: _SplineChartPainter(
+                    stats['bars'] as List<Map<String, dynamic>>,
+                    Theme.of(context).primaryColor,
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 32),
+          
+          if ((stats['actionableInsights'] as Map<String, String>).isNotEmpty) ...[
+            const Text(
+              'Habits & Triggers',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...(stats['actionableInsights'] as Map<String, String>).entries.map((entry) {
+              return _buildGlassCard(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                color: Theme.of(context).primaryColor,
+                child: Row(
+                  children: [
+                    Icon(
+                      entry.key.contains('Boost') ? Icons.bolt : Icons.auto_awesome,
+                      color: Theme.of(context).primaryColor,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.key,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            entry.value,
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 32),
+          ],
+          
+          const Text(
+             'Your Music Triggers',
+             style: TextStyle(
+               color: Colors.white,
+               fontSize: 18,
+               fontWeight: FontWeight.bold,
+             ),
+          ),
+          const SizedBox(height: 16),
+          _buildMusicHabits(context),
+          const SizedBox(height: 32),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -598,21 +743,95 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Widget _buildMusicHabits(BuildContext context) {
+    return StreamBuilder<List<SongInfo>>(
+      stream: DatabaseService().getRecentTracks(limit: 5),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final songs = snapshot.data ?? [];
+        if (songs.isEmpty) {
+          return _buildGlassCard(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 16.0,
+            child: const Center(
+              child: Text(
+                'Listen to more music to see your top triggers here.',
+                style: TextStyle(color: AppTheme.textMuted),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: songs.map((song) {
+            return _buildGlassCard(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              borderRadius: 16.0,
+              child: Row(
+                children: [
+                    CachedImage(
+                      imageUrl: song.coverUrl,
+                      width: 48,
+                      height: 48,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            song.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            song.artist,
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                       Icons.graphic_eq,
+                       color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                       size: 20,
+                    ),
+                  ],
+                ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
   Widget _buildSessionTile(
     String title,
     String subtitle,
     String emoji,
     Color color,
   ) {
-    return Container(
+    return _buildGlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-        ),
-      ),
+      borderRadius: 16.0,
+      color: color,
       child: Row(
         children: [
           Text(emoji, style: const TextStyle(fontSize: 18)),
@@ -640,6 +859,45 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGlassCard({
+    required Widget child,
+    EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? margin,
+    Color? color,
+    double borderRadius = 24.0,
+  }) {
+    return Container(
+      margin: margin,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: color?.withValues(alpha: 0.1) ?? Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            spreadRadius: -5,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              color: color?.withValues(alpha: 0.05) ?? Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: color?.withValues(alpha: 0.1) ?? Colors.white.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: child,
+          ),
+        ),
       ),
     );
   }
