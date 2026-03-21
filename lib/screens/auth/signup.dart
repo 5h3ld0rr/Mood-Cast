@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../theme.dart';
 import '../main_screen.dart';
 import '../../services/auth_service.dart';
@@ -348,15 +349,15 @@ class _SignupScreenState extends State<SignupScreen> {
                               child: OutlinedButton(
                                 onPressed: _isLoading ? null : _googleSignIn,
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.03,
-                                  ),
+                                  backgroundColor: const Color(0xFF020617),
                                   side: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.08),
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    width: 1,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                 ),
                                 child: _isLoading
                                     ? const SizedBox(
@@ -371,18 +372,19 @@ class _SignupScreenState extends State<SignupScreen> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(
-                                            Icons.g_mobiledata,
+                                          const FaIcon(
+                                            FontAwesomeIcons.google,
                                             color: Colors.white,
-                                            size: 32,
+                                            size: 20,
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 14),
                                           const Text(
                                             'CONTINUE WITH GOOGLE',
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 14,
-                                              fontWeight: FontWeight.w600,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.8,
                                             ),
                                           ),
                                         ],
