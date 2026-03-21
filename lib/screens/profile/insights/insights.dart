@@ -16,13 +16,49 @@ class InsightsScreen extends StatefulWidget {
   State<InsightsScreen> createState() => _InsightsScreenState();
 }
 
-class _InsightsScreenState extends State<InsightsScreen> {
+class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late Stream<List<Map<String, dynamic>>> _historyStream;
+  late Stream<List<SongInfo>> _musicHabitsStream;
+  late ValueNotifier<String> _rangeNotifier;
+  
   final Map<String, String> _moodEmojis = {
     'Happy': '😊',
     'Angry': '😠',
     'Sad': '😔',
     'Natural': '😐',
   };
+
+  final String _selectedRange = 'Week';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
+    _historyStream = MetricsService.getMoodHistoryStream();
+    _musicHabitsStream = DatabaseService().getRecentTracks(limit: 5);
+    _rangeNotifier = ValueNotifier<String>(_selectedRange);
+    
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        return;
+      }
+      if (_tabController.index == 0) {
+        _rangeNotifier.value = 'Day';
+      } else if (_tabController.index == 1) {
+        _rangeNotifier.value = 'Week';
+      } else {
+        _rangeNotifier.value = 'Month';
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _rangeNotifier.dispose();
+    super.dispose();
+  }
 
   Map<String, dynamic> _calculateStats(
     List<Map<String, dynamic>> history,
@@ -35,6 +71,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         'avg': '0.0',
         'bars': List.generate(7, (_) => {'intensity': 0.05, 'mood': 'Natural'}),
         'recent': <Map<String, dynamic>>[],
+        'actionableInsights': <String, String>{},
       };
     }
 
@@ -55,8 +92,25 @@ class _InsightsScreenState extends State<InsightsScreen> {
       }).toList();
     }
 
-    if (filtered.isEmpty) filtered = history.take(10).toList();
+    int blocksCount = 7;
+    if (range == 'Month') {
+      blocksCount = 30;
+    } else if (range == 'Day') {
+      blocksCount = 24;
+    }
 
+    if (filtered.isEmpty) {
+      return {
+        'positive': '0%',
+        'breakdown': <String, int>{'Natural': 0},
+        'avg': '0.0',
+        'bars': List.generate(blocksCount, (_) => {'intensity': 0.05, 'mood': 'Natural'}),
+        'recent': history.take(5).toList(),
+        'actionableInsights': <String, String>{
+           'Not enough data': 'No moods detected for this time range. Keep listening!'
+        },
+      };
+    }
     // Mood Breakdown
     Map<String, int> counts = {};
     for (var m in filtered) {
@@ -86,13 +140,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
     }
     double avg = total > 0 ? sumIntensity / total : 0.0;
 
-    int blocksCount = 7;
-    if (range == 'Month') {
-      blocksCount = 30;
-    } else if (range == 'Day') {
-      blocksCount = 24;
-    }
-
     List<Map<String, dynamic>> bars = List.generate(blocksCount, (index) {
       if (range == 'Day') {
         final hour = now.subtract(Duration(hours: 23 - index));
@@ -116,16 +163,17 @@ class _InsightsScreenState extends State<InsightsScreen> {
             localCounts[mood] = (localCounts[mood] ?? 0) + 1;
             if (mood == 'Happy') {
               dSum += 0.9;
-            } else if (mood == 'Natural')
+            } else if (mood == 'Natural') {
               dSum += 0.6;
-            else if (mood == 'Angry')
+            } else if (mood == 'Angry') {
               dSum += 0.8;
-            else if (mood == 'Sad')
+            } else if (mood == 'Sad') {
               dSum += 0.3;
+            }
           }
           intensity = (dSum / hourMoods.length).clamp(0.05, 1.0);
           dominantMood = localCounts.entries
-              .reduce((a, b) => a.value > b.value ? a : b)
+              .reduce((entry1, entry2) => entry1.value > entry2.value ? entry1 : entry2)
               .key;
         }
         return {'intensity': intensity, 'mood': dominantMood};
@@ -150,16 +198,17 @@ class _InsightsScreenState extends State<InsightsScreen> {
             localCounts[mood] = (localCounts[mood] ?? 0) + 1;
             if (mood == 'Happy') {
               dSum += 0.9;
-            } else if (mood == 'Natural')
+            } else if (mood == 'Natural') {
               dSum += 0.6;
-            else if (mood == 'Angry')
+            } else if (mood == 'Angry') {
               dSum += 0.8;
-            else if (mood == 'Sad')
+            } else if (mood == 'Sad') {
               dSum += 0.3;
+            }
           }
           intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
           dominantMood = localCounts.entries
-              .reduce((a, b) => a.value > b.value ? a : b)
+              .reduce((entry1, entry2) => entry1.value > entry2.value ? entry1 : entry2)
               .key;
         }
         return {'intensity': intensity, 'mood': dominantMood};
@@ -179,10 +228,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
        if (ts == null) continue;
        final hour = ts.toDate().hour;
        String tod;
-       if (hour >= 5 && hour < 12) tod = 'Morning';
-       else if (hour >= 12 && hour < 17) tod = 'Afternoon';
-       else if (hour >= 17 && hour < 21) tod = 'Evening';
-       else tod = 'Night';
+       if (hour >= 5 && hour < 12) {
+         tod = 'Morning';
+       } else if (hour >= 12 && hour < 17) {
+         tod = 'Afternoon';
+       } else if (hour >= 17 && hour < 21) {
+         tod = 'Evening';
+       } else {
+         tod = 'Night';
+       }
 
        final mood = m['mood'] as String;
        timeOfDayCounts[tod]![mood] = (timeOfDayCounts[tod]![mood] ?? 0) + 1;
@@ -233,7 +287,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: MetricsService.getMoodHistoryStream(),
+      stream: _historyStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -243,12 +297,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
         }
         final history = snapshot.data ?? [];
 
-        return DefaultTabController(
-          length: 3,
-          initialIndex: 1,
-          child: Scaffold(
-            backgroundColor: Theme.of(context).canvasColor,
-            body: Stack(
+        return Scaffold(
+          backgroundColor: Theme.of(context).canvasColor,
+          body: Stack(
               children: [
                 Positioned(
                   top: -100,
@@ -297,58 +348,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           ],
                         ),
                       ),
-                      Container(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: TabBar(
-                          indicator: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(
-                                  context,
-                                ).primaryColor.withValues(alpha: 0.4),
-                                blurRadius: 10,
-                              ),
-                            ],
-                          ),
-                          indicatorSize: TabBarIndicatorSize.tab,
-                          labelColor: Colors.white,
-                          unselectedLabelColor: AppTheme.textMuted,
-                          labelStyle: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                          dividerColor: Colors.transparent,
-                          tabs: const [
-                            Tab(text: 'Day', height: 40),
-                            Tab(text: 'Week', height: 40),
-                            Tab(text: 'Month', height: 40),
-                          ],
-                        ),
-                      ),
+
                       Expanded(
-                        child: TabBarView(
-                          children: [
-                            _buildInsightsContent(history, 'Day'),
-                            _buildInsightsContent(history, 'Week'),
-                            _buildInsightsContent(history, 'Month'),
-                          ],
-                        ),
+                        child: _buildInsightsContent(history),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-          ),
         );
       },
     );
@@ -356,21 +364,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   Widget _buildInsightsContent(
     List<Map<String, dynamic>> history,
-    String tabType,
   ) {
-    final stats = _calculateStats(history, tabType);
-    final breakdown = stats['breakdown'] as Map<String, int>;
-    int totalMoods = breakdown.values.fold(0, (sum, count) => sum + count);
-
-    String topMood = 'None';
-    if (breakdown.isNotEmpty) {
-      topMood = breakdown.entries
-          .reduce((a, b) => a.value > b.value ? a : b)
-          .key;
-    }
-    final topMoodColor =
-        AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -385,202 +379,61 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildGlassCard(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(
-                            begin: 0.0,
-                            end: (double.tryParse(
-                                      stats['positive'].replaceAll('%', ''),
-                                    ) ??
-                                    0.0) /
-                                100,
-                          ),
-                          duration: const Duration(milliseconds: 1500),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, value, _) {
-                            return SizedBox(
-                              width: 130,
-                              height: 130,
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  CircularProgressIndicator(
-                                    value: 1.0,
-                                    strokeWidth: 10,
-                                    valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.02)),
-                                  ),
-                                  CircularProgressIndicator(
-                                    value: value,
-                                    strokeWidth: 10,
-                                    strokeCap: StrokeCap.round,
-                                    backgroundColor: Colors.transparent,
-                                    valueColor: AlwaysStoppedAnimation(topMoodColor),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        Column(
-                          children: [
-                            Text(
-                              stats['positive'],
-                              style: TextStyle(
-                                color: topMoodColor,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                    color: topMoodColor.withValues(alpha: 0.5),
-                                    blurRadius: 10,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'POSITIVE',
-                              style: TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 10,
-                                letterSpacing: 2,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Dominant Mood',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          topMood,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: topMoodColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: topMoodColor.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            'Highest records: ${breakdown[topMood] ?? 0}',
-                            style: TextStyle(
-                              color: topMoodColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                Column(
-                  children: breakdown.keys.map((mood) {
-                    final count = breakdown[mood] ?? 0;
-                    final percentage = totalMoods > 0
-                        ? (count / totalMoods)
-                        : 0.0;
-                    final moodColor =
-                        AppTheme.moodColors[mood] ??
-                        Theme.of(context).primaryColor;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: moodColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: moodColor.withValues(alpha: 0.3),
-                                  blurRadius: 6,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            width: 70,
-                            child: Text(
-                              mood,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: LinearProgressIndicator(
-                                value: percentage,
-                                backgroundColor: Colors.white.withValues(
-                                  alpha: 0.05,
-                                ),
-                                valueColor: AlwaysStoppedAnimation(moodColor),
-                                minHeight: 8,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          SizedBox(
-                            width: 30,
-                            child: Text(
-                              count.toString(),
-                              textAlign: TextAlign.right,
-                              style: const TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
+          Container(
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.4),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: Colors.white,
+              unselectedLabelColor: AppTheme.textMuted,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(text: 'Day', height: 40),
+                Tab(text: 'Week', height: 40),
+                Tab(text: 'Month', height: 40),
               ],
             ),
           ),
-
+          SizedBox(
+            height: 380,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildMoodBreakdownCard(history, 'Day'),
+                _buildMoodBreakdownCard(history, 'Week'),
+                _buildMoodBreakdownCard(history, 'Month'),
+              ],
+            ),
+          ),
+          
+          ValueListenableBuilder<String>(
+            valueListenable: _rangeNotifier,
+            builder: (context, currentRange, _) {
+              final stats = _calculateStats(history, currentRange);
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -668,18 +521,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
             }),
             const SizedBox(height: 32),
           ],
-          
-          const Text(
-             'Your Music Triggers',
-             style: TextStyle(
-               color: Colors.white,
-               fontSize: 18,
-               fontWeight: FontWeight.bold,
-             ),
-          ),
-          const SizedBox(height: 16),
-          _buildMusicHabits(context),
-          const SizedBox(height: 32),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -728,6 +569,22 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ),
             );
           }),
+                ],
+              );
+            },
+          ),
+          
+          const SizedBox(height: 32),
+          const Text(
+             'Your Music Triggers',
+             style: TextStyle(
+               color: Colors.white,
+               fontSize: 18,
+               fontWeight: FontWeight.bold,
+             ),
+          ),
+          const SizedBox(height: 16),
+          _buildMusicHabits(context),
           const SizedBox(height: 100),
         ],
       ),
@@ -736,7 +593,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   Widget _buildMusicHabits(BuildContext context) {
     return StreamBuilder<List<SongInfo>>(
-      stream: DatabaseService().getRecentTracks(limit: 5),
+      stream: _musicHabitsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -886,6 +743,217 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildMoodBreakdownCard(List<Map<String, dynamic>> history, String range) {
+    final stats = _calculateStats(history, range);
+    final breakdown = stats['breakdown'] as Map<String, int>;
+    int totalMoodsCount = breakdown.values.fold(0, (previousValue, element) => previousValue + element);
+
+    String topMood = 'None';
+    if (breakdown.isNotEmpty) {
+      topMood = breakdown.entries
+          .reduce((a, b) => a.value > b.value ? a : b)
+          .key;
+    }
+    final topMoodColor = AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
+
+    return     _buildGlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(
+                      begin: 0.0,
+                      end: (double.tryParse(
+                                stats['positive'].replaceAll('%', ''),
+                              ) ??
+                              0.0) /
+                          100,
+                    ),
+                    duration: const Duration(milliseconds: 1500),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, _) {
+                      return SizedBox(
+                        width: 130,
+                        height: 130,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CircularProgressIndicator(
+                              value: 1.0,
+                              strokeWidth: 10,
+                              valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.02)),
+                            ),
+                            CircularProgressIndicator(
+                              value: value,
+                              strokeWidth: 10,
+                              strokeCap: StrokeCap.round,
+                              backgroundColor: Colors.transparent,
+                              valueColor: AlwaysStoppedAnimation(topMoodColor),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        stats['positive'],
+                        style: TextStyle(
+                          color: topMoodColor,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: topMoodColor.withValues(alpha: 0.5),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'POSITIVE',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 10,
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Dominant Mood',
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    topMood,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: topMoodColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: topMoodColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      'Highest records: ${breakdown[topMood] ?? 0}',
+                      style: TextStyle(
+                        color: topMoodColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Column(
+            children: breakdown.keys.map((mood) {
+              final count = breakdown[mood] ?? 0;
+              final percentage = totalMoodsCount > 0
+                  ? (count / totalMoodsCount)
+                  : 0.0;
+              final moodColor =
+                  AppTheme.moodColors[mood] ??
+                  Theme.of(context).primaryColor;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: moodColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: moodColor.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 70,
+                      child: Text(
+                        mood,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: percentage,
+                          backgroundColor: Colors.white.withValues(
+                            alpha: 0.05,
+                          ),
+                          valueColor: AlwaysStoppedAnimation(moodColor),
+                          minHeight: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 30,
+                      child: Text(
+                        count.toString(),
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
