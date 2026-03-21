@@ -30,14 +30,16 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
   };
 
   final String _selectedRange = 'Week';
+  late final ValueNotifier<int> _yearNotifier;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
     _historyStream = MetricsService.getMoodHistoryStream();
-    _musicHabitsStream = DatabaseService().getRecentTracks(limit: 5);
+    _musicHabitsStream = DatabaseService().getTopTracks(limit: 5);
     _rangeNotifier = ValueNotifier<String>(_selectedRange);
+    _yearNotifier = ValueNotifier<int>(DateTime.now().year);
     
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
@@ -57,6 +59,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
   void dispose() {
     _tabController.dispose();
     _rangeNotifier.dispose();
+    _yearNotifier.dispose();
     super.dispose();
   }
 
@@ -365,6 +368,17 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
   Widget _buildInsightsContent(
     List<Map<String, dynamic>> history,
   ) {
+    final availableYears = history
+        .map((m) => (m['timestamp'] as Timestamp?)?.toDate().year)
+        .whereType<int>()
+        .toSet()
+        .toList()
+      ..sort((a, b) => b.compareTo(a));
+    
+    if (availableYears.isEmpty) {
+      availableYears.add(DateTime.now().year);
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -435,37 +449,63 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
           const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                'Emotional Intensity',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Avg: ${stats['avg']}/10',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildGlassCard(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 24.0,
-              ),
-              child: _buildHeatmap(stats['bars'] as List<Map<String, dynamic>>, context),
-            ),
+          ValueListenableBuilder<int>(
+            valueListenable: _yearNotifier,
+            builder: (context, currentYear, _) {
+              if (!availableYears.contains(currentYear)) {
+                Future.microtask(() => _yearNotifier.value = availableYears.first);
+                return const SizedBox.shrink();
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Yearly Heatmap',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      DropdownButton<int>(
+                        value: currentYear,
+                        dropdownColor: const Color(0xFF1E1E2C),
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor, 
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        underline: const SizedBox(),
+                        icon: Icon(Icons.keyboard_arrow_down, color: Theme.of(context).primaryColor),
+                        items: availableYears.map((year) {
+                          return DropdownMenuItem<int>(
+                            value: year,
+                            child: Text(year.toString()),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) _yearNotifier.value = val;
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildGlassCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 24.0,
+                      ),
+                      child: _buildHeatmap(history, context, currentYear),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 32),
           
@@ -576,7 +616,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
           
           const SizedBox(height: 32),
           const Text(
-             'Your Music Triggers',
+             'Most Listened Tracks',
              style: TextStyle(
                color: Colors.white,
                fontSize: 18,
@@ -606,7 +646,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
             borderRadius: 16.0,
             child: const Center(
               child: Text(
-                'Listen to more music to see your top triggers here.',
+                'Keep streaming to discover your most played songs!',
                 style: TextStyle(color: AppTheme.textMuted),
                 textAlign: TextAlign.center,
               ),
@@ -670,40 +710,172 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildHeatmap(List<Map<String, dynamic>> data, BuildContext context) {
-    if (data.isEmpty) return const SizedBox.shrink();
+  Widget _buildHeatmap(List<Map<String, dynamic>> history, BuildContext context, int targetYear) {
+    if (history.isEmpty) return const SizedBox.shrink();
 
-    return Center(
-      child: Wrap(
-        spacing: 5.0,
-        runSpacing: 5.0,
-        alignment: WrapAlignment.center,
-        children: data.map((item) {
-           final intensity = item['intensity'] as double;
-           final mood = item['mood'] as String;
-           final color = AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor;
+    final firstDay = DateTime(targetYear, 1, 1);
+    final lastDay = DateTime(targetYear, 12, 31);
+    
+    final startDate = firstDay.subtract(Duration(days: firstDay.weekday - 1));
+    final endDate = lastDay.add(Duration(days: 7 - lastDay.weekday));
+
+    final totalDays = endDate.difference(startDate).inDays + 1;
+    final totalWeeks = totalDays ~/ 7;
+
+    Map<DateTime, List<Map<String, dynamic>>> group = {};
+    for (var m in history) {
+      final ts = m['timestamp'] as Timestamp?;
+      if (ts == null) continue;
+      final d = ts.toDate();
+      if (d.year != targetYear) continue;
+      final date = DateTime(d.year, d.month, d.day);
+      group.putIfAbsent(date, () => []).add(m);
+    }
+
+    List<Widget> columns = [];
+
+    for (int w = 0; w < totalWeeks; w++) {
+       List<Widget> dayWidgets = [];
+       
+       bool isFirstOfMonth = false;
+       String monthName = '';
+
+       for (int i = 0; i < 7; i++) {
+           final currentDay = startDate.add(Duration(days: w * 7 + i));
            
-           return Tooltip(
-             message: '$mood Intensity: ${(intensity * 10).toStringAsFixed(1)}',
-             child: AnimatedContainer(
-               duration: const Duration(milliseconds: 300),
-               width: 20,
-               height: 20,
-               decoration: BoxDecoration(
-                 color: intensity <= 0.05 
-                     ? Colors.white.withValues(alpha: 0.05) 
-                     : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
-                 borderRadius: BorderRadius.circular(4),
-                 border: Border.all(
+           if (currentDay.year == targetYear && currentDay.day == 1) {
+               isFirstOfMonth = true;
+               monthName = DateFormat('MMM').format(currentDay);
+           }
+           
+           if (currentDay.year != targetYear) {
+              dayWidgets.add(const SizedBox(width: 14, height: 14));
+              continue;
+           }
+
+           final dayMoods = group[currentDay] ?? [];
+           double intensity = 0.05;
+           String dominantMood = 'Natural';
+
+           if (dayMoods.isNotEmpty) {
+               double dSum = 0;
+               Map<String, int> localCounts = {};
+               for (var m in dayMoods) {
+                  final mood = m['mood'] as String;
+                  localCounts[mood] = (localCounts[mood] ?? 0) + 1;
+                  if (mood == 'Happy') {
+                    dSum += 0.9;
+                  } else if (mood == 'Natural') {
+                    dSum += 0.6;
+                  } else if (mood == 'Angry') {
+                    dSum += 0.8;
+                  } else if (mood == 'Sad') {
+                    dSum += 0.3;
+                  }
+               }
+               intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
+               dominantMood = localCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+           }
+
+           final color = AppTheme.moodColors[dominantMood] ?? Theme.of(context).primaryColor;
+
+           dayWidgets.add(
+             Tooltip(
+               message: '${DateFormat('MMM dd, yyyy').format(currentDay)}\n$dominantMood: ${(intensity * 10).toStringAsFixed(1)}/10',
+               triggerMode: TooltipTriggerMode.tap,
+               child: AnimatedContainer(
+                 duration: const Duration(milliseconds: 300),
+                 width: 14,
+                 height: 14,
+                 decoration: BoxDecoration(
                    color: intensity <= 0.05 
-                       ? Colors.white.withValues(alpha: 0.1) 
-                       : color.withValues(alpha: 0.2),
-                   width: 1,
+                       ? Colors.white.withValues(alpha: 0.05) 
+                       : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
+                   borderRadius: BorderRadius.circular(4),
+                   border: Border.all(
+                     color: intensity <= 0.05 
+                         ? Colors.white.withValues(alpha: 0.1) 
+                         : color.withValues(alpha: 0.2),
+                     width: 1,
+                   ),
                  ),
                ),
              ),
            );
-        }).toList(),
+       }
+
+       columns.add(
+         Padding(
+           padding: const EdgeInsets.symmetric(horizontal: 2.0),
+           child: Column(
+             mainAxisAlignment: MainAxisAlignment.start,
+             crossAxisAlignment: CrossAxisAlignment.start,
+             children: [
+               SizedBox(
+                 height: 20,
+                 width: 14,
+                 child: OverflowBox(
+                   alignment: Alignment.centerLeft,
+                   maxWidth: 40,
+                   child: Text(
+                     isFirstOfMonth ? monthName : '',
+                     style: const TextStyle(
+                       color: AppTheme.textMuted, 
+                       fontSize: 10, 
+                       fontWeight: FontWeight.bold,
+                     ),
+                     softWrap: false,
+                     overflow: TextOverflow.visible,
+                   ),
+                 ),
+               ),
+               ...dayWidgets.map((w) => Padding(padding: const EdgeInsets.only(bottom: 4.0), child: w)),
+             ],
+           ),
+         )
+       );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildDayLabel('Mon'),
+              const SizedBox(height: 18),
+              _buildDayLabel('Wed'),
+              const SizedBox(height: 18),
+              _buildDayLabel('Fri'),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SizedBox(
+            height: 155, 
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              children: columns,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDayLabel(String text) {
+    return SizedBox(
+      height: 18,
+      child: Center(
+        child: Text(
+          text,
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
+        ),
       ),
     );
   }
