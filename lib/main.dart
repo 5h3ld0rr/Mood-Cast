@@ -24,7 +24,12 @@ void main() async {
   await PlayerService().init();
 
   // Initialize Google Sign In (Required for 7.0.0+)
-  await GoogleSignIn.instance.initialize();
+  try {
+    await GoogleSignIn.instance.initialize();
+  } catch (e) {
+    debugPrint("Google Sign In initialization failed: $e");
+    // We continue so the app can still boot for other features
+  }
 
   // Initialize Notifications
   await NotificationService().initialize();

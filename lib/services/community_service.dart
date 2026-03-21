@@ -255,4 +255,42 @@ class CommunityService {
       return List<String>.from(doc.data()?['joinedTribes'] ?? []);
     });
   }
+
+  // --- Regional Mood Stats ---
+  Stream<Map<String, int>> getRegionalMoodStats(String region) {
+    // Reads from 'regional_stats' collection.
+    // You can populate this collection manually or via Firebase Cloud Functions based on user locations.
+    return _firestore
+        .collection('regional_stats')
+        .doc(region)
+        .snapshots()
+        .map((doc) {
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return {
+          'Happy': data['Happy'] ?? 0,
+          'Sad': data['Sad'] ?? 0,
+          'Angry': data['Angry'] ?? 0,
+          'Natural': data['Natural'] ?? 0,
+        };
+      } else {
+        // Fallback default placeholder if no real data is found for the region yet
+        return {
+          'Happy': 1200,
+          'Sad': 400,
+          'Angry': 150,
+          'Natural': 800,
+        };
+      }
+    });
+  }
+
+  // --- Global Mood Stats ---
+  Stream<GlobalMoodStats> getGlobalStats() {
+    return _firestore
+        .collection('global_stats')
+        .doc('live')
+        .snapshots()
+        .map((doc) => GlobalMoodStats.fromFirestore(doc));
+  }
 }

@@ -212,3 +212,36 @@ class MoodboardSong {
     };
   }
 }
+class GlobalMoodStats {
+  final int vibingNow;
+  final Map<String, int> moodPercentages;
+  final Map<String, String> regionalMoods;
+
+  GlobalMoodStats({
+    required this.vibingNow,
+    required this.moodPercentages,
+    required this.regionalMoods,
+  });
+
+  factory GlobalMoodStats.fromFirestore(DocumentSnapshot doc) {
+    if (!doc.exists) {
+      return GlobalMoodStats(
+        vibingNow: 12400,
+        moodPercentages: {'Happy': 43, 'Natural': 28, 'Sad': 17, 'Angry': 12},
+        regionalMoods: {
+          'US': 'Happy',
+          'EU': 'Sad',
+          'ASIA': 'Natural',
+          'LA': 'Angry',
+          'AF': 'Natural',
+        },
+      );
+    }
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    return GlobalMoodStats(
+      vibingNow: data['vibingNow'] ?? 12400,
+      moodPercentages: Map<String, int>.from(data['moodPercentages'] ?? {}),
+      regionalMoods: Map<String, String>.from(data['regionalMoods'] ?? {}),
+    );
+  }
+}

@@ -595,201 +595,129 @@ class _CommunityScreenState extends State<CommunityScreen>
 
 
   void _showMoodSnippet(String mood, String region) {
-    YouTubeMusicMetadata? snippetMetadata;
-    bool isFetching = true;
-    bool hasError = false;
-
     showDialog(
       context: context,
       barrierColor: Colors.black87,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          if (isFetching && !hasError) {
-            _ytmService
-                .getRecommendationsByMood(mood)
-                .then((results) async {
-                  if (results.isNotEmpty && mounted) {
-                    final song = results.first;
-                    setDialogState(() {
-                      snippetMetadata = song;
-                      isFetching = false;
-                    });
-                    // Start playback
-                    await _playerService.play(
-                      SongInfo(
-                        title: song.title,
-                        artist: song.artist,
-                        coverUrl: song.artworkUrl,
-                        videoId: song.videoId,
-                      ),
-                    );
-                  } else {
-                    setDialogState(() {
-                      isFetching = false;
-                      hasError = true;
-                    });
-                  }
-                })
-                .catchError((e) {
-                  if (mounted) {
-                    setDialogState(() {
-                      isFetching = false;
-                      hasError = true;
-                    });
-                  }
-                });
-          }
+      builder: (context) {
+        final themeColor = AppTheme.moodColors[mood] ?? Colors.white;
 
-          final themeColor = AppTheme.moodColors[mood] ?? Colors.white;
-
-          return Center(
-            child: Container(
-              width: 300,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundDark,
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: themeColor.withValues(alpha: 0.3)),
-                boxShadow: [
-                  BoxShadow(
-                    color: themeColor.withValues(alpha: 0.2),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Mood Snippet: $region',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Collective $mood frequency',
-                    style: TextStyle(color: themeColor, fontSize: 14),
-                  ),
-                  const SizedBox(height: 32),
-                  // Animated Frequency Bars
-                  SizedBox(
-                    height: 40,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        10,
-                        (i) => TweenAnimationBuilder<double>(
-                          duration: Duration(milliseconds: 300 + (i * 100)),
-                          tween: Tween(begin: 10, end: isFetching ? 15 : 40),
-                          curve: Curves.easeInOut,
-                          builder: (context, val, _) => Container(
-                            width: 6,
-                            height:
-                                val *
-                                (isFetching
-                                    ? 1
-                                    : (math.Random().nextDouble() + 0.5)),
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                            decoration: BoxDecoration(
-                              color: themeColor.withValues(
-                                alpha: isFetching ? 0.3 : 1.0,
-                              ),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Text(
-                    isFetching
-                        ? 'Tuning into frequency...'
-                        : hasError
-                        ? 'Failed to catch the vibe ⚠️'
-                        : 'Mashup: ${snippetMetadata?.title ?? 'Unknown Vibz'}',
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 24),
-                  if (!isFetching && !hasError)
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(seconds: 10),
-                      onEnd: () {
-                        _playerService.stop();
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                      },
-                      builder: (context, value, _) => Column(
-                        children: [
-                          LinearProgressIndicator(
-                            value: value,
-                            backgroundColor: Colors.white10,
-                            valueColor: AlwaysStoppedAnimation(themeColor),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'PLAYING FREQUENCY • ${(value * 10).toInt()}s',
-                            style: const TextStyle(
-                              color: Colors.white24,
-                              fontSize: 10,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (hasError)
-                    ElevatedButton(
-                      onPressed: () {
-                        setDialogState(() {
-                          isFetching = true;
-                          hasError = false;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: themeColor.withValues(alpha: 0.2),
-                        foregroundColor: themeColor,
-                      ),
-                      child: const Text('RETRY'),
-                    )
-                  else
-                    const SizedBox(
-                      height: 40,
-                      child: Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(Colors.white24),
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      _playerService.stop();
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      'CLOSE',
-                      style: TextStyle(color: Colors.white54),
-                    ),
-                  ),
-                ],
-              ),
+        return Center(
+          child: Container(
+            width: 300,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.backgroundDark,
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: themeColor.withValues(alpha: 0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: themeColor.withValues(alpha: 0.2),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
             ),
-          );
-        },
+            child: StreamBuilder<Map<String, int>>(
+              stream: _communityService.getRegionalMoodStats(region),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 200,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.white24),
+                    ),
+                  );
+                }
+
+                int countHappy = snapshot.data?['Happy'] ?? 0;
+                int countSad = snapshot.data?['Sad'] ?? 0;
+                int countAngry = snapshot.data?['Angry'] ?? 0;
+                int countNatural = snapshot.data?['Natural'] ?? 0;
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Region: $region',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Dominant Mood: $mood',
+                      style: TextStyle(color: themeColor, fontSize: 14),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Mood Stats Column
+                    _buildRegionMoodStat('Happy', countHappy, AppTheme.moodColors['Happy'] ?? Colors.amber),
+                    const SizedBox(height: 12),
+                    _buildRegionMoodStat('Natural', countNatural, AppTheme.moodColors['Natural'] ?? Colors.green),
+                    const SizedBox(height: 12),
+                    _buildRegionMoodStat('Sad', countSad, AppTheme.moodColors['Sad'] ?? Colors.blue),
+                    const SizedBox(height: 12),
+                    _buildRegionMoodStat('Angry', countAngry, AppTheme.moodColors['Angry'] ?? Colors.red),
+                    
+                    const SizedBox(height: 32),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'CLOSE',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRegionMoodStat(String mood, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8, height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                mood,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            '${(count / 1000).toStringAsFixed(1)}K',
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1446,64 +1374,281 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   Widget _buildGlobalMoodPulse() {
-    return Container(
-      height: 340,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.05),
-            Colors.deepPurple.withValues(alpha: 0.08),
-          ],
-        ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Outer glow
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, _) {
-              return Container(
-                width: 280 + (_pulseController.value * 20),
-                height: 280 + (_pulseController.value * 20),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.amber.withValues(alpha: 0.06 + _pulseController.value * 0.06),
-                      blurRadius: 60,
-                      spreadRadius: 10,
+    return StreamBuilder<GlobalMoodStats>(
+      stream: _communityService.getGlobalStats(),
+      builder: (context, snapshot) {
+        final stats = snapshot.data ??
+            GlobalMoodStats(
+              vibingNow: 12400,
+              moodPercentages: {
+                'Happy': 43,
+                'Natural': 28,
+                'Sad': 17,
+                'Angry': 12,
+              },
+              regionalMoods: {
+                'US': 'Happy',
+                'EU': 'Sad',
+                'ASIA': 'Natural',
+                'LA': 'Angry',
+                'AF': 'Natural',
+              },
+            );
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.05),
+                Colors.deepPurple.withValues(alpha: 0.08),
+              ],
+            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            children: [
+              // Live Status Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Live Global Frequency',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.public,
+                              color: Colors.blueAccent,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${(stats.vibingNow / 1000).toStringAsFixed(1)}K Vibing Now',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'LIVE',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              );
-            },
-          ),
+              ),
+              const SizedBox(height: 24),
 
-          // Globe painter — driven by slow globe controller
-          AnimatedBuilder(
-            animation: _globeController,
-            builder: (context, _) {
-              return CustomPaint(
-                size: const Size(260, 260),
-                painter: _GlobePainter(rotation: _globeController.value * 2 * math.pi),
-              );
-            },
-          ),
+              // Globe Layer
+              SizedBox(
+                height: 260,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Outer glow
+                    AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, _) {
+                        return Container(
+                          width: 200 + (_pulseController.value * 20),
+                          height: 200 + (_pulseController.value * 20),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.amber.withValues(
+                                  alpha: 0.06 + _pulseController.value * 0.06,
+                                ),
+                                blurRadius: 60,
+                                spreadRadius: 10,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
 
-          // Nodes pinned to continent centroids — same projection as _GlobePainter
-          _buildRegionalNode('US',   'Happy',     38.0, -97.0),  // continental US
-          _buildRegionalNode('EU',   'Sad',       51.0,  10.0),  // central Europe
-          _buildRegionalNode('ASIA', 'Natural',   40.0,  95.0),  // central Asia
-          _buildRegionalNode('LA',   'Angry',    -15.0, -55.0),  // South America
-          _buildRegionalNode('AF',   'Natural',    2.0,  20.0),  // Africa
-        ],
-      ),
+                    // Globe painter — driven by slow globe controller
+                    AnimatedBuilder(
+                      animation: _globeController,
+                      builder: (context, _) {
+                        return CustomPaint(
+                          size: const Size(260, 260),
+                          painter: _GlobePainter(
+                            rotation: _globeController.value * 2 * math.pi,
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Nodes pinned to continent centroids — same projection as _GlobePainter
+                    _buildRegionalNode(
+                      'US',
+                      stats.regionalMoods['US'] ?? 'Happy',
+                      38.0,
+                      -97.0,
+                    ),
+                    _buildRegionalNode(
+                      'EU',
+                      stats.regionalMoods['EU'] ?? 'Sad',
+                      51.0,
+                      10.0,
+                    ),
+                    _buildRegionalNode(
+                      'ASIA',
+                      stats.regionalMoods['ASIA'] ?? 'Natural',
+                      40.0,
+                      95.0,
+                    ),
+                    _buildRegionalNode(
+                      'LA',
+                      stats.regionalMoods['LA'] ?? 'Angry',
+                      -15.0,
+                      -55.0,
+                    ),
+                    _buildRegionalNode(
+                      'AF',
+                      stats.regionalMoods['AF'] ?? 'Natural',
+                      2.0,
+                      20.0,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Data Stats Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildGlobalStat(
+                      'Happy',
+                      stats.moodPercentages['Happy'] ?? 0,
+                      Icons.trending_up,
+                      Colors.amber,
+                    ),
+                    _buildGlobalStat(
+                      'Natural',
+                      stats.moodPercentages['Natural'] ?? 0,
+                      Icons.trending_flat,
+                      Colors.greenAccent,
+                    ),
+                    _buildGlobalStat(
+                      'Sad',
+                      stats.moodPercentages['Sad'] ?? 0,
+                      Icons.trending_down,
+                      Colors.blueAccent,
+                    ),
+                    _buildGlobalStat(
+                      'Angry',
+                      stats.moodPercentages['Angry'] ?? 0,
+                      Icons.trending_down,
+                      Colors.redAccent,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+  Widget _buildGlobalStat(String mood, int percentage, IconData trendIcon, Color color) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 4),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              mood,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '$percentage%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(trendIcon, color: color, size: 14),
+          ],
+        ),
+      ],
     );
   }
 
