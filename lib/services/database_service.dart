@@ -423,7 +423,30 @@ class DatabaseService {
       'coverUrl': song.coverUrl,
       'videoId': song.videoId,
       'timestamp': FieldValue.serverTimestamp(),
-    });
+      'playCount': FieldValue.increment(1),
+    }, SetOptions(merge: true));
+  }
+
+  Stream<List<SongInfo>> getTopTracks({int limit = 5}) {
+    if (uid == null) return Stream.value([]);
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('recent_tracks')
+        .orderBy('playCount', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return SongInfo(
+              title: data['title'] ?? '',
+              artist: data['artist'] ?? '',
+              coverUrl: data['coverUrl'],
+              videoId: data['videoId'],
+            );
+          }).toList();
+        });
   }
 
   Stream<List<SongInfo>> getRecentTracks({int limit = 10}) {
