@@ -228,38 +228,75 @@ class YouTubeMusicService {
     String baseQuery;
     switch (mood.toLowerCase()) {
       case 'happy':
-        baseQuery = "feel good anthems charts 2024";
+        baseQuery = "feel good anthems charts";
         break;
       case 'sad':
         baseQuery = "slow bittersweet acoustic piano ballads";
         break;
       case 'energetic':
-        baseQuery = "high energy gym phonk edm shuffle";
+        baseQuery = "high energy workout phonk edm";
         break;
       case 'calm':
-        baseQuery = "peaceful meditation nature ambient soundscapes";
+        baseQuery = "peaceful meditation nature ambient";
         break;
       case 'focused':
         baseQuery = "lofi hip hop radio beats to study/relax to";
         break;
       case 'relaxing':
-        baseQuery = "chill r&b soul evening vibes";
+        baseQuery = "chill r&b soul vibes";
         break;
       case 'inspired':
-        baseQuery = "epic cinematic orchestral motivation tracks";
+        baseQuery = "epic cinematic orchestral motivation";
         break;
       case 'angry':
         baseQuery = "heavy metal breakdown aggressive hardcore";
         break;
       default:
-        baseQuery = "popular $mood songs 2024";
+        baseQuery = "popular $mood songs";
         break;
     }
 
-    if (weather != null && weather.isNotEmpty) {
-      baseQuery += " for $weather weather";
-    }
+    baseQuery += _getTimeOfDayModifier();
+    baseQuery += _getWeatherModifier(weather);
+
     return baseQuery;
+  }
+
+  String _getTimeOfDayModifier() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return " morning";
+    } else if (hour >= 12 && hour < 17) {
+      return " afternoon";
+    } else if (hour >= 17 && hour < 21) {
+      return " evening";
+    } else {
+      return " late night midnight";
+    }
+  }
+
+  String _getWeatherModifier(String? weather) {
+    if (weather == null || weather.isEmpty) return "";
+    
+    switch (weather.toLowerCase()) {
+      case 'rain':
+      case 'drizzle':
+      case 'rainy':
+        return " rainy day cozy acoustic";
+      case 'clear':
+      case 'sunny':
+        return " bright sunny upbeat";
+      case 'clouds':
+      case 'cloudy':
+        return " cloudy moody atmosphere";
+      case 'snow':
+      case 'snowy':
+        return " winter snow soft chilling";
+      case 'thunderstorm':
+        return " dark storm cinematic heavy";
+      default:
+        return " $weather weather";
+    }
   }
 
   Future<List<YouTubeMusicMetadata>> getRecommendationsByMood(
@@ -354,13 +391,17 @@ class YouTubeMusicService {
         baseQuery = 'Hard Rock Metal';
         break;
       default:
-        baseQuery = 'Trending';
+        baseQuery = 'Trending Artists';
         break;
     }
 
+    baseQuery += _getTimeOfDayModifier();
+    
+    // For artists, keep weather influence lighter
     if (weather != null && weather.isNotEmpty) {
-      baseQuery += " for $weather weather";
+       baseQuery += " $weather";
     }
+
     return baseQuery;
   }
 }
