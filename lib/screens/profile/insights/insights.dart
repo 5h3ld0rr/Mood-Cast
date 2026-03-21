@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../theme.dart';
 import '../../../services/metrics_service.dart';
 import 'package:intl/intl.dart';
-import 'recent_sessions.dart';
 import '../../../services/database_service.dart';
 import '../../../services/player_service.dart';
 import '../../../widgets/cached_image.dart';
@@ -282,7 +281,6 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
       'breakdown': counts,
       'avg': (avg * 10).toStringAsFixed(1),
       'bars': bars,
-      'recent': history.take(5).toList(),
       'actionableInsights': actionableInsights,
     };
   }
@@ -562,53 +560,6 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
             const SizedBox(height: 32),
           ],
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Recent History',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RecentSessionsScreen(),
-                    ),
-                  );
-                },
-                child: Text(
-                  'See all',
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...(stats['recent'] as List).map((m) {
-            final mood = m['mood'] as String;
-            final ts = m['timestamp'] as Timestamp?;
-            final dateStr = ts != null
-                ? DateFormat('MMM dd, hh:mm a').format(ts.toDate())
-                : 'Recent';
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildSessionTile(
-                mood,
-                dateStr,
-                _moodEmojis[mood] ?? '✨',
-                AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor,
-              ),
-            );
-          }),
                 ],
               );
             },
@@ -780,23 +731,30 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
            final color = AppTheme.moodColors[dominantMood] ?? Theme.of(context).primaryColor;
 
            dayWidgets.add(
-             Tooltip(
-               message: '${DateFormat('MMM dd, yyyy').format(currentDay)}\n$dominantMood: ${(intensity * 10).toStringAsFixed(1)}/10',
-               triggerMode: TooltipTriggerMode.tap,
-               child: AnimatedContainer(
-                 duration: const Duration(milliseconds: 300),
-                 width: 14,
-                 height: 14,
-                 decoration: BoxDecoration(
-                   color: intensity <= 0.05 
-                       ? Colors.white.withValues(alpha: 0.05) 
-                       : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
-                   borderRadius: BorderRadius.circular(4),
-                   border: Border.all(
+             GestureDetector(
+               onTap: () {
+                 if (dayMoods.isNotEmpty) {
+                   _showDayDetailReport(context, currentDay, dayMoods);
+                 }
+               },
+               child: Tooltip(
+                 message: '${DateFormat('MMM dd, yyyy').format(currentDay)}\n${dayMoods.isEmpty ? "No data" : "$dominantMood: ${(intensity * 10).toStringAsFixed(1)}/10"}\nTap for details',
+                 triggerMode: TooltipTriggerMode.longPress,
+                 child: AnimatedContainer(
+                   duration: const Duration(milliseconds: 300),
+                   width: 14,
+                   height: 14,
+                   decoration: BoxDecoration(
                      color: intensity <= 0.05 
-                         ? Colors.white.withValues(alpha: 0.1) 
-                         : color.withValues(alpha: 0.2),
-                     width: 1,
+                         ? Colors.white.withValues(alpha: 0.05) 
+                         : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
+                     borderRadius: BorderRadius.circular(4),
+                     border: Border.all(
+                       color: intensity <= 0.05 
+                           ? Colors.white.withValues(alpha: 0.1) 
+                           : color.withValues(alpha: 0.2),
+                       width: 1,
+                     ),
                    ),
                  ),
                ),
@@ -868,6 +826,172 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     );
   }
 
+  void _showDayDetailReport(BuildContext context, DateTime date, List<Map<String, dynamic>> dayMoods) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF161621),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.7,
+          expand: false,
+          builder: (BuildContext context, ScrollController scrollController) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DateFormat('EEEE').format(date),
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('MMMM dd, yyyy').format(date),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          '${dayMoods.length} entries',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Mood Timeline',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded( // Changed from Flexible to Expanded for DraggableScrollableSheet
+                    child: ListView.builder(
+                      controller: scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: dayMoods.length,
+                      itemBuilder: (context, index) {
+                        final mood = dayMoods[index];
+                        final moodName = mood['mood'] as String;
+                        final ts = mood['timestamp'] as Timestamp;
+                        final timeStr = DateFormat('hh:mm a').format(ts.toDate());
+                        final color = AppTheme.moodColors[moodName] ?? Theme.of(context).primaryColor;
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: Row(
+                            children: [
+                              SizedBox( // Changed from Container to SizedBox for explicit width
+                                width: 50,
+                                child: Text(
+                                  timeStr,
+                                  style: const TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                width: 2,
+                                height: 40,
+                                margin: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      color,
+                                      color.withValues(alpha: 0),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: _buildGlassCard(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  borderRadius: 16,
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        _moodEmojis[moodName] ?? '✨',
+                                        style: const TextStyle(fontSize: 20),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        moodName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      if (mood.containsKey('intensity'))
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: color.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'Intensity ${mood['intensity']}',
+                                            style: TextStyle(
+                                              color: color,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildDayLabel(String text) {
     return SizedBox(
       height: 18,
@@ -876,47 +1000,6 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
           text,
           style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSessionTile(
-    String title,
-    String subtitle,
-    String emoji,
-    Color color,
-  ) {
-    return _buildGlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      borderRadius: 16.0,
-      color: color,
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
