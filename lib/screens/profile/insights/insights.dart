@@ -15,12 +15,13 @@ class InsightsScreen extends StatefulWidget {
   State<InsightsScreen> createState() => _InsightsScreenState();
 }
 
-class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProviderStateMixin {
+class _InsightsScreenState extends State<InsightsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Stream<List<Map<String, dynamic>>> _historyStream;
   late Stream<List<SongInfo>> _musicHabitsStream;
   late ValueNotifier<String> _rangeNotifier;
-  
+
   final Map<String, String> _moodEmojis = {
     'Happy': '😊',
     'Angry': '😠',
@@ -39,7 +40,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     _musicHabitsStream = DatabaseService().getTopTracks(limit: 5);
     _rangeNotifier = ValueNotifier<String>(_selectedRange);
     _yearNotifier = ValueNotifier<int>(DateTime.now().year);
-    
+
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         return;
@@ -106,10 +107,14 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
         'positive': '0%',
         'breakdown': <String, int>{'Natural': 0},
         'avg': '0.0',
-        'bars': List.generate(blocksCount, (_) => {'intensity': 0.05, 'mood': 'Natural'}),
+        'bars': List.generate(
+          blocksCount,
+          (_) => {'intensity': 0.05, 'mood': 'Natural'},
+        ),
         'recent': history.take(5).toList(),
         'actionableInsights': <String, String>{
-           'Not enough data': 'No moods detected for this time range. Keep listening!'
+          'Not enough data':
+              'No moods detected for this time range. Keep listening!',
         },
       };
     }
@@ -175,7 +180,10 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
           }
           intensity = (dSum / hourMoods.length).clamp(0.05, 1.0);
           dominantMood = localCounts.entries
-              .reduce((entry1, entry2) => entry1.value > entry2.value ? entry1 : entry2)
+              .reduce(
+                (entry1, entry2) =>
+                    entry1.value > entry2.value ? entry1 : entry2,
+              )
               .key;
         }
         return {'intensity': intensity, 'mood': dominantMood};
@@ -210,7 +218,10 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
           }
           intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
           dominantMood = localCounts.entries
-              .reduce((entry1, entry2) => entry1.value > entry2.value ? entry1 : entry2)
+              .reduce(
+                (entry1, entry2) =>
+                    entry1.value > entry2.value ? entry1 : entry2,
+              )
               .key;
         }
         return {'intensity': intensity, 'mood': dominantMood};
@@ -226,22 +237,22 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     };
 
     for (var m in filtered) {
-       final ts = m['timestamp'] as Timestamp?;
-       if (ts == null) continue;
-       final hour = ts.toDate().hour;
-       String tod;
-       if (hour >= 5 && hour < 12) {
-         tod = 'Morning';
-       } else if (hour >= 12 && hour < 17) {
-         tod = 'Afternoon';
-       } else if (hour >= 17 && hour < 21) {
-         tod = 'Evening';
-       } else {
-         tod = 'Night';
-       }
+      final ts = m['timestamp'] as Timestamp?;
+      if (ts == null) continue;
+      final hour = ts.toDate().hour;
+      String tod;
+      if (hour >= 5 && hour < 12) {
+        tod = 'Morning';
+      } else if (hour >= 12 && hour < 17) {
+        tod = 'Afternoon';
+      } else if (hour >= 17 && hour < 21) {
+        tod = 'Evening';
+      } else {
+        tod = 'Night';
+      }
 
-       final mood = m['mood'] as String;
-       timeOfDayCounts[tod]![mood] = (timeOfDayCounts[tod]![mood] ?? 0) + 1;
+      final mood = m['mood'] as String;
+      timeOfDayCounts[tod]![mood] = (timeOfDayCounts[tod]![mood] ?? 0) + 1;
     }
 
     Map<String, String> actionableInsights = {};
@@ -250,7 +261,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
       String happyTod = '';
       int maxSad = -1;
       String sadTod = '';
-      
+
       timeOfDayCounts.forEach((tod, moods) {
         int h = moods['Happy'] ?? 0;
         if (h > maxHappy) {
@@ -263,16 +274,19 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
           sadTod = tod;
         }
       });
-      
+
       if (maxHappy > 0) {
-        actionableInsights['Peak Positivity'] = 'You usually feel great in the $happyTod.';
+        actionableInsights['Peak Positivity'] =
+            'You usually feel great in the $happyTod.';
       }
       if (maxSad > 0) {
-        actionableInsights['Needs a Boost'] = 'You tend to feel down in the $sadTod. Try listening to upbeat music then!';
+        actionableInsights['Needs a Boost'] =
+            'You tend to feel down in the $sadTod. Try listening to upbeat music then!';
       }
       if (actionableInsights.isEmpty && counts.isNotEmpty) {
         // Fallback
-        actionableInsights['Mood Pattern'] = 'Your mood remains relatively stable throughout the day.';
+        actionableInsights['Mood Pattern'] =
+            'Your mood remains relatively stable throughout the day.';
       }
     }
 
@@ -301,78 +315,75 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
         return Scaffold(
           backgroundColor: Theme.of(context).canvasColor,
           body: Stack(
-              children: [
-                Positioned(
-                  top: -100,
-                  right: -100,
-                  child: Container(
-                    width: 400,
-                    height: 400,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Theme.of(context).primaryColor.withValues(alpha: 0.3),
-                          Colors.transparent,
-                        ],
-                        stops: [0.0, 0.5],
-                      ),
+            children: [
+              Positioned(
+                top: -100,
+                right: -100,
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                        Colors.transparent,
+                      ],
+                      stops: [0.0, 0.5],
                     ),
                   ),
                 ),
-                SafeArea(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.arrow_back_ios_new,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                            const Text(
-                              'Trends & Insights',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+              ),
+              SafeArea(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const Text(
+                            'Trends & Insights',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                      Expanded(
-                        child: _buildInsightsContent(history),
-                      ),
-                    ],
-                  ),
+                    Expanded(child: _buildInsightsContent(history)),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildInsightsContent(
-    List<Map<String, dynamic>> history,
-  ) {
-    final availableYears = history
-        .map((m) => (m['timestamp'] as Timestamp?)?.toDate().year)
-        .whereType<int>()
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
-    
+  Widget _buildInsightsContent(List<Map<String, dynamic>> history) {
+    final availableYears =
+        history
+            .map((m) => (m['timestamp'] as Timestamp?)?.toDate().year)
+            .whereType<int>()
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+
     if (availableYears.isEmpty) {
       availableYears.add(DateTime.now().year);
     }
@@ -437,142 +448,156 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
               ],
             ),
           ),
-          
+
           ValueListenableBuilder<String>(
             valueListenable: _rangeNotifier,
             builder: (context, currentRange, _) {
               final stats = _calculateStats(history, currentRange);
-              
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-          const SizedBox(height: 32),
-          ValueListenableBuilder<int>(
-            valueListenable: _yearNotifier,
-            builder: (context, currentYear, _) {
-              if (!availableYears.contains(currentYear)) {
-                Future.microtask(() => _yearNotifier.value = availableYears.first);
-                return const SizedBox.shrink();
-              }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Yearly Heatmap',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      DropdownButton<int>(
-                        value: currentYear,
-                        dropdownColor: const Color(0xFF1E1E2C),
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor, 
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                        underline: const SizedBox(),
-                        icon: Icon(Icons.keyboard_arrow_down, color: Theme.of(context).primaryColor),
-                        items: availableYears.map((year) {
-                          return DropdownMenuItem<int>(
-                            value: year,
-                            child: Text(year.toString()),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) _yearNotifier.value = val;
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildGlassCard(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 24.0,
-                      ),
-                      child: _buildHeatmap(history, context, currentYear),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          
-          if ((stats['actionableInsights'] as Map<String, String>).isNotEmpty) ...[
-            const Text(
-              'Habits & Triggers',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...(stats['actionableInsights'] as Map<String, String>).entries.map((entry) {
-              return _buildGlassCard(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                color: Theme.of(context).primaryColor,
-                child: Row(
-                  children: [
-                    Icon(
-                      entry.key.contains('Boost') ? Icons.bolt : Icons.auto_awesome,
-                      color: Theme.of(context).primaryColor,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
+                  const SizedBox(height: 32),
+                  ValueListenableBuilder<int>(
+                    valueListenable: _yearNotifier,
+                    builder: (context, currentYear, _) {
+                      if (!availableYears.contains(currentYear)) {
+                        Future.microtask(
+                          () => _yearNotifier.value = availableYears.first,
+                        );
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            entry.key,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Yearly Heatmap',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              DropdownButton<int>(
+                                value: currentYear,
+                                dropdownColor: const Color(0xFF1E1E2C),
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                                underline: const SizedBox(),
+                                icon: Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                items: availableYears.map((year) {
+                                  return DropdownMenuItem<int>(
+                                    value: year,
+                                    child: Text(year.toString()),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) _yearNotifier.value = val;
+                                },
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            entry.value,
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 13,
+                          const SizedBox(height: 16),
+                          _buildGlassCard(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 24.0,
+                              ),
+                              child: _buildHeatmap(
+                                history,
+                                context,
+                                currentYear,
+                              ),
                             ),
                           ),
                         ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+
+                  if ((stats['actionableInsights'] as Map<String, String>)
+                      .isNotEmpty) ...[
+                    const Text(
+                      'Habits & Triggers',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    ...(stats['actionableInsights'] as Map<String, String>)
+                        .entries
+                        .map((entry) {
+                          return _buildGlassCard(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            color: Theme.of(context).primaryColor,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  entry.key.contains('Boost')
+                                      ? Icons.bolt
+                                      : Icons.auto_awesome,
+                                  color: Theme.of(context).primaryColor,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        entry.key,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        entry.value,
+                                        style: const TextStyle(
+                                          color: AppTheme.textMuted,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                    const SizedBox(height: 32),
                   ],
-                ),
-              );
-            }),
-            const SizedBox(height: 32),
-          ],
-
                 ],
               );
             },
           ),
-          
+
           const SizedBox(height: 32),
           const Text(
-             'Most Listened Tracks',
-             style: TextStyle(
-               color: Colors.white,
-               fontSize: 18,
-               fontWeight: FontWeight.bold,
-             ),
+            'Most Listened Tracks',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 16),
           _buildMusicHabits(context),
@@ -589,7 +614,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final songs = snapshot.data ?? [];
         if (songs.isEmpty) {
           return _buildGlassCard(
@@ -613,47 +638,49 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
               borderRadius: 16.0,
               child: Row(
                 children: [
-                    CachedImage(
-                      imageUrl: song.coverUrl,
-                      width: 48,
-                      height: 48,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            song.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  CachedImage(
+                    imageUrl: song.coverUrl,
+                    width: 48,
+                    height: 48,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          song.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            song.artist,
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          song.artist,
+                          style: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 12,
                           ),
-                        ],
-                      ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    Icon(
-                       Icons.graphic_eq,
-                       color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                       size: 20,
-                    ),
-                  ],
-                ),
+                  ),
+                  Icon(
+                    Icons.graphic_eq,
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.5),
+                    size: 20,
+                  ),
+                ],
+              ),
             );
           }).toList(),
         );
@@ -661,12 +688,16 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildHeatmap(List<Map<String, dynamic>> history, BuildContext context, int targetYear) {
+  Widget _buildHeatmap(
+    List<Map<String, dynamic>> history,
+    BuildContext context,
+    int targetYear,
+  ) {
     if (history.isEmpty) return const SizedBox.shrink();
 
     final firstDay = DateTime(targetYear, 1, 1);
     final lastDay = DateTime(targetYear, 12, 31);
-    
+
     final startDate = firstDay.subtract(Duration(days: firstDay.weekday - 1));
     final endDate = lastDay.add(Duration(days: 7 - lastDay.weekday));
 
@@ -686,112 +717,121 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     List<Widget> columns = [];
 
     for (int w = 0; w < totalWeeks; w++) {
-       List<Widget> dayWidgets = [];
-       
-       bool isFirstOfMonth = false;
-       String monthName = '';
+      List<Widget> dayWidgets = [];
 
-       for (int i = 0; i < 7; i++) {
-           final currentDay = startDate.add(Duration(days: w * 7 + i));
-           
-           if (currentDay.year == targetYear && currentDay.day == 1) {
-               isFirstOfMonth = true;
-               monthName = DateFormat('MMM').format(currentDay);
-           }
-           
-           if (currentDay.year != targetYear) {
-              dayWidgets.add(const SizedBox(width: 14, height: 14));
-              continue;
-           }
+      bool isFirstOfMonth = false;
+      String monthName = '';
 
-           final dayMoods = group[currentDay] ?? [];
-           double intensity = 0.05;
-           String dominantMood = 'Natural';
+      for (int i = 0; i < 7; i++) {
+        final currentDay = startDate.add(Duration(days: w * 7 + i));
 
-           if (dayMoods.isNotEmpty) {
-               double dSum = 0;
-               Map<String, int> localCounts = {};
-               for (var m in dayMoods) {
-                  final mood = m['mood'] as String;
-                  localCounts[mood] = (localCounts[mood] ?? 0) + 1;
-                  if (mood == 'Happy') {
-                    dSum += 0.9;
-                  } else if (mood == 'Natural') {
-                    dSum += 0.6;
-                  } else if (mood == 'Angry') {
-                    dSum += 0.8;
-                  } else if (mood == 'Sad') {
-                    dSum += 0.3;
-                  }
-               }
-               intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
-               dominantMood = localCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-           }
+        if (currentDay.year == targetYear && currentDay.day == 1) {
+          isFirstOfMonth = true;
+          monthName = DateFormat('MMM').format(currentDay);
+        }
 
-           final color = AppTheme.moodColors[dominantMood] ?? Theme.of(context).primaryColor;
+        if (currentDay.year != targetYear) {
+          dayWidgets.add(const SizedBox(width: 14, height: 14));
+          continue;
+        }
 
-           dayWidgets.add(
-             GestureDetector(
-               onTap: () {
-                 if (dayMoods.isNotEmpty) {
-                   _showDayDetailReport(context, currentDay, dayMoods);
-                 }
-               },
-               child: Tooltip(
-                 message: '${DateFormat('MMM dd, yyyy').format(currentDay)}\n${dayMoods.isEmpty ? "No data" : "$dominantMood: ${(intensity * 10).toStringAsFixed(1)}/10"}\nTap for details',
-                 triggerMode: TooltipTriggerMode.longPress,
-                 child: AnimatedContainer(
-                   duration: const Duration(milliseconds: 300),
-                   width: 14,
-                   height: 14,
-                   decoration: BoxDecoration(
-                     color: intensity <= 0.05 
-                         ? Colors.white.withValues(alpha: 0.05) 
-                         : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
-                     borderRadius: BorderRadius.circular(4),
-                     border: Border.all(
-                       color: intensity <= 0.05 
-                           ? Colors.white.withValues(alpha: 0.1) 
-                           : color.withValues(alpha: 0.2),
-                       width: 1,
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-           );
-       }
+        final dayMoods = group[currentDay] ?? [];
+        double intensity = 0.05;
+        String dominantMood = 'Natural';
 
-       columns.add(
-         Padding(
-           padding: const EdgeInsets.symmetric(horizontal: 2.0),
-           child: Column(
-             mainAxisAlignment: MainAxisAlignment.start,
-             crossAxisAlignment: CrossAxisAlignment.start,
-             children: [
-               SizedBox(
-                 height: 20,
-                 width: 14,
-                 child: OverflowBox(
-                   alignment: Alignment.centerLeft,
-                   maxWidth: 40,
-                   child: Text(
-                     isFirstOfMonth ? monthName : '',
-                     style: const TextStyle(
-                       color: AppTheme.textMuted, 
-                       fontSize: 10, 
-                       fontWeight: FontWeight.bold,
-                     ),
-                     softWrap: false,
-                     overflow: TextOverflow.visible,
-                   ),
-                 ),
-               ),
-               ...dayWidgets.map((w) => Padding(padding: const EdgeInsets.only(bottom: 4.0), child: w)),
-             ],
-           ),
-         )
-       );
+        if (dayMoods.isNotEmpty) {
+          double dSum = 0;
+          Map<String, int> localCounts = {};
+          for (var m in dayMoods) {
+            final mood = m['mood'] as String;
+            localCounts[mood] = (localCounts[mood] ?? 0) + 1;
+            if (mood == 'Happy') {
+              dSum += 0.9;
+            } else if (mood == 'Natural') {
+              dSum += 0.6;
+            } else if (mood == 'Angry') {
+              dSum += 0.8;
+            } else if (mood == 'Sad') {
+              dSum += 0.3;
+            }
+          }
+          intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
+          dominantMood = localCounts.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
+        }
+
+        final color =
+            AppTheme.moodColors[dominantMood] ?? Theme.of(context).primaryColor;
+
+        dayWidgets.add(
+          GestureDetector(
+            onTap: () {
+              if (dayMoods.isNotEmpty) {
+                _showDayDetailReport(context, currentDay, dayMoods);
+              }
+            },
+            child: Tooltip(
+              message:
+                  '${DateFormat('MMM dd, yyyy').format(currentDay)}\n${dayMoods.isEmpty ? "No data" : "$dominantMood: ${(intensity * 10).toStringAsFixed(1)}/10"}\nTap for details',
+              triggerMode: TooltipTriggerMode.longPress,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: intensity <= 0.05
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: intensity <= 0.05
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : color.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      columns.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 20,
+                width: 14,
+                child: OverflowBox(
+                  alignment: Alignment.centerLeft,
+                  maxWidth: 40,
+                  child: Text(
+                    isFirstOfMonth ? monthName : '',
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    softWrap: false,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+              ),
+              ...dayWidgets.map(
+                (w) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4.0),
+                  child: w,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Row(
@@ -814,7 +854,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
         ),
         Expanded(
           child: SizedBox(
-            height: 155, 
+            height: 155,
             child: ListView(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
@@ -826,7 +866,11 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     );
   }
 
-  void _showDayDetailReport(BuildContext context, DateTime date, List<Map<String, dynamic>> dayMoods) {
+  void _showDayDetailReport(
+    BuildContext context,
+    DateTime date,
+    List<Map<String, dynamic>> dayMoods,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF161621),
@@ -897,7 +941,8 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Expanded( // Changed from Flexible to Expanded for DraggableScrollableSheet
+                  Expanded(
+                    // Changed from Flexible to Expanded for DraggableScrollableSheet
                     child: ListView.builder(
                       controller: scrollController,
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -906,14 +951,19 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                         final mood = dayMoods[index];
                         final moodName = mood['mood'] as String;
                         final ts = mood['timestamp'] as Timestamp;
-                        final timeStr = DateFormat('hh:mm a').format(ts.toDate());
-                        final color = AppTheme.moodColors[moodName] ?? Theme.of(context).primaryColor;
-                        
+                        final timeStr = DateFormat(
+                          'hh:mm a',
+                        ).format(ts.toDate());
+                        final color =
+                            AppTheme.moodColors[moodName] ??
+                            Theme.of(context).primaryColor;
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: Row(
                             children: [
-                              SizedBox( // Changed from Container to SizedBox for explicit width
+                              SizedBox(
+                                // Changed from Container to SizedBox for explicit width
                                 width: 50,
                                 child: Text(
                                   timeStr,
@@ -926,21 +976,23 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                               Container(
                                 width: 2,
                                 height: 40,
-                                margin: const EdgeInsets.symmetric(horizontal: 16),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
-                                    colors: [
-                                      color,
-                                      color.withValues(alpha: 0),
-                                    ],
+                                    colors: [color, color.withValues(alpha: 0)],
                                   ),
                                 ),
                               ),
                               Expanded(
                                 child: _buildGlassCard(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
                                   borderRadius: 16,
                                   child: Row(
                                     children: [
@@ -959,10 +1011,15 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                                       const Spacer(),
                                       if (mood.containsKey('intensity'))
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: color.withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           child: Text(
                                             'Intensity ${mood['intensity']}',
@@ -1004,11 +1061,16 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
     );
   }
 
-
-  Widget _buildMoodBreakdownCard(List<Map<String, dynamic>> history, String range) {
+  Widget _buildMoodBreakdownCard(
+    List<Map<String, dynamic>> history,
+    String range,
+  ) {
     final stats = _calculateStats(history, range);
     final breakdown = stats['breakdown'] as Map<String, int>;
-    int totalMoodsCount = breakdown.values.fold(0, (previousValue, element) => previousValue + element);
+    int totalMoodsCount = breakdown.values.fold(
+      0,
+      (previousValue, element) => previousValue + element,
+    );
 
     String topMood = 'None';
     if (breakdown.isNotEmpty) {
@@ -1016,9 +1078,10 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
           .reduce((a, b) => a.value > b.value ? a : b)
           .key;
     }
-    final topMoodColor = AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
+    final topMoodColor =
+        AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
 
-    return     _buildGlassCard(
+    return _buildGlassCard(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
@@ -1032,7 +1095,8 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                   TweenAnimationBuilder<double>(
                     tween: Tween(
                       begin: 0.0,
-                      end: (double.tryParse(
+                      end:
+                          (double.tryParse(
                                 stats['positive'].replaceAll('%', ''),
                               ) ??
                               0.0) /
@@ -1050,7 +1114,9 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                             CircularProgressIndicator(
                               value: 1.0,
                               strokeWidth: 10,
-                              valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.02)),
+                              valueColor: AlwaysStoppedAnimation(
+                                Colors.white.withValues(alpha: 0.02),
+                              ),
                             ),
                             CircularProgressIndicator(
                               value: value,
@@ -1099,10 +1165,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                 children: [
                   const Text(
                     'Dominant Mood',
-                    style: TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -1147,8 +1210,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                   ? (count / totalMoodsCount)
                   : 0.0;
               final moodColor =
-                  AppTheme.moodColors[mood] ??
-                  Theme.of(context).primaryColor;
+                  AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: Row(
@@ -1184,9 +1246,7 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
                         borderRadius: BorderRadius.circular(6),
                         child: LinearProgressIndicator(
                           value: percentage,
-                          backgroundColor: Colors.white.withValues(
-                            alpha: 0.05,
-                          ),
+                          backgroundColor: Colors.white.withValues(alpha: 0.05),
                           valueColor: AlwaysStoppedAnimation(moodColor),
                           minHeight: 8,
                         ),
@@ -1227,7 +1287,9 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: color?.withValues(alpha: 0.1) ?? Colors.black.withValues(alpha: 0.1),
+            color:
+                color?.withValues(alpha: 0.1) ??
+                Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             spreadRadius: -5,
           ),
@@ -1240,10 +1302,14 @@ class _InsightsScreenState extends State<InsightsScreen> with SingleTickerProvid
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: color?.withValues(alpha: 0.05) ?? Colors.white.withValues(alpha: 0.03),
+              color:
+                  color?.withValues(alpha: 0.05) ??
+                  Colors.white.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
-                color: color?.withValues(alpha: 0.1) ?? Colors.white.withValues(alpha: 0.08),
+                color:
+                    color?.withValues(alpha: 0.1) ??
+                    Colors.white.withValues(alpha: 0.08),
                 width: 1,
               ),
             ),

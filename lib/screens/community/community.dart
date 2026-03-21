@@ -35,6 +35,9 @@ class _CommunityScreenState extends State<CommunityScreen>
   final PlayerService _playerService = PlayerService();
   final ValueNotifier<Color?> _screenGlowColor = ValueNotifier<Color?>(null);
 
+  // Real-time Presence
+  Timer? _heartbeatTimer;
+
   StreamSubscription? _supportListener;
   int _lastResponseCount = 0;
   bool _isFirstLoad = true;
@@ -82,14 +85,14 @@ class _CommunityScreenState extends State<CommunityScreen>
   void initState() {
     super.initState();
     _pulseController = AnimationController(
-                                vsync: this,
-                                duration: const Duration(seconds: 4),
-                              )..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
 
     _globeController = AnimationController(
-                                vsync: this,
-                                duration: const Duration(seconds: 25), // one full rotation
-                              )..repeat();
+      vsync: this,
+      duration: const Duration(seconds: 25), // one full rotation
+    )..repeat();
 
     // Listen for vibes dropped for user's own active request
     _supportListener = _communityService.getActiveSupportRequest().listen((
@@ -101,8 +104,10 @@ class _CommunityScreenState extends State<CommunityScreen>
         // Check if a new vibe was dropped
         if (!_isFirstLoad && newResponses > _lastResponseCount) {
           final latestResponse = post.supportResponses.last;
-          debugPrint('DEBUG: New vibe detected from ${latestResponse.userName}');
-          
+          debugPrint(
+            'DEBUG: New vibe detected from ${latestResponse.userName}',
+          );
+
           // Notify ONLY if someone else dropped the vibe
           if (latestResponse.userId != _communityService.uid) {
             debugPrint('DEBUG: Triggering system notification for vibe');
@@ -112,7 +117,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                   '${latestResponse.userName} just dropped a vibe for your lift.',
             );
           } else {
-            debugPrint('DEBUG: Vibe was dropped by current user, skipping notification');
+            debugPrint(
+              'DEBUG: Vibe was dropped by current user, skipping notification',
+            );
           }
         }
 
@@ -125,6 +132,18 @@ class _CommunityScreenState extends State<CommunityScreen>
     });
 
     _moodService.currentMood.addListener(_handleMoodChange);
+    _initLiveStats();
+  }
+
+  void _initLiveStats() {
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _communityService.updateUserMood(_moodService.currentMood.value);
+      }
+    });
+
+    // Send initial heartbeat immediately
+    _communityService.updateUserMood(_moodService.currentMood.value);
   }
 
   void _handleMoodChange() async {
@@ -133,7 +152,9 @@ class _CommunityScreenState extends State<CommunityScreen>
 
     // If mood is no longer Sad/Angry, remove active support request
     if (!isSadOrAngry) {
-      final activePost = await _communityService.getActiveSupportRequest().first;
+      final activePost = await _communityService
+          .getActiveSupportRequest()
+          .first;
       if (activePost != null) {
         await _communityService.deletePost(activePost.id);
         _showFeedback(
@@ -149,6 +170,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     _pulseController.dispose();
     _globeController.dispose();
     _supportListener?.cancel();
+    _heartbeatTimer?.cancel();
     _moodService.currentMood.removeListener(_handleMoodChange);
     super.dispose();
   }
@@ -187,10 +209,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   void _leaveTribeSession() {
     TribeService().leaveTribeSession();
-    _showFeedback(
-      'You left the tribe session.',
-      icon: Icons.logout,
-    );
+    _showFeedback('You left the tribe session.', icon: Icons.logout);
   }
 
   void _dropAVibe(CommunityPost post) {
@@ -383,7 +402,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                                   artist: song.artist,
                                   videoId: song.videoId,
                                   coverUrl: song.artworkUrl,
-                                  moodColorValue: Colors.amber.toARGB32(),
+                                  moodColorValue: const Color(
+                                    0xFFA855F7,
+                                  ).toARGB32(),
                                 );
                                 Navigator.pop(context);
                                 _showFeedback(
@@ -552,7 +573,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
     final Map<String, Color> reactionColors = {
       'Relatable': Colors.blueAccent,
-      'Vibing': Colors.amber,
+      'Vibing': const Color(0xFFA855F7),
       'Healing': Colors.greenAccent,
       'Powerful': Colors.redAccent,
     };
@@ -592,7 +613,6 @@ class _CommunityScreenState extends State<CommunityScreen>
       ),
     );
   }
-
 
   void _showMoodSnippet(String mood, String region) {
     showDialog(
@@ -651,16 +671,32 @@ class _CommunityScreenState extends State<CommunityScreen>
                       style: TextStyle(color: themeColor, fontSize: 14),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Mood Stats Column
-                    _buildRegionMoodStat('Happy', countHappy, AppTheme.moodColors['Happy'] ?? Colors.amber),
+                    _buildRegionMoodStat(
+                      'Happy',
+                      countHappy,
+                      AppTheme.moodColors['Happy'] ?? const Color(0xFFA855F7),
+                    ),
                     const SizedBox(height: 12),
-                    _buildRegionMoodStat('Natural', countNatural, AppTheme.moodColors['Natural'] ?? Colors.green),
+                    _buildRegionMoodStat(
+                      'Natural',
+                      countNatural,
+                      AppTheme.moodColors['Natural'] ?? Colors.green,
+                    ),
                     const SizedBox(height: 12),
-                    _buildRegionMoodStat('Sad', countSad, AppTheme.moodColors['Sad'] ?? Colors.blue),
+                    _buildRegionMoodStat(
+                      'Sad',
+                      countSad,
+                      AppTheme.moodColors['Sad'] ?? Colors.blue,
+                    ),
                     const SizedBox(height: 12),
-                    _buildRegionMoodStat('Angry', countAngry, AppTheme.moodColors['Angry'] ?? Colors.red),
-                    
+                    _buildRegionMoodStat(
+                      'Angry',
+                      countAngry,
+                      AppTheme.moodColors['Angry'] ?? Colors.red,
+                    ),
+
                     const SizedBox(height: 32),
                     TextButton(
                       onPressed: () {
@@ -695,7 +731,8 @@ class _CommunityScreenState extends State<CommunityScreen>
           Row(
             children: [
               Container(
-                width: 8, height: 8,
+                width: 8,
+                height: 8,
                 decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
@@ -710,7 +747,9 @@ class _CommunityScreenState extends State<CommunityScreen>
             ],
           ),
           Text(
-            '${(count / 1000).toStringAsFixed(1)}K',
+            count >= 1000
+                ? '${(count / 1000).toStringAsFixed(1)}K'
+                : count.toString(),
             style: TextStyle(
               color: color,
               fontSize: 14,
@@ -851,7 +890,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            isJoined ? 'Welcome To Tribe' : 'Your Mood Tribe',
+                                            isJoined
+                                                ? 'Welcome To Tribe'
+                                                : 'Your Mood Tribe',
                                             style: TextStyle(
                                               color: tribe.color,
                                               fontSize: 12,
@@ -910,10 +951,12 @@ class _CommunityScreenState extends State<CommunityScreen>
                                     ),
                                     const SizedBox(width: 4),
                                     StreamBuilder<List<TribeMember>>(
-                                      stream: TribeService().getActiveMembersStream(tribe.id),
+                                      stream: TribeService()
+                                          .getActiveMembersStream(tribe.id),
                                       builder: (context, snapshot) {
-                                        final activeCount = snapshot.data?.length ?? 0;
-                                        
+                                        final activeCount =
+                                            snapshot.data?.length ?? 0;
+
                                         return Text(
                                           activeCount > 0
                                               ? '$activeCount others vibing right now'
@@ -939,11 +982,14 @@ class _CommunityScreenState extends State<CommunityScreen>
                                               _enterTribeSession(tribe),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isJoined
-                                                ? Colors.white.withValues(alpha: 0.1)
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.1,
+                                                  )
                                                 : tribe.color,
                                             foregroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
                                             ),
                                             elevation: isJoined ? 0 : 8,
                                             shadowColor: tribe.color.withValues(
@@ -951,7 +997,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                                             ),
                                           ),
                                           child: Text(
-                                            isJoined ? 'RETURN TO SESSION' : 'JOIN TRIBE',
+                                            isJoined
+                                                ? 'RETURN TO SESSION'
+                                                : 'JOIN TRIBE',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
@@ -969,11 +1017,13 @@ class _CommunityScreenState extends State<CommunityScreen>
                                         child: ElevatedButton(
                                           onPressed: _leaveTribeSession,
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.redAccent.withValues(alpha: 0.2),
+                                            backgroundColor: Colors.redAccent
+                                                .withValues(alpha: 0.2),
                                             foregroundColor: Colors.redAccent,
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
                                             ),
                                             elevation: 0,
                                           ),
@@ -1028,13 +1078,14 @@ class _CommunityScreenState extends State<CommunityScreen>
                         ? mood
                         : 'Natural';
                     final themeColor =
-                        AppTheme.moodColors[boardMood] ?? Colors.amber;
+                        AppTheme.moodColors[boardMood] ??
+                        const Color(0xFFA855F7);
 
                     return StreamBuilder<List<MoodboardSong>>(
                       stream: _communityService.getMoodboardSongs(boardMood),
                       builder: (context, snapshot) {
                         final songs = snapshot.data ?? [];
-                        
+
                         return Container(
                           margin: const EdgeInsets.only(top: 8, bottom: 24),
                           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -1042,10 +1093,12 @@ class _CommunityScreenState extends State<CommunityScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '$boardMood Tribe Anthem',
@@ -1059,7 +1112,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                                       Text(
                                         'TOP SONGS RIGHT NOW',
                                         style: TextStyle(
-                                          color: themeColor.withValues(alpha: 0.7),
+                                          color: themeColor.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           fontSize: 10,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 1.5,
@@ -1075,33 +1130,53 @@ class _CommunityScreenState extends State<CommunityScreen>
                                   child: Container(
                                     padding: const EdgeInsets.all(32),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.05),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       borderRadius: BorderRadius.circular(24),
                                     ),
                                     child: Column(
                                       children: [
-                                        Icon(Icons.leaderboard_outlined, color: themeColor.withValues(alpha: 0.3), size: 48),
+                                        Icon(
+                                          Icons.leaderboard_outlined,
+                                          color: themeColor.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          size: 48,
+                                        ),
                                         const SizedBox(height: 16),
                                         const Text(
                                           'The board is empty.\nSet the vibe for your tribe!',
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(color: Colors.white38, fontSize: 13),
+                                          style: TextStyle(
+                                            color: Colors.white38,
+                                            fontSize: 13,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                 )
                               else ...[
-                                _buildLeaderboardPodium(songs.take(3).toList(), boardMood),
+                                _buildLeaderboardPodium(
+                                  songs.take(3).toList(),
+                                  boardMood,
+                                ),
                                 if (songs.length > 3) ...[
                                   const SizedBox(height: 24),
-                                  ...songs.skip(3).take(7).toList().asMap().entries.map((entry) {
-                                    return _buildLeaderboardChartItem(
-                                      entry.value,
-                                      boardMood,
-                                      entry.key + 3,
-                                    );
-                                  }),
+                                  ...songs
+                                      .skip(3)
+                                      .take(7)
+                                      .toList()
+                                      .asMap()
+                                      .entries
+                                      .map((entry) {
+                                        return _buildLeaderboardChartItem(
+                                          entry.value,
+                                          boardMood,
+                                          entry.key + 3,
+                                        );
+                                      }),
                                 ],
                               ],
                             ],
@@ -1215,8 +1290,10 @@ class _CommunityScreenState extends State<CommunityScreen>
                                 scrollDirection: Axis.horizontal,
                                 itemCount: activePost.supportResponses.length,
                                 itemBuilder: (context, index) {
-                                  final vibe =
-                                      activePost.supportResponses.reversed.toList()[index];
+                                  final vibe = activePost
+                                      .supportResponses
+                                      .reversed
+                                      .toList()[index];
                                   final color = Color(vibe.moodColorValue);
 
                                   return GestureDetector(
@@ -1235,7 +1312,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                                           icon: Icons.play_circle_outline,
                                         );
                                       } else {
-                                        _showFeedback('Vibing with this track!');
+                                        _showFeedback(
+                                          'Vibing with this track!',
+                                        );
                                       }
                                     },
                                     child: Container(
@@ -1255,7 +1334,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                                             width: 40,
                                             height: 40,
                                             decoration: BoxDecoration(
-                                              color: color.withValues(alpha: 0.2),
+                                              color: color.withValues(
+                                                alpha: 0.2,
+                                              ),
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                             ),
@@ -1287,7 +1368,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                                                 Text(
                                                   vibe.songTitle,
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   style: const TextStyle(
                                                     color: Colors.white,
                                                     fontWeight: FontWeight.bold,
@@ -1297,11 +1379,11 @@ class _CommunityScreenState extends State<CommunityScreen>
                                                 Text(
                                                   vibe.artist,
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   style: TextStyle(
-                                                    color: Colors.white.withValues(
-                                                      alpha: 0.5,
-                                                    ),
+                                                    color: Colors.white
+                                                        .withValues(alpha: 0.5),
                                                     fontSize: 11,
                                                   ),
                                                 ),
@@ -1309,7 +1391,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                                                 Text(
                                                   'from ${vibe.userName}',
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   style: TextStyle(
                                                     color: color.withValues(
                                                       alpha: 0.8,
@@ -1377,7 +1460,8 @@ class _CommunityScreenState extends State<CommunityScreen>
     return StreamBuilder<GlobalMoodStats>(
       stream: _communityService.getGlobalStats(),
       builder: (context, snapshot) {
-        final stats = snapshot.data ??
+        final stats =
+            snapshot.data ??
             GlobalMoodStats(
               vibingNow: 12400,
               moodPercentages: {
@@ -1434,13 +1518,25 @@ class _CommunityScreenState extends State<CommunityScreen>
                               size: 14,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              '${(stats.vibingNow / 1000).toStringAsFixed(1)}K Vibing Now',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                            TweenAnimationBuilder<double>(
+                              tween: Tween<double>(
+                                end: stats.vibingNow.toDouble(),
                               ),
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, _) {
+                                String countText = value >= 1000
+                                    ? '${(value / 1000).toStringAsFixed(1)}K'
+                                    : value.toInt().toString();
+                                return Text(
+                                  '$countText Vibing Now',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -1500,7 +1596,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.amber.withValues(
+                                color: const Color(0xFFA855F7).withValues(
                                   alpha: 0.06 + _pulseController.value * 0.06,
                                 ),
                                 blurRadius: 60,
@@ -1571,25 +1667,33 @@ class _CommunityScreenState extends State<CommunityScreen>
                     _buildGlobalStat(
                       'Happy',
                       stats.moodPercentages['Happy'] ?? 0,
-                      Icons.trending_up,
-                      Colors.amber,
+                      (stats.regionalMoods.values.contains('Happy'))
+                          ? Icons.trending_up
+                          : Icons.trending_flat,
+                      const Color(0xFFA855F7),
                     ),
                     _buildGlobalStat(
                       'Natural',
                       stats.moodPercentages['Natural'] ?? 0,
-                      Icons.trending_flat,
+                      (stats.regionalMoods.values.contains('Natural'))
+                          ? Icons.trending_up
+                          : Icons.trending_flat,
                       Colors.greenAccent,
                     ),
                     _buildGlobalStat(
                       'Sad',
                       stats.moodPercentages['Sad'] ?? 0,
-                      Icons.trending_down,
+                      (stats.regionalMoods.values.contains('Sad'))
+                          ? Icons.trending_up
+                          : Icons.trending_flat,
                       Colors.blueAccent,
                     ),
                     _buildGlobalStat(
                       'Angry',
                       stats.moodPercentages['Angry'] ?? 0,
-                      Icons.trending_down,
+                      (stats.regionalMoods.values.contains('Angry'))
+                          ? Icons.trending_up
+                          : Icons.trending_flat,
                       Colors.redAccent,
                     ),
                   ],
@@ -1602,8 +1706,12 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-
-  Widget _buildGlobalStat(String mood, int percentage, IconData trendIcon, Color color) {
+  Widget _buildGlobalStat(
+    String mood,
+    int percentage,
+    IconData trendIcon,
+    Color color,
+  ) {
     return Column(
       children: [
         Row(
@@ -1636,13 +1744,20 @@ class _CommunityScreenState extends State<CommunityScreen>
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              '$percentage%',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(end: percentage.toDouble()),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) {
+                return Text(
+                  '${value.toInt()}%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 4),
             Icon(trendIcon, color: color, size: 14),
@@ -1663,7 +1778,8 @@ class _CommunityScreenState extends State<CommunityScreen>
     return AnimatedBuilder(
       animation: _globeController,
       builder: (context, child) {
-        const double r = 130.0; // must match CustomPaint size 260×260 → r = 260/2
+        const double r =
+            130.0; // must match CustomPaint size 260×260 → r = 260/2
         final globeRot = _globeController.value * 2 * math.pi;
 
         // ── Same formula as _GlobePainter ──────────────────────────────────
@@ -1681,7 +1797,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
         final color = AppTheme.moodColors[mood] ?? Colors.white;
         final opacity = vis.clamp(0.2, 1.0);
-        final scale  = 0.72 + vis * 0.28; // perspective scale: smaller at limb
+        final scale = 0.72 + vis * 0.28; // perspective scale: smaller at limb
 
         return Transform.translate(
           offset: Offset(x, y),
@@ -1692,21 +1808,34 @@ class _CommunityScreenState extends State<CommunityScreen>
               child: GestureDetector(
                 onTap: () => _showMoodSnippet(mood, label),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: color.withValues(alpha: 0.55), width: 0.8),
+                    border: Border.all(
+                      color: color.withValues(alpha: 0.55),
+                      width: 0.8,
+                    ),
                     boxShadow: [
-                      BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 6),
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.25),
+                        blurRadius: 6,
+                      ),
                     ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 5, height: 5,
-                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -1816,67 +1945,73 @@ class _CommunityScreenState extends State<CommunityScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  ...post.supportResponses.reversed.take(5).map(
-                    (res) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 2),
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: Color(res.moodColorValue),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                RichText(
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: res.userName,
+                  ...post.supportResponses.reversed
+                      .take(5)
+                      .map(
+                        (res) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(top: 2),
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: Color(res.moodColorValue),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: 13,
                                         ),
+                                        children: [
+                                          TextSpan(
+                                            text: res.userName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const TextSpan(
+                                            text: ' sent ',
+                                            style: TextStyle(
+                                              color: Colors.white54,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: res.songTitle,
+                                            style: TextStyle(
+                                              color: Color(res.moodColorValue),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const TextSpan(
-                                        text: ' sent ',
-                                        style: TextStyle(color: Colors.white54),
-                                      ),
-                                      TextSpan(
-                                        text: res.songTitle,
-                                        style: TextStyle(
-                                          color: Color(res.moodColorValue),
-                                          fontWeight: FontWeight.w600,
+                                    ),
+                                    Text(
+                                      'by ${res.artist}',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.4,
                                         ),
+                                        fontSize: 11,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  'by ${res.artist}',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.4),
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1901,7 +2036,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                     post.reactions,
                     'Vibing',
                     '🔥',
-                    Colors.amber,
+                    const Color(0xFFA855F7),
                   ),
                   _buildReactionButton(
                     post.id,
@@ -2019,19 +2154,26 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  Widget _buildPodiumMember(MoodboardSong song, String mood, int rank, double height) {
-    final color = AppTheme.moodColors[mood] ?? Colors.amber;
+  Widget _buildPodiumMember(
+    MoodboardSong song,
+    String mood,
+    int rank,
+    double height,
+  ) {
+    final color = AppTheme.moodColors[mood] ?? const Color(0xFFA855F7);
     final isFirst = rank == 1;
 
     return GestureDetector(
       onTap: () {
         if (song.videoId != null) {
-          _playerService.play(SongInfo(
-            videoId: song.videoId!,
-            title: song.title,
-            artist: song.artist,
-            coverUrl: song.coverUrl,
-          ));
+          _playerService.play(
+            SongInfo(
+              videoId: song.videoId!,
+              title: song.title,
+              artist: song.artist,
+              coverUrl: song.coverUrl,
+            ),
+          );
         } else {
           _showFeedback('Unable to play this track 😔');
         }
@@ -2054,13 +2196,15 @@ class _CommunityScreenState extends State<CommunityScreen>
                       color.withValues(alpha: 0.2),
                     ],
                   ),
-                  boxShadow: isFirst ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.4),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    )
-                  ] : [],
+                  boxShadow: isFirst
+                      ? [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.4),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : [],
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(3.0),
@@ -2072,7 +2216,11 @@ class _CommunityScreenState extends State<CommunityScreen>
                     child: ClipOval(
                       child: song.coverUrl != null
                           ? Image.network(song.coverUrl!, fit: BoxFit.cover)
-                          : Icon(Icons.music_note, color: color.withValues(alpha: 0.5), size: isFirst ? 40 : 30),
+                          : Icon(
+                              Icons.music_note,
+                              color: color.withValues(alpha: 0.5),
+                              size: isFirst ? 40 : 30,
+                            ),
                     ),
                   ),
                 ),
@@ -2085,7 +2233,10 @@ class _CommunityScreenState extends State<CommunityScreen>
               Positioned(
                 bottom: -5,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(12),
@@ -2138,7 +2289,11 @@ class _CommunityScreenState extends State<CommunityScreen>
                   const SizedBox(width: 4),
                   Text(
                     '${song.vibes}',
-                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -2149,8 +2304,12 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  Widget _buildLeaderboardChartItem(MoodboardSong song, String mood, int index) {
-    final color = AppTheme.moodColors[mood] ?? Colors.amber;
+  Widget _buildLeaderboardChartItem(
+    MoodboardSong song,
+    String mood,
+    int index,
+  ) {
+    final color = AppTheme.moodColors[mood] ?? const Color(0xFFA855F7);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -2162,12 +2321,14 @@ class _CommunityScreenState extends State<CommunityScreen>
       child: ListTile(
         onTap: () {
           if (song.videoId != null) {
-            _playerService.play(SongInfo(
-              videoId: song.videoId!,
-              title: song.title,
-              artist: song.artist,
-              coverUrl: song.coverUrl,
-            ));
+            _playerService.play(
+              SongInfo(
+                videoId: song.videoId!,
+                title: song.title,
+                artist: song.artist,
+                coverUrl: song.coverUrl,
+              ),
+            );
           } else {
             _showFeedback('Unable to play this track 😔');
           }
@@ -2199,7 +2360,11 @@ class _CommunityScreenState extends State<CommunityScreen>
                         borderRadius: BorderRadius.circular(6),
                         child: Image.network(song.coverUrl!, fit: BoxFit.cover),
                       )
-                    : const Icon(Icons.music_note, color: Colors.white24, size: 16),
+                    : const Icon(
+                        Icons.music_note,
+                        color: Colors.white24,
+                        size: 16,
+                      ),
               ),
             ],
           ),
@@ -2208,7 +2373,11 @@ class _CommunityScreenState extends State<CommunityScreen>
           song.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
         ),
         subtitle: Text(
           song.artist,
@@ -2231,7 +2400,11 @@ class _CommunityScreenState extends State<CommunityScreen>
                 const SizedBox(width: 4),
                 Text(
                   '${song.vibes}',
-                  style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -2249,7 +2422,13 @@ class _GlobePainter extends CustomPainter {
 
   // Projects a [lat°, lng°] point onto screen given globe centre/radius/rotation.
   // Returns null when the point is on the back hemisphere.
-  Offset? _project(double latDeg, double lngDeg, double cx, double cy, double r) {
+  Offset? _project(
+    double latDeg,
+    double lngDeg,
+    double cx,
+    double cy,
+    double r,
+  ) {
     final lat = latDeg * math.pi / 180;
     final lng = (lngDeg * math.pi / 180) + rotation;
     final cosLat = math.cos(lat);
@@ -2262,8 +2441,13 @@ class _GlobePainter extends CustomPainter {
 
   // Draws a polygon land mass from [lat,lng] pairs, fading by avg visibility.
   void _drawLandPoly(
-    Canvas canvas, double cx, double cy, double r,
-    List<List<double>> pts, Color fill, Color stroke,
+    Canvas canvas,
+    double cx,
+    double cy,
+    double r,
+    List<List<double>> pts,
+    Color fill,
+    Color stroke,
   ) {
     final path = Path();
     bool started = false;
@@ -2274,7 +2458,10 @@ class _GlobePainter extends CustomPainter {
       final proj = _project(pt[0], pt[1], cx, cy, r);
       if (proj == null) {
         // Gap in polygon when crossing limb — restart path segment
-        if (started) { path.close(); started = false; }
+        if (started) {
+          path.close();
+          started = false;
+        }
         continue;
       }
       // Accumulate average visibility for opacity
@@ -2283,8 +2470,10 @@ class _GlobePainter extends CustomPainter {
       visSum += math.cos(lat) * math.cos(lng);
       visCount++;
 
-      if (!started) { path.moveTo(proj.dx, proj.dy); started = true; }
-      else {
+      if (!started) {
+        path.moveTo(proj.dx, proj.dy);
+        started = true;
+      } else {
         path.lineTo(proj.dx, proj.dy);
       }
     }
@@ -2293,8 +2482,19 @@ class _GlobePainter extends CustomPainter {
     final avgVis = visCount > 0 ? (visSum / visCount).clamp(0.0, 1.0) : 0.0;
     if (avgVis <= 0) return;
 
-    canvas.drawPath(path, Paint()..color = fill.withValues(alpha: fill.a * avgVis)..style = PaintingStyle.fill);
-    canvas.drawPath(path, Paint()..color = stroke.withValues(alpha: stroke.a * avgVis)..style = PaintingStyle.stroke..strokeWidth = 0.7);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = fill.withValues(alpha: fill.a * avgVis)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = stroke.withValues(alpha: stroke.a * avgVis)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.7,
+    );
   }
 
   @override
@@ -2305,25 +2505,38 @@ class _GlobePainter extends CustomPainter {
 
     // ── Atmosphere ──────────────────────────────────────────────────────────
     canvas.drawCircle(
-      Offset(cx, cy), r * 1.06,
-      Paint()..shader = RadialGradient(
-        colors: [Colors.transparent, Colors.blueAccent.withValues(alpha: 0.12), Colors.transparent],
-        stops: const [0.88, 0.96, 1.0],
-      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r * 1.06)),
+      Offset(cx, cy),
+      r * 1.06,
+      Paint()
+        ..shader =
+            RadialGradient(
+              colors: [
+                Colors.transparent,
+                Colors.blueAccent.withValues(alpha: 0.12),
+                Colors.transparent,
+              ],
+              stops: const [0.88, 0.96, 1.0],
+            ).createShader(
+              Rect.fromCircle(center: Offset(cx, cy), radius: r * 1.06),
+            ),
     );
 
     // ── Ocean ───────────────────────────────────────────────────────────────
     canvas.drawCircle(
-      Offset(cx, cy), r,
-      Paint()..shader = RadialGradient(
-        center: const Alignment(-0.3, -0.4),
-        colors: [const Color(0xFF1b3a6b), const Color(0xFF071428)],
-      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.3, -0.4),
+          colors: [const Color(0xFF1b3a6b), const Color(0xFF071428)],
+        ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
     );
 
     // ── Clip everything inside sphere ────────────────────────────────────────
     canvas.save();
-    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: r - 0.5)));
+    canvas.clipPath(
+      Path()..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: r - 0.5)),
+    );
 
     // ── Grid lines ──────────────────────────────────────────────────────────
     // Latitude
@@ -2332,14 +2545,24 @@ class _GlobePainter extends CustomPainter {
       final ry = math.cos(latRad) * r;
       final yy = cy - math.sin(latRad) * r;
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(cx, yy), width: ry * 2, height: ry * 0.55),
-        Paint()..color = Colors.white.withValues(alpha: 0.06)..style = PaintingStyle.stroke..strokeWidth = 0.6,
+        Rect.fromCenter(
+          center: Offset(cx, yy),
+          width: ry * 2,
+          height: ry * 0.55,
+        ),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.06)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.6,
       );
     }
     // Equator slightly brighter
     canvas.drawOval(
       Rect.fromCenter(center: Offset(cx, cy), width: r * 2, height: r * 0.55),
-      Paint()..color = Colors.white.withValues(alpha: 0.14)..style = PaintingStyle.stroke..strokeWidth = 0.8,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.14)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
     );
     // Longitude meridians
     for (int lng = 0; lng < 180; lng += 30) {
@@ -2353,105 +2576,460 @@ class _GlobePainter extends CustomPainter {
         final latRad2 = lat * math.pi / 180;
         final x = cx + r * math.cos(latRad2) * sinL;
         final y = cy - r * math.sin(latRad2);
-        if (first) { path.moveTo(x, y); first = false; } else {
+        if (first) {
+          path.moveTo(x, y);
+          first = false;
+        } else {
           path.lineTo(x, y);
         }
       }
-      canvas.drawPath(path, Paint()..color = Colors.lightBlueAccent.withValues(alpha: gridAlpha)..style = PaintingStyle.stroke..strokeWidth = 0.6);
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.lightBlueAccent.withValues(alpha: gridAlpha)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.6,
+      );
     }
 
     // ── Continents ──────────────────────────────────────────────────────────
-    const landFill   = Color(0xFF2dbd7e);
+    const landFill = Color(0xFF2dbd7e);
     const landStroke = Color(0xFF5fffc0);
 
     // ▸ North America (simplified outline)
-    _drawLandPoly(canvas, cx, cy, r, [
-      [70,-140],[72,-120],[70,-95],[65,-85],[60,-75],[55,-65],[50,-55],[47,-53],
-      [45,-60],[43,-66],[41,-70],[37,-76],[30,-81],[25,-80],[24,-82],[28,-90],
-      [29,-94],[26,-97],[22,-97],[20,-87],[15,-83],[12,-83],[8,-77],[8,-77],
-      [9,-79],[11,-84],[14,-87],[16,-88],[21,-86],[25,-90],[30,-89],[34,-89],
-      [36,-90],[38,-90],[40,-88],[42,-83],[46,-84],[48,-88],[47,-92],[46,-95],
-      [47,-99],[47,-104],[47,-110],[46,-117],[48,-122],[54,-130],[58,-134],
-      [60,-142],[61,-150],[60,-152],[56,-158],[57,-161],[64,-165],[66,-168],
-      [68,-166],[70,-162],[72,-157],[72,-152],[72,-140],[70,-140],
-    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [70, -140],
+        [72, -120],
+        [70, -95],
+        [65, -85],
+        [60, -75],
+        [55, -65],
+        [50, -55],
+        [47, -53],
+        [45, -60],
+        [43, -66],
+        [41, -70],
+        [37, -76],
+        [30, -81],
+        [25, -80],
+        [24, -82],
+        [28, -90],
+        [29, -94],
+        [26, -97],
+        [22, -97],
+        [20, -87],
+        [15, -83],
+        [12, -83],
+        [8, -77],
+        [8, -77],
+        [9, -79],
+        [11, -84],
+        [14, -87],
+        [16, -88],
+        [21, -86],
+        [25, -90],
+        [30, -89],
+        [34, -89],
+        [36, -90],
+        [38, -90],
+        [40, -88],
+        [42, -83],
+        [46, -84],
+        [48, -88],
+        [47, -92],
+        [46, -95],
+        [47, -99],
+        [47, -104],
+        [47, -110],
+        [46, -117],
+        [48, -122],
+        [54, -130],
+        [58, -134],
+        [60, -142],
+        [61, -150],
+        [60, -152],
+        [56, -158],
+        [57, -161],
+        [64, -165],
+        [66, -168],
+        [68, -166],
+        [70, -162],
+        [72, -157],
+        [72, -152],
+        [72, -140],
+        [70, -140],
+      ],
+      landFill.withValues(alpha: 0.28),
+      landStroke.withValues(alpha: 0.5),
+    );
 
     // ▸ Greenland
-    _drawLandPoly(canvas, cx, cy, r, [
-      [76,-68],[74,-55],[70,-52],[68,-52],[66,-53],[64,-52],[62,-48],[61,-44],
-      [64,-40],[67,-34],[70,-25],[72,-22],[75,-20],[77,-18],[80,-18],[83,-30],
-      [83,-38],[82,-45],[80,-52],[79,-60],[76,-68],
-    ], landFill.withValues(alpha: 0.22), landStroke.withValues(alpha: 0.4));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [76, -68],
+        [74, -55],
+        [70, -52],
+        [68, -52],
+        [66, -53],
+        [64, -52],
+        [62, -48],
+        [61, -44],
+        [64, -40],
+        [67, -34],
+        [70, -25],
+        [72, -22],
+        [75, -20],
+        [77, -18],
+        [80, -18],
+        [83, -30],
+        [83, -38],
+        [82, -45],
+        [80, -52],
+        [79, -60],
+        [76, -68],
+      ],
+      landFill.withValues(alpha: 0.22),
+      landStroke.withValues(alpha: 0.4),
+    );
 
     // ▸ South America
-    _drawLandPoly(canvas, cx, cy, r, [
-      [12,-72],[11,-62],[10,-63],[8,-60],[5,-52],[2,-50],[0,-50],[-3,-41],
-      [-5,-35],[-8,-35],[-10,-38],[-12,-40],[-15,-40],[-18,-39],[-22,-42],
-      [-23,-43],[-28,-48],[-30,-50],[-33,-53],[-38,-57],[-42,-62],[-46,-65],
-      [-50,-69],[-53,-70],[-55,-64],[-55,-66],[-52,-68],[-47,-65],[-44,-65],
-      [-40,-62],[-35,-57],[-28,-50],[-22,-43],[-18,-40],[-15,-75],[-10,-76],
-      [-5,-80],[0,-78],[5,-77],[10,-75],[12,-72],
-    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [12, -72],
+        [11, -62],
+        [10, -63],
+        [8, -60],
+        [5, -52],
+        [2, -50],
+        [0, -50],
+        [-3, -41],
+        [-5, -35],
+        [-8, -35],
+        [-10, -38],
+        [-12, -40],
+        [-15, -40],
+        [-18, -39],
+        [-22, -42],
+        [-23, -43],
+        [-28, -48],
+        [-30, -50],
+        [-33, -53],
+        [-38, -57],
+        [-42, -62],
+        [-46, -65],
+        [-50, -69],
+        [-53, -70],
+        [-55, -64],
+        [-55, -66],
+        [-52, -68],
+        [-47, -65],
+        [-44, -65],
+        [-40, -62],
+        [-35, -57],
+        [-28, -50],
+        [-22, -43],
+        [-18, -40],
+        [-15, -75],
+        [-10, -76],
+        [-5, -80],
+        [0, -78],
+        [5, -77],
+        [10, -75],
+        [12, -72],
+      ],
+      landFill.withValues(alpha: 0.28),
+      landStroke.withValues(alpha: 0.5),
+    );
 
     // ▸ Europe (simplified)
-    _drawLandPoly(canvas, cx, cy, r, [
-      [36,-9],[38,-9],[40,-8],[44,-8],[44,-1],[46,2],[47,7],[47,13],[45,13],
-      [44,15],[42,18],[40,18],[38,16],[37,14],[37,15],[38,20],[40,20],[41,22],
-      [42,28],[44,28],[45,29],[46,30],[48,30],[48,22],[52,21],[54,18],[54,14],
-      [55,12],[57,10],[58,7],[58,5],[56,4],[54,10],[54,14],[54,18],[57,22],
-      [60,25],[62,25],[65,25],[68,28],[70,28],[71,26],[70,20],[68,16],[64,14],
-      [62,6],[60,5],[58,5],[56,4],[51,2],[50,-2],[48,-5],[45,-2],[44,0],[43,-2],
-      [40,-8],[38,-9],[36,-9],
-    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [36, -9],
+        [38, -9],
+        [40, -8],
+        [44, -8],
+        [44, -1],
+        [46, 2],
+        [47, 7],
+        [47, 13],
+        [45, 13],
+        [44, 15],
+        [42, 18],
+        [40, 18],
+        [38, 16],
+        [37, 14],
+        [37, 15],
+        [38, 20],
+        [40, 20],
+        [41, 22],
+        [42, 28],
+        [44, 28],
+        [45, 29],
+        [46, 30],
+        [48, 30],
+        [48, 22],
+        [52, 21],
+        [54, 18],
+        [54, 14],
+        [55, 12],
+        [57, 10],
+        [58, 7],
+        [58, 5],
+        [56, 4],
+        [54, 10],
+        [54, 14],
+        [54, 18],
+        [57, 22],
+        [60, 25],
+        [62, 25],
+        [65, 25],
+        [68, 28],
+        [70, 28],
+        [71, 26],
+        [70, 20],
+        [68, 16],
+        [64, 14],
+        [62, 6],
+        [60, 5],
+        [58, 5],
+        [56, 4],
+        [51, 2],
+        [50, -2],
+        [48, -5],
+        [45, -2],
+        [44, 0],
+        [43, -2],
+        [40, -8],
+        [38, -9],
+        [36, -9],
+      ],
+      landFill.withValues(alpha: 0.28),
+      landStroke.withValues(alpha: 0.5),
+    );
 
     // ▸ Africa
-    _drawLandPoly(canvas, cx, cy, r, [
-      [37,10],[34,12],[30,32],[28,34],[22,37],[18,38],[12,42],[10,44],[8,48],
-      [12,50],[14,50],[12,44],[12,42],[15,38],[18,38],[22,36],[24,32],[24,18],
-      [22,14],[16,12],[12,14],[8,16],[6,2],[4,2],[2,10],[0,10],[-5,10],
-      [-5,14],[-8,14],[-10,16],[-12,14],[-15,12],[-17,12],[-18,30],[-20,34],
-      [-22,36],[-26,33],[-28,30],[-30,28],[-34,26],[-34,18],[-30,16],
-      [-26,14],[-20,12],[-16,6],[-12,2],[-5,-2],[0,-3],[4,8],[8,2],[12,-2],
-      [16,-2],[20,2],[24,10],[28,8],[32,2],[36,10],[37,10],
-    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [37, 10],
+        [34, 12],
+        [30, 32],
+        [28, 34],
+        [22, 37],
+        [18, 38],
+        [12, 42],
+        [10, 44],
+        [8, 48],
+        [12, 50],
+        [14, 50],
+        [12, 44],
+        [12, 42],
+        [15, 38],
+        [18, 38],
+        [22, 36],
+        [24, 32],
+        [24, 18],
+        [22, 14],
+        [16, 12],
+        [12, 14],
+        [8, 16],
+        [6, 2],
+        [4, 2],
+        [2, 10],
+        [0, 10],
+        [-5, 10],
+        [-5, 14],
+        [-8, 14],
+        [-10, 16],
+        [-12, 14],
+        [-15, 12],
+        [-17, 12],
+        [-18, 30],
+        [-20, 34],
+        [-22, 36],
+        [-26, 33],
+        [-28, 30],
+        [-30, 28],
+        [-34, 26],
+        [-34, 18],
+        [-30, 16],
+        [-26, 14],
+        [-20, 12],
+        [-16, 6],
+        [-12, 2],
+        [-5, -2],
+        [0, -3],
+        [4, 8],
+        [8, 2],
+        [12, -2],
+        [16, -2],
+        [20, 2],
+        [24, 10],
+        [28, 8],
+        [32, 2],
+        [36, 10],
+        [37, 10],
+      ],
+      landFill.withValues(alpha: 0.28),
+      landStroke.withValues(alpha: 0.5),
+    );
 
     // ▸ Asia (coarse approximation)
-    _drawLandPoly(canvas, cx, cy, r, [
-      [70,30],[72,50],[72,70],[70,80],[68,90],[68,100],[66,110],[60,120],
-      [55,130],[52,140],[48,140],[44,132],[40,128],[36,126],[34,120],[28,120],
-      [22,114],[20,110],[16,100],[10,100],[8,98],[6,100],[4,102],[2,104],
-      [0,109],[-2,110],[-6,106],[-4,102],[0,100],[4,96],[8,90],[12,80],
-      [18,72],[22,68],[24,60],[24,54],[26,50],[28,48],[32,36],[36,36],[38,28],
-      [42,28],[44,40],[44,50],[44,52],[48,50],[52,50],[56,40],[60,30],[64,30],
-      [68,30],[70,30],
-    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [70, 30],
+        [72, 50],
+        [72, 70],
+        [70, 80],
+        [68, 90],
+        [68, 100],
+        [66, 110],
+        [60, 120],
+        [55, 130],
+        [52, 140],
+        [48, 140],
+        [44, 132],
+        [40, 128],
+        [36, 126],
+        [34, 120],
+        [28, 120],
+        [22, 114],
+        [20, 110],
+        [16, 100],
+        [10, 100],
+        [8, 98],
+        [6, 100],
+        [4, 102],
+        [2, 104],
+        [0, 109],
+        [-2, 110],
+        [-6, 106],
+        [-4, 102],
+        [0, 100],
+        [4, 96],
+        [8, 90],
+        [12, 80],
+        [18, 72],
+        [22, 68],
+        [24, 60],
+        [24, 54],
+        [26, 50],
+        [28, 48],
+        [32, 36],
+        [36, 36],
+        [38, 28],
+        [42, 28],
+        [44, 40],
+        [44, 50],
+        [44, 52],
+        [48, 50],
+        [52, 50],
+        [56, 40],
+        [60, 30],
+        [64, 30],
+        [68, 30],
+        [70, 30],
+      ],
+      landFill.withValues(alpha: 0.28),
+      landStroke.withValues(alpha: 0.5),
+    );
 
     // ▸ Australia
-    _drawLandPoly(canvas, cx, cy, r, [
-      [-14,128],[-16,136],[-14,136],[-12,136],[-12,140],[-14,142],[-18,146],
-      [-22,152],[-24,153],[-28,154],[-32,152],[-34,150],[-38,146],[-38,140],
-      [-36,136],[-34,116],[-30,114],[-26,114],[-22,114],[-18,122],[-14,128],
-    ], landFill.withValues(alpha: 0.28), landStroke.withValues(alpha: 0.5));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [-14, 128],
+        [-16, 136],
+        [-14, 136],
+        [-12, 136],
+        [-12, 140],
+        [-14, 142],
+        [-18, 146],
+        [-22, 152],
+        [-24, 153],
+        [-28, 154],
+        [-32, 152],
+        [-34, 150],
+        [-38, 146],
+        [-38, 140],
+        [-36, 136],
+        [-34, 116],
+        [-30, 114],
+        [-26, 114],
+        [-22, 114],
+        [-18, 122],
+        [-14, 128],
+      ],
+      landFill.withValues(alpha: 0.28),
+      landStroke.withValues(alpha: 0.5),
+    );
 
     // ▸ Antarctica (just top edge visible at bottom of globe)
-    _drawLandPoly(canvas, cx, cy, r, [
-      [-70,-180],[-75,-120],[-72,-60],[-74,0],[-72,60],[-75,120],[-70,180],
-    ], landFill.withValues(alpha: 0.18), landStroke.withValues(alpha: 0.3));
+    _drawLandPoly(
+      canvas,
+      cx,
+      cy,
+      r,
+      [
+        [-70, -180],
+        [-75, -120],
+        [-72, -60],
+        [-74, 0],
+        [-72, 60],
+        [-75, 120],
+        [-70, 180],
+      ],
+      landFill.withValues(alpha: 0.18),
+      landStroke.withValues(alpha: 0.3),
+    );
 
     canvas.restore();
 
     // ── Specular / rim ──────────────────────────────────────────────────────
     canvas.drawCircle(
-      Offset(cx, cy), r,
-      Paint()..shader = RadialGradient(
-        center: const Alignment(-0.48, -0.48),
-        radius: 0.7,
-        colors: [Colors.white.withValues(alpha: 0.14), Colors.transparent],
-      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.48, -0.48),
+          radius: 0.7,
+          colors: [Colors.white.withValues(alpha: 0.14), Colors.transparent],
+        ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
     );
     canvas.drawCircle(
-      Offset(cx, cy), r,
-      Paint()..color = Colors.blueAccent.withValues(alpha: 0.28)..style = PaintingStyle.stroke..strokeWidth = 1.2,
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..color = Colors.blueAccent.withValues(alpha: 0.28)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
     );
   }
 

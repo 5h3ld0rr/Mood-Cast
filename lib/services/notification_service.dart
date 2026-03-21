@@ -60,8 +60,9 @@ class NotificationService {
     if (Platform.isAndroid) {
       final androidImplementation = _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+
       if (androidImplementation != null) {
         await androidImplementation.requestNotificationsPermission();
       }
@@ -85,7 +86,8 @@ class NotificationService {
     if (Platform.isAndroid) {
       await _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(_channel);
     }
 
@@ -94,9 +96,7 @@ class NotificationService {
     debugPrint("FCM Token: $token");
 
     // Handle background messages
-    FirebaseMessaging.onBackgroundMessage(
-      _firebaseMessagingBackgroundHandler,
-    );
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     // Listen for foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {

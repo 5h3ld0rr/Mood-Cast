@@ -46,7 +46,8 @@ class _CachedImageState extends State<CachedImage> {
 
     // Attempt to upscale the image if it's a known thumbnail provider
     String finalUrl = widget.imageUrl!;
-    if (widget.width != null && widget.width! > 200 || widget.height != null && widget.height! > 200) {
+    if (widget.width != null && widget.width! > 200 ||
+        widget.height != null && widget.height! > 200) {
       finalUrl = _getHighResUrl(finalUrl);
     }
 
@@ -64,10 +65,11 @@ class _CachedImageState extends State<CachedImage> {
         }
         return widget.placeholder ?? _buildPlaceholder();
       },
-      errorWidget: (context, url, error) => widget.errorWidget ?? _buildErrorWidget(),
+      errorWidget: (context, url, error) =>
+          widget.errorWidget ?? _buildErrorWidget(),
       imageBuilder: (context, imageProvider) {
         // When the image successfully loads, we store the URL.
-        // Note: Logic inside build is usually risky for side-effects, 
+        // Note: Logic inside build is usually risky for side-effects,
         // but since we're just updating a string for the NEXT build, it's okay here.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _lastSuccessfulUrl != finalUrl) {
@@ -76,13 +78,10 @@ class _CachedImageState extends State<CachedImage> {
             });
           }
         });
-        
+
         return Container(
           decoration: BoxDecoration(
-            image: DecorationImage(
-              image: imageProvider,
-              fit: widget.fit,
-            ),
+            image: DecorationImage(image: imageProvider, fit: widget.fit),
           ),
         );
       },

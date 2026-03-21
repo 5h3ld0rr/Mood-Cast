@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/community_models.dart';
+import 'weather_service.dart';
 
 class CommunityService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -15,29 +16,25 @@ class CommunityService {
         .collection('community_posts')
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map(
-          (snapshot) {
-            final now = DateTime.now();
-            final validPosts = <CommunityPost>[];
-            
-            for (var doc in snapshot.docs) {
-              final post = CommunityPost.fromFirestore(doc);
-              
-              // If it's a support request, hide and schedule delete it after 1 hour
-              if (post.isSupportRequest) {
-                final isExpired = now.difference(post.timestamp).inHours >= 1;
-                if (isExpired) {
-                  // Lazy delete the expired post off of Firebase
-                  deletePost(post.id);
-                  continue; // skip adding to UI
-                }
+        .map((snapshot) {
+          final now = DateTime.now();
+          final validPosts = <CommunityPost>[];
+
+          for (var doc in snapshot.docs) {
+            final post = CommunityPost.fromFirestore(doc);
+
+            if (post.isSupportRequest) {
+              final isExpired = now.difference(post.timestamp).inHours >= 1;
+              if (isExpired) {
+                deletePost(post.id);
+                continue;
               }
-              validPosts.add(post);
             }
-            
-            return validPosts;
-          },
-        );
+            validPosts.add(post);
+          }
+
+          return validPosts;
+        });
   }
 
   Future<void> createPost({
@@ -50,7 +47,7 @@ class CommunityService {
     if (uid == null) return;
 
     final post = CommunityPost(
-      id: '', // Firestore will generate this
+      id: '',
       userId: uid!,
       userName: overrideUserName ?? displayName!,
       userMood: userMood,
@@ -74,18 +71,15 @@ class CommunityService {
         .limit(1)
         .snapshots()
         .map((snapshot) {
-      if (snapshot.docs.isEmpty) return null;
-      final post = CommunityPost.fromFirestore(snapshot.docs.first);
-       // Check if post is older than 1 hour
-      final now = DateTime.now();
-      if (now.difference(post.timestamp).inHours >= 1) {
-        // Lazy delete expired post that was just loaded
-        deletePost(post.id);
-        return null;
-      }
-      
-      return post;
-    });
+          if (snapshot.docs.isEmpty) return null;
+          final post = CommunityPost.fromFirestore(snapshot.docs.first);
+          final now = DateTime.now();
+          if (now.difference(post.timestamp).inHours >= 1) {
+            deletePost(post.id);
+            return null;
+          }
+          return post;
+        });
   }
 
   Future<void> deletePost(String postId) async {
@@ -133,7 +127,6 @@ class CommunityService {
       'supportResponses': FieldValue.arrayUnion([response.toMap()]),
     });
 
-    // Award points
     await awardPoints(50);
   }
 
@@ -171,7 +164,6 @@ class CommunityService {
           .get();
 
       if (query.docs.isNotEmpty) {
-        // Song already on the board, just naturally boost its vibes!
         await query.docs.first.reference.update({
           'vibes': FieldValue.increment(1),
         });
@@ -216,6 +208,31 @@ class CommunityService {
     }, SetOptions(merge: true));
   }
 
+  Future<void> updateUserMood(String mood) async {
+    if (uid == null) return;
+
+    // Map country to Region for the Globe
+    String region = 'ASIA'; // Default
+    final country = WeatherService().currentWeather.value?.country ?? '';
+    if (country == 'US' || country == 'CA') {
+      region = 'US';
+    } else if (['GB', 'FR', 'DE', 'IT', 'ES', 'NL', 'BE'].contains(country)) {
+      region = 'EU';
+    } else if (['CN', 'JP', 'IN', 'KR', 'SG', 'LK'].contains(country)) {
+      region = 'ASIA';
+    } else if (['BR', 'AR', 'MX', 'CO', 'CL'].contains(country)) {
+      region = 'LA';
+    } else if (['ZA', 'NG', 'KE', 'EG', 'MA'].contains(country)) {
+      region = 'AF';
+    }
+
+    await _firestore.collection('users').doc(uid).set({
+      'currentMood': mood,
+      'region': region,
+      'lastSeen': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   Stream<int> getPoints() {
     if (uid == null) return Stream.value(0);
     return _firestore.collection('users').doc(uid).snapshots().map((doc) {
@@ -256,41 +273,113 @@ class CommunityService {
     });
   }
 
-  // --- Regional Mood Stats ---
+  // --- Real-Time Regional Stats ---
   Stream<Map<String, int>> getRegionalMoodStats(String region) {
-    // Reads from 'regional_stats' collection.
-    // You can populate this collection manually or via Firebase Cloud Functions based on user locations.
-    return _firestore
-        .collection('regional_stats')
-        .doc(region)
-        .snapshots()
-        .map((doc) {
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>;
-        return {
-          'Happy': data['Happy'] ?? 0,
-          'Sad': data['Sad'] ?? 0,
-          'Angry': data['Angry'] ?? 0,
-          'Natural': data['Natural'] ?? 0,
-        };
-      } else {
-        // Fallback default placeholder if no real data is found for the region yet
-        return {
-          'Happy': 1200,
-          'Sad': 400,
-          'Angry': 150,
-          'Natural': 800,
-        };
+    // We listen to all users but filter locally for accuracy if region is ASIA (default)
+    return _firestore.collection('users').snapshots().map((snapshot) {
+      final now = DateTime.now();
+      int happyCount = 0;
+      int naturalCount = 0;
+      int sadCount = 0;
+      int angryCount = 0;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final lastSeen = (data['lastSeen'] as Timestamp?)?.toDate();
+        final mood = data['currentMood'] as String?;
+        final userRegion = data['region'] as String? ?? 'ASIA';
+
+        // Filter by region (ASIA is the catch-all for unset regions)
+        if (userRegion != region) continue;
+
+        // Consider someone 'online' if seen in last 10 minutes
+        if (lastSeen != null &&
+            (now.difference(lastSeen).inMinutes.abs() < 10)) {
+          if (mood == 'Happy')
+            happyCount++;
+          else if (mood == 'Natural')
+            naturalCount++;
+          else if (mood == 'Sad')
+            sadCount++;
+          else if (mood == 'Angry')
+            angryCount++;
+        }
       }
+
+      return {
+        'Happy': happyCount,
+        'Natural': naturalCount,
+        'Sad': sadCount,
+        'Angry': angryCount,
+      };
     });
   }
 
-  // --- Global Mood Stats ---
+  // --- Real-Time Global Stats ---
   Stream<GlobalMoodStats> getGlobalStats() {
-    return _firestore
-        .collection('global_stats')
-        .doc('live')
-        .snapshots()
-        .map((doc) => GlobalMoodStats.fromFirestore(doc));
+    return _firestore.collection('users').snapshots().map((snapshot) {
+      final now = DateTime.now();
+      int happyCount = 0,
+          naturalCount = 0,
+          sadCount = 0,
+          angryCount = 0,
+          onlineCount = 0;
+      final regionalMoodCounts = <String, Map<String, int>>{
+        'US': {},
+        'EU': {},
+        'ASIA': {},
+        'LA': {},
+        'AF': {},
+      };
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final lastSeen = (data['lastSeen'] as Timestamp?)?.toDate();
+        final mood = data['currentMood'] as String?;
+        final region = data['region'] as String? ?? 'ASIA';
+
+        if (lastSeen != null && now.difference(lastSeen).inMinutes < 5) {
+          onlineCount++;
+          if (mood == 'Happy')
+            happyCount++;
+          else if (mood == 'Natural')
+            naturalCount++;
+          else if (mood == 'Sad')
+            sadCount++;
+          else if (mood == 'Angry')
+            angryCount++;
+
+          if (mood != null && regionalMoodCounts.containsKey(region)) {
+            regionalMoodCounts[region]![mood] =
+                (regionalMoodCounts[region]![mood] ?? 0) + 1;
+          }
+        }
+      }
+
+      int total = happyCount + naturalCount + sadCount + angryCount;
+      if (total == 0) total = 1;
+
+      final regionalMoods = <String, String>{};
+      regionalMoodCounts.forEach((region, counts) {
+        if (counts.isEmpty) {
+          regionalMoods[region] = 'Natural';
+        } else {
+          final sortedMoods = counts.entries.toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
+          regionalMoods[region] = sortedMoods.first.key;
+        }
+      });
+
+      return GlobalMoodStats(
+        vibingNow: onlineCount,
+        moodPercentages: {
+          'Happy': ((happyCount / total) * 100).round(),
+          'Natural': ((naturalCount / total) * 100).round(),
+          'Sad': ((sadCount / total) * 100).round(),
+          'Angry': ((angryCount / total) * 100).round(),
+        },
+        regionalMoods: regionalMoods,
+      );
+    });
   }
 }

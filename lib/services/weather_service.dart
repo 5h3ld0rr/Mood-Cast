@@ -101,5 +101,7 @@ class WeatherService {
 }
 
 class AppLocationServiceDisabledException implements Exception {}
+
 class AppLocationPermissionDeniedException implements Exception {}
+
 class AppLocationPermissionPermanentlyDeniedException implements Exception {}

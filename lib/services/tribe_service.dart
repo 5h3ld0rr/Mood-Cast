@@ -17,7 +17,9 @@ class TribeService {
   String? get uid => _auth.currentUser?.uid;
   String? get displayName => _auth.currentUser?.displayName ?? 'Anonymous';
 
-  final ValueNotifier<String?> currentTribeIdNotifier = ValueNotifier<String?>(null);
+  final ValueNotifier<String?> currentTribeIdNotifier = ValueNotifier<String?>(
+    null,
+  );
   String? get currentTribeId => currentTribeIdNotifier.value;
   set currentTribeId(String? value) => currentTribeIdNotifier.value = value;
   Timer? _heartbeatTimer;
@@ -40,7 +42,7 @@ class TribeService {
   /// Joins a tribe session, enforcing only 1 active tribe per user.
   Future<void> joinTribeSession(String tribeId) async {
     if (uid == null) return;
-    
+
     // Auto-leave current session if trying to join a new one
     if (currentTribeId != null && currentTribeId != tribeId) {
       await leaveTribeSession();
@@ -56,9 +58,9 @@ class TribeService {
         .collection('members')
         .doc(uid)
         .set({
-      'displayName': displayName,
-      'lastSeen': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+          'displayName': displayName,
+          'lastSeen': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
     currentTribeId = tribeId;
 
@@ -73,7 +75,9 @@ class TribeService {
     _playerService.onUserPlaybackAction = () {
       if (currentTribeId != null) {
         if (isDJ) {
-          debugPrint('TribeService: DJ triggered playback action – syncing to session.');
+          debugPrint(
+            'TribeService: DJ triggered playback action – syncing to session.',
+          );
           // Use a slight delay to allow the local player state to update first
           Future.delayed(const Duration(milliseconds: 100), () {
             syncPlaybackState(
@@ -82,7 +86,9 @@ class TribeService {
             );
           });
         } else {
-          debugPrint('TribeService: Listener triggered manual playback – auto-leaving tribe.');
+          debugPrint(
+            'TribeService: Listener triggered manual playback – auto-leaving tribe.',
+          );
           leaveTribeSession();
         }
       }
@@ -124,7 +130,7 @@ class TribeService {
   /// Leaves the current tribe session
   Future<void> leaveTribeSession() async {
     if (uid == null || currentTribeId == null) return;
-    
+
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
     _sessionSubscription?.cancel();
@@ -134,7 +140,9 @@ class TribeService {
     _playerService.onUserPlaybackAction = null;
 
     final oldTribeId = currentTribeId!;
-    _playerService.stop(isTribeSync: true); // stop tribe music without re-triggering leave
+    _playerService.stop(
+      isTribeSync: true,
+    ); // stop tribe music without re-triggering leave
 
     try {
       // Remove self from members
@@ -144,11 +152,13 @@ class TribeService {
           .collection('members')
           .doc(uid)
           .delete();
-          
+
       currentTribeId = null;
 
       // Check if we were the DJ. If so, resign
-      final sessionRef = _firestore.collection('tribe_sessions').doc(oldTribeId);
+      final sessionRef = _firestore
+          .collection('tribe_sessions')
+          .doc(oldTribeId);
       final sessionSnap = await sessionRef.get();
       if (sessionSnap.exists && sessionSnap.data()?['currentDJUid'] == uid) {
         await _assignNextDJ(oldTribeId);
@@ -197,31 +207,32 @@ class TribeService {
 
   /// Stream to listen to real-time session changes (DJ, song, queue, skip votes)
   Stream<TribeSession?> getSessionStream(String tribeId) {
-    return _firestore
-        .collection('tribe_sessions')
-        .doc(tribeId)
-        .snapshots()
-        .map((doc) {
-      if (doc.exists) {
-        _lastKnownSession = TribeSession.fromFirestore(doc);
-        return _lastKnownSession;
-      }
-      return null;
-    });
+    return _firestore.collection('tribe_sessions').doc(tribeId).snapshots().map(
+      (doc) {
+        if (doc.exists) {
+          _lastKnownSession = TribeSession.fromFirestore(doc);
+          return _lastKnownSession;
+        }
+        return null;
+      },
+    );
   }
 
   /// Syncs the current playback state (play/pause/position) to the tribe session.
   /// Only the DJ should call this.
-  Future<void> syncPlaybackState({required bool isPaused, int? positionMs}) async {
+  Future<void> syncPlaybackState({
+    required bool isPaused,
+    int? positionMs,
+  }) async {
     if (currentTribeId == null || !isDJ) return;
 
-    final data = {
-      'isPaused': isPaused,
-      'lastPositionMs': positionMs ?? 0,
-    };
+    final data = {'isPaused': isPaused, 'lastPositionMs': positionMs ?? 0};
 
     try {
-      await _firestore.collection('tribe_sessions').doc(currentTribeId).update(data);
+      await _firestore
+          .collection('tribe_sessions')
+          .doc(currentTribeId)
+          .update(data);
     } catch (e) {
       debugPrint('TribeService: Failed to sync playback state: $e');
     }
@@ -235,25 +246,27 @@ class TribeService {
         .collection('members')
         .snapshots()
         .map((snapshot) {
-      final now = DateTime.now();
-      return snapshot.docs
-          .map((doc) => TribeMember.fromFirestore(doc))
-          .where((member) => now.difference(member.lastSeen).inSeconds < 45)
-          .toList();
-    });
+          final now = DateTime.now();
+          return snapshot.docs
+              .map((doc) => TribeMember.fromFirestore(doc))
+              .where((member) => now.difference(member.lastSeen).inSeconds < 45)
+              .toList();
+        });
   }
 
   /// Adds a song to the DJ's queue
   Future<void> queueSong(TribeTrack track) async {
     if (currentTribeId == null) return;
-    final sessionRef = _firestore.collection('tribe_sessions').doc(currentTribeId);
-    
+    final sessionRef = _firestore
+        .collection('tribe_sessions')
+        .doc(currentTribeId);
+
     await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(sessionRef);
       if (!snapshot.exists) return;
 
       final session = TribeSession.fromFirestore(snapshot);
-      
+
       if (session.currentTrack == null) {
         // If there is no track playing, play it immediately
         transaction.update(sessionRef, {
@@ -266,7 +279,7 @@ class TribeService {
       } else {
         // Otherwise queue it
         transaction.update(sessionRef, {
-          'queue': FieldValue.arrayUnion([track.toMap()])
+          'queue': FieldValue.arrayUnion([track.toMap()]),
         });
       }
     });
@@ -276,7 +289,9 @@ class TribeService {
   /// Used both for skip vote passing and natural track ending.
   Future<void> playNextInQueue() async {
     if (currentTribeId == null) return;
-    final sessionRef = _firestore.collection('tribe_sessions').doc(currentTribeId);
+    final sessionRef = _firestore
+        .collection('tribe_sessions')
+        .doc(currentTribeId);
 
     await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(sessionRef);
@@ -310,7 +325,9 @@ class TribeService {
   Future<void> voteSkip() async {
     if (currentTribeId == null || uid == null) return;
 
-    final sessionRef = _firestore.collection('tribe_sessions').doc(currentTribeId);
+    final sessionRef = _firestore
+        .collection('tribe_sessions')
+        .doc(currentTribeId);
 
     await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(sessionRef);
@@ -321,18 +338,20 @@ class TribeService {
 
       if (!session.skipVotes.contains(uid)) {
         List<String> newSkipVotes = List.from(session.skipVotes)..add(uid!);
-        
+
         // Count active members to determine 50% majority
         final membersSnap = await _firestore
             .collection('tribe_sessions')
             .doc(currentTribeId)
             .collection('members')
             .get();
-        
+
         final checkTime = DateTime.now();
         int activeCount = 0;
         for (var doc in membersSnap.docs) {
-          final lastSeen = (doc.data()['lastSeen'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final lastSeen =
+              (doc.data()['lastSeen'] as Timestamp?)?.toDate() ??
+              DateTime.now();
           if (checkTime.difference(lastSeen).inSeconds < 45) {
             activeCount++;
           }
@@ -364,7 +383,7 @@ class TribeService {
         } else {
           // Just add the vote
           transaction.update(sessionRef, {
-            'skipVotes': FieldValue.arrayUnion([uid])
+            'skipVotes': FieldValue.arrayUnion([uid]),
           });
         }
       }
@@ -375,7 +394,7 @@ class TribeService {
   Future<void> removeFromQueue(TribeTrack track) async {
     if (currentTribeId == null) return;
     await _firestore.collection('tribe_sessions').doc(currentTribeId).update({
-      'queue': FieldValue.arrayRemove([track.toMap()])
+      'queue': FieldValue.arrayRemove([track.toMap()]),
     });
   }
 }

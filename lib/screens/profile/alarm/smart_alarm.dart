@@ -44,7 +44,8 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AnalysisScreen(activeNotifier: ValueNotifier(true)),
+        builder: (context) =>
+            AnalysisScreen(activeNotifier: ValueNotifier(true)),
       ),
     );
     ScaffoldMessenger.of(context).showSnackBar(
@@ -87,11 +88,17 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
               children: [
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const SizedBox(width: 8),
@@ -134,10 +141,12 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
                               boxShadow: _isAlarmEnabled
                                   ? [
                                       BoxShadow(
-                                        color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                                        color: Theme.of(
+                                          context,
+                                        ).primaryColor.withValues(alpha: 0.3),
                                         blurRadius: 30,
                                         spreadRadius: 5,
-                                      )
+                                      ),
                                     ]
                                   : [],
                             ),
@@ -149,11 +158,15 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
                                   style: TextStyle(
                                     fontSize: 56,
                                     fontWeight: FontWeight.bold,
-                                    color: _isAlarmEnabled ? Colors.white : Colors.white54,
+                                    color: _isAlarmEnabled
+                                        ? Colors.white
+                                        : Colors.white54,
                                   ),
                                 ),
                                 Text(
-                                  _alarmTime.period == DayPeriod.am ? 'AM' : 'PM',
+                                  _alarmTime.period == DayPeriod.am
+                                      ? 'AM'
+                                      : 'PM',
                                   style: TextStyle(
                                     fontSize: 24,
                                     color: _isAlarmEnabled
@@ -175,7 +188,9 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
                           color: AppTheme.cardBg,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Column(
@@ -183,11 +198,17 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
                             SwitchListTile(
                               title: const Text(
                                 'Alarm Enabled',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               subtitle: const Text(
                                 'Will ring at the specified time.',
-                                style: TextStyle(color: Colors.white54, fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
                               ),
                               value: _isAlarmEnabled,
                               activeThumbColor: Theme.of(context).primaryColor,
@@ -199,17 +220,47 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
                             ),
                             const Divider(color: Colors.white12, height: 1),
                             ListTile(
-                              leading: Icon(Icons.face, color: Theme.of(context).primaryColor),
-                              title: const Text('Smart Mood Scan', style: TextStyle(color: Colors.white)),
-                              subtitle: const Text('Scans your face to tailor the first song', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              trailing: Icon(Icons.check_circle, color: Theme.of(context).primaryColor),
+                              leading: Icon(
+                                Icons.face,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              title: const Text(
+                                'Smart Mood Scan',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              subtitle: const Text(
+                                'Scans your face to tailor the first song',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              trailing: Icon(
+                                Icons.check_circle,
+                                color: Theme.of(context).primaryColor,
+                              ),
                             ),
                             const Divider(color: Colors.white12, height: 1),
                             ListTile(
-                              leading: Icon(Icons.volume_up, color: Theme.of(context).primaryColor),
-                              title: const Text('Gentle Wake', style: TextStyle(color: Colors.white)),
-                              subtitle: const Text('Volume gradually increases over 5 minutes', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              trailing: Icon(Icons.check_circle, color: Theme.of(context).primaryColor),
+                              leading: Icon(
+                                Icons.volume_up,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              title: const Text(
+                                'Gentle Wake',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              subtitle: const Text(
+                                'Volume gradually increases over 5 minutes',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              trailing: Icon(
+                                Icons.check_circle,
+                                color: Theme.of(context).primaryColor,
+                              ),
                             ),
                           ],
                         ),

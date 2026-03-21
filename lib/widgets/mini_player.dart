@@ -57,7 +57,6 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
   /// Returns true when the user is restricted from manual playback control.
   bool get _isInteractionLocked => TribeService().isInteractionLocked;
 
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -250,7 +249,8 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      if (!_isInteractionLocked) PlayerService().togglePlay();
+                                      if (!_isInteractionLocked)
+                                        PlayerService().togglePlay();
                                     },
                                   );
                                 },

@@ -54,7 +54,8 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppTheme.moodColors['Happy']?.withValues(alpha: 0.1) ?? Colors.purple.withValues(alpha: 0.1),
+                    AppTheme.moodColors['Happy']?.withValues(alpha: 0.1) ??
+                        Colors.purple.withValues(alpha: 0.1),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.7],
@@ -69,11 +70,17 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
               children: [
                 // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const Text(
@@ -88,7 +95,7 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                     ],
                   ),
                 ),
-                
+
                 // Content
                 Expanded(
                   child: StreamBuilder<List<Map<String, dynamic>>>(
@@ -96,7 +103,10 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(
-                            child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        );
                       }
 
                       final history = snapshot.data ?? [];
@@ -106,11 +116,18 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.history_toggle_off, size: 64, color: Colors.white.withValues(alpha: 0.2)),
+                              Icon(
+                                Icons.history_toggle_off,
+                                size: 64,
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 'No mood history yet',
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 16,
+                                ),
                               ),
                             ],
                           ),
@@ -119,30 +136,35 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
 
                       return ListView.builder(
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 8.0,
+                        ),
                         itemCount: history.length,
                         itemBuilder: (context, index) {
                           final entry = history[index];
                           final mood = entry['mood'] as String;
                           final ts = entry['timestamp'] as Timestamp?;
                           final dateStr = ts != null
-                              ? DateFormat('EEEE, MMM d • h:mm a').format(ts.toDate())
+                              ? DateFormat(
+                                  'EEEE, MMM d • h:mm a',
+                                ).format(ts.toDate())
                               : 'Recent';
 
-                          final confidence = entry['confidence'] as Map<String, dynamic>?;
+                          final confidence =
+                              entry['confidence'] as Map<String, dynamic>?;
 
                           // Staggered Animation
                           return TweenAnimationBuilder<double>(
-                            duration: Duration(milliseconds: 400 + (index * 100).clamp(0, 1000)),
+                            duration: Duration(
+                              milliseconds: 400 + (index * 100).clamp(0, 1000),
+                            ),
                             curve: Curves.easeOutCubic,
                             tween: Tween(begin: 0.0, end: 1.0),
                             builder: (context, value, child) {
                               return Transform.translate(
                                 offset: Offset(0, 50 * (1 - value)),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Padding(
@@ -152,7 +174,8 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                                 mood,
                                 dateStr,
                                 moodEmojis[mood] ?? '✨',
-                                AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor,
+                                AppTheme.moodColors[mood] ??
+                                    Theme.of(context).primaryColor,
                                 confidence,
                               ),
                             ),
@@ -182,10 +205,7 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
       decoration: BoxDecoration(
         color: AppTheme.cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.15),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.05),
@@ -250,7 +270,7 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                 ],
               ),
             ),
-            
+
             // Confidence Bars
             if (confidence != null && confidence.isNotEmpty) ...[
               Padding(
@@ -274,8 +294,10 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                           .map((e) {
                             final score = (e.value as num).toDouble();
                             final moodName = e.key;
-                            final moodColor = AppTheme.moodColors[moodName] ?? Theme.of(context).primaryColor;
-                            
+                            final moodColor =
+                                AppTheme.moodColors[moodName] ??
+                                Theme.of(context).primaryColor;
+
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: Row(
@@ -284,7 +306,11 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                                     width: 60,
                                     child: Text(
                                       moodName,
-                                      style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                   Expanded(
@@ -292,8 +318,11 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                                       borderRadius: BorderRadius.circular(4),
                                       child: LinearProgressIndicator(
                                         value: score,
-                                        backgroundColor: Colors.white.withValues(alpha: 0.05),
-                                        valueColor: AlwaysStoppedAnimation(moodColor),
+                                        backgroundColor: Colors.white
+                                            .withValues(alpha: 0.05),
+                                        valueColor: AlwaysStoppedAnimation(
+                                          moodColor,
+                                        ),
                                         minHeight: 8,
                                       ),
                                     ),
@@ -314,7 +343,8 @@ class _RecentSessionsScreenState extends State<RecentSessionsScreen> {
                                 ],
                               ),
                             );
-                          }).toList(),
+                          })
+                          .toList(),
                     ),
                   ],
                 ),

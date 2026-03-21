@@ -27,19 +27,21 @@ class SongInfo {
 
   String? get highResCoverUrl {
     if (coverUrl == null) return null;
-    
+
     // If we have a videoId, we can often predict the best quality URL
     if (videoId != null) {
-      if (coverUrl!.contains('img.youtube.com') || coverUrl!.contains('i.ytimg.com')) {
+      if (coverUrl!.contains('img.youtube.com') ||
+          coverUrl!.contains('i.ytimg.com')) {
         return "https://img.youtube.com/vi/$videoId/maxresdefault.jpg";
       }
     }
-    
+
     // Already in high res?
-    if (coverUrl!.contains('maxresdefault.jpg') || coverUrl!.contains('=w1024')) {
+    if (coverUrl!.contains('maxresdefault.jpg') ||
+        coverUrl!.contains('=w1024')) {
       return coverUrl;
     }
-    
+
     return coverUrl;
   }
 
@@ -109,7 +111,7 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
       return;
     }
 
-    // Strictly use androidVr client — it bypasses many YouTube signature restrictions 
+    // Strictly use androidVr client — it bypasses many YouTube signature restrictions
     // and is highly compatible with the manual HTTP requests we use below.
     final manifest = await _yt.videos.streamsClient.getManifest(
       videoId,
@@ -118,7 +120,8 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
 
     // Prefer WebM (Opus) first as it is more stable for streaming on Android
     final allAudio = manifest.audioOnly.sortByBitrate().toList();
-    if (allAudio.isEmpty) throw Exception("No audio-only streams found for $videoId");
+    if (allAudio.isEmpty)
+      throw Exception("No audio-only streams found for $videoId");
 
     final webmStreams = allAudio
         .where((s) => s.container.name == 'webm')
@@ -171,7 +174,9 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
     request.headers['Range'] = 'bytes=$from-$finalTo';
     request.headers['Connection'] = 'keep-alive';
 
-    final response = await httpClient.send(request).timeout(const Duration(seconds: 5));
+    final response = await httpClient
+        .send(request)
+        .timeout(const Duration(seconds: 5));
 
     return StreamAudioResponse(
       sourceLength: totalBytes,
@@ -201,7 +206,7 @@ class PlayerService {
   final ValueNotifier<Duration> position = ValueNotifier<Duration>(
     Duration.zero,
   );
-  
+
   VoidCallback? onUserPlaybackAction;
   final ValueNotifier<Duration> duration = ValueNotifier<Duration>(
     const Duration(seconds: 1),
@@ -214,9 +219,12 @@ class PlayerService {
 
   Timer? _sleepTimer;
   Timer? _fadeTimer;
-  final ValueNotifier<Duration?> sleepTimerRemaining = ValueNotifier<Duration?>(null);
+  final ValueNotifier<Duration?> sleepTimerRemaining = ValueNotifier<Duration?>(
+    null,
+  );
 
-  Stream<ProcessingState> get processingStateStream => _audioPlayer.processingStateStream;
+  Stream<ProcessingState> get processingStateStream =>
+      _audioPlayer.processingStateStream;
 
   List<SongInfo> currentQueue = [];
   List<SongInfo> _originalQueue = [];
@@ -305,9 +313,13 @@ class PlayerService {
     );
   }
 
-  Future<void> playQueue(List<SongInfo> queue, {int initialIndex = 0, bool isTribeSync = false}) async {
+  Future<void> playQueue(
+    List<SongInfo> queue, {
+    int initialIndex = 0,
+    bool isTribeSync = false,
+  }) async {
     if (!isTribeSync) onUserPlaybackAction?.call();
-    
+
     if (queue.isEmpty) return;
     _originalQueue = List.from(queue);
     currentQueue = List.from(queue);
@@ -323,7 +335,10 @@ class PlayerService {
     await play(currentQueue[currentIndex]);
   }
 
-  Future<void> skipToNext({bool autoPlay = false, bool isTribeSync = false}) async {
+  Future<void> skipToNext({
+    bool autoPlay = false,
+    bool isTribeSync = false,
+  }) async {
     if (!autoPlay && !isTribeSync) onUserPlaybackAction?.call();
 
     if (currentQueue.isEmpty || currentIndex < 0) return;
@@ -385,7 +400,7 @@ class PlayerService {
 
     final stopwatch = Stopwatch()..start();
     debugPrint("PlayerService: Playback request starting for '${song.title}'");
-    
+
     currentSong.value = song;
     progress.value = 0.0;
     position.value = Duration.zero;
@@ -400,14 +415,18 @@ class PlayerService {
 
     // 1. UPDATE METADATA (NON-BLOCKING)
     unawaited(_audioHandler.updateMediaItemFromSong(song));
-    debugPrint("PlayerService: UI Setup took ${stopwatch.elapsedMilliseconds}ms");
+    debugPrint(
+      "PlayerService: UI Setup took ${stopwatch.elapsedMilliseconds}ms",
+    );
 
     try {
       // Calling stop() is slow; setAudioSource handles switching automatically.
 
       // 0. Check if it's a direct local file (not from YouTube)
       if (song.localPath != null && song.localPath!.isNotEmpty) {
-        debugPrint("PlayerService: Playing direct local file: ${song.localPath}");
+        debugPrint(
+          "PlayerService: Playing direct local file: ${song.localPath}",
+        );
         await _audioPlayer.setAudioSource(AudioSource.file(song.localPath!));
         await _audioPlayer.play();
         return;
@@ -417,7 +436,9 @@ class PlayerService {
 
       // 1. Resolve videoId if missing
       if (targetVideoId == null || targetVideoId.isEmpty) {
-        debugPrint("PlayerService: Searching for '${song.title} ${song.artist}'");
+        debugPrint(
+          "PlayerService: Searching for '${song.title} ${song.artist}'",
+        );
         final results = await _yt.search.search("${song.title} ${song.artist}");
         if (results.isNotEmpty) {
           targetVideoId = results.first.id.value;
@@ -431,18 +452,18 @@ class PlayerService {
 
       // 2. CONCURRENT: Start pre-warming and metadata fetch immediately
       final prewarmFuture = prewarm(targetVideoId);
-      
+
       // Background: Fetch full metadata for high-res art (don't block playback)
       final vidId = targetVideoId;
       unawaited(() async {
         try {
           final video = await _yt.videos.get(vidId);
-          final bestThumb = video.thumbnails.maxResUrl.isNotEmpty 
-              ? video.thumbnails.maxResUrl 
-              : video.thumbnails.standardResUrl.isNotEmpty 
-                  ? video.thumbnails.standardResUrl 
-                  : video.thumbnails.highResUrl;
-          
+          final bestThumb = video.thumbnails.maxResUrl.isNotEmpty
+              ? video.thumbnails.maxResUrl
+              : video.thumbnails.standardResUrl.isNotEmpty
+              ? video.thumbnails.standardResUrl
+              : video.thumbnails.highResUrl;
+
           if (bestThumb.isNotEmpty && bestThumb != song.coverUrl) {
             final updatedSong = SongInfo(
               title: song.title,
@@ -468,7 +489,9 @@ class PlayerService {
 
       final localPath = resultsCheck[0] as String?;
       if (localPath != null) {
-        debugPrint("PlayerService: Instant offline playback for $targetVideoId");
+        debugPrint(
+          "PlayerService: Instant offline playback for $targetVideoId",
+        );
         await _audioPlayer.setAudioSource(AudioSource.file(localPath));
         _audioPlayer.play(); // No await so UI updates instantly
         return;
@@ -477,15 +500,15 @@ class PlayerService {
       // 5. Final resolve for streaming
       debugPrint("PlayerService: Streaming $targetVideoId...");
 
-        await _audioPlayer.setAudioSource(
-          _YouTubeStreamAudioSource(
-            httpClient: _httpClient,
-            videoId: targetVideoId,
-            ytExplode: _yt,
-            audioQuality: audioQuality.value,
-          ),
-        );
-        await _audioPlayer.play();
+      await _audioPlayer.setAudioSource(
+        _YouTubeStreamAudioSource(
+          httpClient: _httpClient,
+          videoId: targetVideoId,
+          ytExplode: _yt,
+          audioQuality: audioQuality.value,
+        ),
+      );
+      await _audioPlayer.play();
       debugPrint("PlayerService: Playback started!");
 
       // Pre-warm the next song in queue so it plays instantly when skipped to
@@ -494,8 +517,8 @@ class PlayerService {
       debugPrint("PlayerService ERROR: $e");
       debugPrint("Stack: $stack");
     } finally {
-      // isBuffering reset removed here. 
-      // The processingStateStream listener in Constructor handles it correctly 
+      // isBuffering reset removed here.
+      // The processingStateStream listener in Constructor handles it correctly
       // based on the REAL player state (ProcessingState.buffering).
     }
   }
@@ -517,13 +540,15 @@ class PlayerService {
     if (song != null) {
       await _db.toggleLikedSong(song);
       isLiked.value = !isLiked.value;
-      
+
       // Automatically add/vibe to leaderboard if it is now "Liked"
       if (isLiked.value) {
         try {
           final currentMood = MoodService().currentMood.value;
           final validMoods = ['Happy', 'Sad', 'Angry', 'Chill', 'Focused'];
-          final boardMood = validMoods.contains(currentMood) ? currentMood : 'Happy';
+          final boardMood = validMoods.contains(currentMood)
+              ? currentMood
+              : 'Happy';
 
           await CommunityService().addSongToMoodboard(
             mood: boardMood,
@@ -532,7 +557,9 @@ class PlayerService {
             coverUrl: song.coverUrl,
             videoId: song.videoId,
           );
-          debugPrint("PlayerService: Added/Vibed song automatically to $boardMood leaderboard");
+          debugPrint(
+            "PlayerService: Added/Vibed song automatically to $boardMood leaderboard",
+          );
         } catch (e) {
           debugPrint("PlayerService: Failed to auto-add to leaderboard: $e");
         }
@@ -568,8 +595,9 @@ class PlayerService {
 
     _sleepTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (sleepTimerRemaining.value != null) {
-        final remaining = sleepTimerRemaining.value! - const Duration(seconds: 1);
-        
+        final remaining =
+            sleepTimerRemaining.value! - const Duration(seconds: 1);
+
         if (remaining.inSeconds <= 0) {
           timer.cancel();
           _initiateFadeOut();
@@ -602,7 +630,7 @@ class PlayerService {
         timer.cancel(); // Don't forget to cancel the periodic timer!
         _audioPlayer.setVolume(0.0);
         stop();
-        
+
         // Use Global Navigator Key to close the PlayerScreen if it's currently showing
         // We look for the navigator state and pop since PlayerScreen is usually pushed as a full-screen route
         if (navigatorKey.currentState?.canPop() ?? false) {
@@ -624,7 +652,10 @@ class PlayerService {
     }
   }
 
-  Future<void> seekToPosition(Duration targetPosition, {bool isTribeSync = false}) async {
+  Future<void> seekToPosition(
+    Duration targetPosition, {
+    bool isTribeSync = false,
+  }) async {
     if (!isTribeSync) onUserPlaybackAction?.call();
     await _audioPlayer.seek(targetPosition);
   }

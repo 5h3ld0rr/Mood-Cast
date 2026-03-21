@@ -71,7 +71,11 @@ class NotificationDetailsScreen extends StatelessWidget {
                 elevation: 0,
                 pinned: true,
                 leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -96,7 +100,9 @@ class NotificationDetailsScreen extends StatelessWidget {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.2),
+                                  color: AppTheme.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   blurRadius: 50,
                                   spreadRadius: -20,
                                 ),
@@ -116,7 +122,10 @@ class NotificationDetailsScreen extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: AppTheme.primary.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(30),
@@ -186,7 +195,9 @@ class NotificationDetailsScreen extends StatelessWidget {
                         ),
                       ),
 
-                      if (payload != null && payload!.isNotEmpty && payload != '{}') ...[
+                      if (payload != null &&
+                          payload!.isNotEmpty &&
+                          payload != '{}') ...[
                         const SizedBox(height: 60),
                         _buildPayloadSection(),
                       ],
@@ -216,7 +227,11 @@ class NotificationDetailsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline_rounded, color: AppTheme.primary, size: 20),
+              const Icon(
+                Icons.info_outline_rounded,
+                color: AppTheme.primary,
+                size: 20,
+              ),
               const SizedBox(width: 12),
               const Text(
                 'SYSTEM METADATA',
@@ -256,7 +271,9 @@ class NotificationDetailsScreen extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             elevation: 0,
           ),
           child: const Text(

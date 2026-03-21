@@ -202,10 +202,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     });
 
     _startHeartRateSimulation();
-    
+
     // Phase 1: Locking Phase with Haptics and Zoom
     HapticFeedback.vibrate();
-    
+
     try {
       final XFile image = await _controller!.takePicture();
 
@@ -244,28 +244,13 @@ class _AnalysisScreenState extends State<AnalysisScreen>
           };
         } else if (smileProb < 0.1 && avgEyesOpen < 0.4) {
           resultMood = 'Sad';
-          scores = {
-            'Sad': 0.85,
-            'Natural': 0.1,
-            'Happy': 0.01,
-            'Angry': 0.04,
-          };
+          scores = {'Sad': 0.85, 'Natural': 0.1, 'Happy': 0.01, 'Angry': 0.04};
         } else if (smileProb < 0.1 && avgEyesOpen > 0.8) {
           resultMood = 'Angry';
-          scores = {
-            'Angry': 0.8,
-            'Natural': 0.15,
-            'Sad': 0.03,
-            'Happy': 0.02,
-          };
+          scores = {'Angry': 0.8, 'Natural': 0.15, 'Sad': 0.03, 'Happy': 0.02};
         } else {
           resultMood = 'Natural';
-          scores = {
-            'Natural': 0.85,
-            'Happy': 0.05,
-            'Sad': 0.05,
-            'Angry': 0.05,
-          };
+          scores = {'Natural': 0.85, 'Happy': 0.05, 'Sad': 0.05, 'Angry': 0.05};
         }
       }
 
@@ -284,7 +269,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
         _confidenceScores = scores;
       });
       MoodService().updateMood(_detectedMood!);
-      MetricsService.saveMoodScan(_detectedMood!, confidence: _confidenceScores);
+      MetricsService.saveMoodScan(
+        _detectedMood!,
+        confidence: _confidenceScores,
+      );
     } catch (e) {
       debugPrint('Error during scan: $e');
       _hrTimer?.cancel();
@@ -343,7 +331,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       };
                     });
                     MoodService().updateMood(mood);
-                    MetricsService.saveMoodScan(mood, confidence: _confidenceScores);
+                    MetricsService.saveMoodScan(
+                      mood,
+                      confidence: _confidenceScores,
+                    );
                     HapticFeedback.mediumImpact();
                   },
                   child: AnimatedContainer(
@@ -444,12 +435,14 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                     fit: BoxFit.cover,
                                     child: SizedBox(
                                       width: constraints.maxWidth,
-                                      height: constraints.maxWidth /
+                                      height:
+                                          constraints.maxWidth /
                                           (_controller!.value.aspectRatio < 1
                                               ? _controller!.value.aspectRatio
                                               : 1 /
-                                                  _controller!
-                                                      .value.aspectRatio),
+                                                    _controller!
+                                                        .value
+                                                        .aspectRatio),
                                       child: CameraPreview(_controller!),
                                     ),
                                   ),
@@ -503,14 +496,16 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                     bottom: false,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: Theme.of(context)
-                              .primaryColor
-                              .withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -542,9 +537,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         padding: const EdgeInsets.only(top: 18),
                         child: Text(
                           'SCANNING',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 fontSize: 14,
                                 letterSpacing: 4,
@@ -630,10 +623,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                           _detectedMood != null
                               ? 'Mood Analyzed'
                               : 'Scanning Features...',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontSize: 18),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(fontSize: 18),
                         ),
                         Text(
                           '${(_progress * 100).toInt()}%',
@@ -664,17 +656,20 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 24),
+                        horizontal: 24,
+                        vertical: 24,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.03),
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.08)),
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context)
-                                .primaryColor
-                                .withValues(alpha: 0.05),
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.05),
                             blurRadius: 30,
                             spreadRadius: 0,
                           ),
@@ -687,9 +682,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context)
-                                      .primaryColor
-                                      .withValues(alpha: 0.1),
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -706,9 +701,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                     Text(
                                       'PRIMARY EMOTION',
                                       style: TextStyle(
-                                        color: Theme.of(context)
-                                            .primaryColor
-                                            .withValues(alpha: 0.6),
+                                        color: Theme.of(
+                                          context,
+                                        ).primaryColor.withValues(alpha: 0.6),
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         letterSpacing: 2.5,
@@ -755,8 +750,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.auto_awesome,
-                                  color: Colors.black),
+                              icon: const Icon(
+                                Icons.auto_awesome,
+                                color: Colors.black,
+                              ),
                               label: const Text(
                                 'GENERATE VIBE PLAYLIST',
                                 style: TextStyle(
@@ -766,8 +763,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).primaryColor,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 18),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
@@ -782,8 +780,10 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 _progress = 0.0;
                               });
                             },
-                            icon: const Icon(Icons.refresh_rounded,
-                                color: Colors.white70),
+                            icon: const Icon(
+                              Icons.refresh_rounded,
+                              color: Colors.white70,
+                            ),
                             label: const Text(
                               'SCAN AGAIN',
                               style: TextStyle(
@@ -793,8 +793,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                               ),
                             ),
                             style: TextButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
                           ),
                         ],
                       ),
@@ -806,9 +806,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(context)
-                                .primaryColor
-                                .withValues(alpha: 0.1),
+                            Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.1),
                             Colors.white.withValues(alpha: 0.05),
                           ],
                           begin: Alignment.topLeft,
@@ -816,7 +816,8 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         ),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1)),
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -830,9 +831,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                                 ? 'CHEER UP JOKE! 😂'
                                 : 'MOOD INSIGHT ✨',
                             style: TextStyle(
-                              color: Theme.of(context)
-                                  .primaryColor
-                                  .withValues(alpha: 0.5),
+                              color: Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.5),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
@@ -950,7 +951,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
   List<Widget> _buildNeuralNodes(double cameraH) {
     if (!_isScanning) return [];
-    
+
     return [
       CustomPaint(
         size: Size(double.infinity, cameraH),
@@ -1035,8 +1036,11 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     );
   }
 
-  Widget _buildCorner(BuildContext context,
-      {required bool isTop, required bool isLeft}) {
+  Widget _buildCorner(
+    BuildContext context, {
+    required bool isTop,
+    required bool isLeft,
+  }) {
     return Container(
       width: 35,
       height: 35,
@@ -1045,22 +1049,26 @@ class _AnalysisScreenState extends State<AnalysisScreen>
           top: isTop
               ? BorderSide(
                   color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3)
+                  width: 3,
+                )
               : BorderSide.none,
           bottom: !isTop
               ? BorderSide(
                   color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3)
+                  width: 3,
+                )
               : BorderSide.none,
           left: isLeft
               ? BorderSide(
                   color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3)
+                  width: 3,
+                )
               : BorderSide.none,
           right: !isLeft
               ? BorderSide(
                   color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3)
+                  width: 3,
+                )
               : BorderSide.none,
         ),
       ),
@@ -1072,10 +1080,12 @@ class _LensClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path()
-      ..addOval(Rect.fromCircle(
-        center: Offset(size.width / 2, size.height / 2),
-        radius: (size.width / 2) * 0.85,
-      ));
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(size.width / 2, size.height / 2),
+          radius: (size.width / 2) * 0.85,
+        ),
+      );
     return path;
   }
 
@@ -1093,7 +1103,8 @@ class _LensHUD extends StatefulWidget {
   State<_LensHUD> createState() => _LensHUDState();
 }
 
-class _LensHUDState extends State<_LensHUD> with SingleTickerProviderStateMixin {
+class _LensHUDState extends State<_LensHUD>
+    with SingleTickerProviderStateMixin {
   late AnimationController _rotationController;
 
   @override
@@ -1255,7 +1266,7 @@ class _NeuralConnectionPainter extends CustomPainter {
         }
       }
     }
-    
+
     // Draw dots at points
     final dotPaint = Paint()..color = color.withValues(alpha: 0.6);
     for (var p in points) {
@@ -1268,18 +1279,18 @@ class _NeuralConnectionPainter extends CustomPainter {
         ..color = color.withValues(alpha: 0.8)
         ..strokeWidth = 2.0
         ..style = PaintingStyle.stroke;
-      
+
       // Map ML Kit coordinates to preview size (simplified)
       final previewRect = Rect.fromLTWH(
-        size.width * 0.2, 
-        size.height * 0.2, 
-        size.width * 0.6, 
-        size.height * 0.4
+        size.width * 0.2,
+        size.height * 0.2,
+        size.width * 0.6,
+        size.height * 0.4,
       );
-      
+
       canvas.drawRRect(
-        RRect.fromRectAndRadius(previewRect, const Radius.circular(20)), 
-        facePaint
+        RRect.fromRectAndRadius(previewRect, const Radius.circular(20)),
+        facePaint,
       );
     }
   }
@@ -1301,8 +1312,9 @@ class _PulseCircleState extends State<_PulseCircle>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(seconds: 1))
-      ..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -1324,7 +1336,9 @@ class _PulseCircleState extends State<_PulseCircle>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.redAccent.withValues(alpha: _controller.value * 0.5),
+                color: Colors.redAccent.withValues(
+                  alpha: _controller.value * 0.5,
+                ),
                 blurRadius: 10,
                 spreadRadius: 2,
               ),

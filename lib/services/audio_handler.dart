@@ -87,17 +87,19 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     // Use the maximum resolution available from youtube
     final coverUrl = song.highResCoverUrl ?? song.coverUrl;
 
-    mediaItem.add(MediaItem(
-      id: song.videoId ?? 'temp',
-      album: "MoodCast",
-      title: song.title,
-      artist: song.artist,
-      artUri: coverUrl != null ? Uri.parse(coverUrl) : null,
-      duration: _player.duration,
-      extras: {
-        'androidNotificationTitle': 'MoodCast',
-        'playbackSource': 'MoodCast App',
-      },
-    ));
+    mediaItem.add(
+      MediaItem(
+        id: song.videoId ?? 'temp',
+        album: "MoodCast",
+        title: song.title,
+        artist: song.artist,
+        artUri: coverUrl != null ? Uri.parse(coverUrl) : null,
+        duration: _player.duration,
+        extras: {
+          'androidNotificationTitle': 'MoodCast',
+          'playbackSource': 'MoodCast App',
+        },
+      ),
+    );
   }
 }

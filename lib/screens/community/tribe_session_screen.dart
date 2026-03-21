@@ -47,13 +47,17 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
     _playerService.clearQueue();
     await _tribeService.joinTribeSession(widget.tribeId);
 
-    _sessionSub = _tribeService.getSessionStream(widget.tribeId).listen((session) {
+    _sessionSub = _tribeService.getSessionStream(widget.tribeId).listen((
+      session,
+    ) {
       if (!mounted) return;
       setState(() => _session = session);
       if (session != null) _syncPlayback(session);
     });
 
-    _membersSub = _tribeService.getActiveMembersStream(widget.tribeId).listen((members) {
+    _membersSub = _tribeService.getActiveMembersStream(widget.tribeId).listen((
+      members,
+    ) {
       if (!mounted) return;
       setState(() => _members = members);
     });
@@ -94,15 +98,17 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
 
       // Start playback (isTribeSync=true prevents recursion/leaving tribe)
       await _playerService.play(songInfo, isTribeSync: true);
-      
+
       // If the session says it's paused, pause it immediately after setting source
       if (shouldBePaused) {
-        await _playerService.togglePlay(isTribeSync: true); // This will call pause
+        await _playerService.togglePlay(
+          isTribeSync: true,
+        ); // This will call pause
       }
 
       // Sync position
       _syncPosition(session);
-    } 
+    }
     // 2. Handle Play/Pause Sync for current track
     else {
       // ONLY toggle if we are out of sync
@@ -113,11 +119,11 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
         debugPrint('TribeSync: DJ resumed – resuming locally.');
         await _playerService.togglePlay(isTribeSync: true);
       }
-      
+
       // Always sync position if we are resuming or if we are far out of sync
       if (!shouldBePaused) {
-         // Optionally check if we are > 2s off
-         _syncPosition(session);
+        // Optionally check if we are > 2s off
+        _syncPosition(session);
       } else if (session.lastPositionMs > 0) {
         // Sync to the exact pause point
         await _playerService.seekToPosition(
@@ -131,32 +137,34 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
   Future<void> _syncPosition(TribeSession session) async {
     // Wait until audio engine is ready to seek
     _playerService.processingStateStream
-        .firstWhere((state) =>
-            state == ProcessingState.ready ||
-            state == ProcessingState.completed)
+        .firstWhere(
+          (state) =>
+              state == ProcessingState.ready ||
+              state == ProcessingState.completed,
+        )
         .then((_) async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      
-      int targetMs;
-      if (session.isPaused) {
-        targetMs = session.lastPositionMs;
-      } else {
-        // Dynamic calc from startTime
-        targetMs = now - session.startTime;
-      }
+          final now = DateTime.now().millisecondsSinceEpoch;
 
-      if (targetMs > 0) {
-        await _playerService.seekToPosition(
-          Duration(milliseconds: targetMs),
-          isTribeSync: true,
-        );
-        debugPrint('TribeSync: Position synced to ${targetMs}ms');
-      }
-    }).catchError((e) {
-      debugPrint('TribeSync: Position sync error – $e');
-    });
+          int targetMs;
+          if (session.isPaused) {
+            targetMs = session.lastPositionMs;
+          } else {
+            // Dynamic calc from startTime
+            targetMs = now - session.startTime;
+          }
+
+          if (targetMs > 0) {
+            await _playerService.seekToPosition(
+              Duration(milliseconds: targetMs),
+              isTribeSync: true,
+            );
+            debugPrint('TribeSync: Position synced to ${targetMs}ms');
+          }
+        })
+        .catchError((e) {
+          debugPrint('TribeSync: Position sync error – $e');
+        });
   }
-
 
   @override
   void dispose() {
@@ -186,14 +194,20 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppTheme.backgroundDark.withAlpha(230),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(32),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Search to Queue',
-                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -204,20 +218,26 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                     hintText: 'Search songs...',
                     fillColor: Colors.white10,
                     filled: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                   onChanged: (query) {
                     if (debounce?.isActive ?? false) debounce!.cancel();
-                    debounce = Timer(const Duration(milliseconds: 500), () async {
-                      if (query.length > 2) {
-                        setStateModal(() => isLoading = true);
-                        final results = await _ytmService.searchTracks(query);
-                        setStateModal(() {
-                          searchResults = results;
-                          isLoading = false;
-                        });
-                      }
-                    });
+                    debounce = Timer(
+                      const Duration(milliseconds: 500),
+                      () async {
+                        if (query.length > 2) {
+                          setStateModal(() => isLoading = true);
+                          final results = await _ytmService.searchTracks(query);
+                          setStateModal(() {
+                            searchResults = results;
+                            isLoading = false;
+                          });
+                        }
+                      },
+                    );
                   },
                 ),
                 const SizedBox(height: 16),
@@ -232,21 +252,46 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: song.artworkUrl != null
-                                    ? Image.network(song.artworkUrl!, width: 48, height: 48, fit: BoxFit.cover)
-                                    : Container(width: 48, height: 48, color: Colors.white10, child: const Icon(Icons.music_note, color: Colors.white24)),
+                                    ? Image.network(
+                                        song.artworkUrl!,
+                                        width: 48,
+                                        height: 48,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        width: 48,
+                                        height: 48,
+                                        color: Colors.white10,
+                                        child: const Icon(
+                                          Icons.music_note,
+                                          color: Colors.white24,
+                                        ),
+                                      ),
                               ),
-                              title: Text(song.title, style: const TextStyle(color: Colors.white)),
-                              subtitle: Text(song.artist, style: const TextStyle(color: Colors.white54)),
-                              trailing: Icon(Icons.add_circle, color: widget.tribeColor),
+                              title: Text(
+                                song.title,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              subtitle: Text(
+                                song.artist,
+                                style: const TextStyle(color: Colors.white54),
+                              ),
+                              trailing: Icon(
+                                Icons.add_circle,
+                                color: widget.tribeColor,
+                              ),
                               onTap: () {
-                                _tribeService.queueSong(TribeTrack(
-                                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                  title: song.title,
-                                  artist: song.artist,
-                                  coverUrl: song.artworkUrl,
-                                  videoId: song.videoId,
-                                  addedBy: _tribeService.displayName ?? 'DJ',
-                                ));
+                                _tribeService.queueSong(
+                                  TribeTrack(
+                                    id: DateTime.now().millisecondsSinceEpoch
+                                        .toString(),
+                                    title: song.title,
+                                    artist: song.artist,
+                                    coverUrl: song.artworkUrl,
+                                    videoId: song.videoId,
+                                    addedBy: _tribeService.displayName ?? 'DJ',
+                                  ),
+                                );
                                 Navigator.pop(context);
                               },
                             );
@@ -266,7 +311,9 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
     if (_session == null) {
       return Scaffold(
         backgroundColor: AppTheme.backgroundDark,
-        body: Center(child: CircularProgressIndicator(color: widget.tribeColor)),
+        body: Center(
+          child: CircularProgressIndicator(color: widget.tribeColor),
+        ),
       );
     }
 
@@ -280,11 +327,11 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
         children: [
           // Background Gradient
           Positioned.fill(
-             child: Container(
+            child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    widget.tribeColor.withAlpha(50), 
+                    widget.tribeColor.withAlpha(50),
                     AppTheme.backgroundDark,
                   ],
                   begin: Alignment.topCenter,
@@ -293,7 +340,7 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Column(
               children: [
@@ -303,7 +350,10 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.white,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const SizedBox(width: 8),
@@ -312,15 +362,23 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                         children: [
                           Text(
                             'LIVE TRIBE SESSION',
-                            style: TextStyle(color: widget.tribeColor, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2),
+                            style: TextStyle(
+                              color: widget.tribeColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                            ),
                           ),
                           Text(
                             widget.tribeName,
-                            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
-
                     ],
                   ),
                 ),
@@ -334,9 +392,19 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.speaker_notes_off, color: Colors.white24, size: 64),
+                          Icon(
+                            Icons.speaker_notes_off,
+                            color: Colors.white24,
+                            size: 64,
+                          ),
                           const SizedBox(height: 16),
-                          const Text('Silence...', style: TextStyle(color: Colors.white54, fontSize: 18)),
+                          const Text(
+                            'Silence...',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 18,
+                            ),
+                          ),
                           if (isDJ) ...[
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
@@ -352,15 +420,19 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                           if (!isDJ && _session!.currentDJUid == null) ...[
                             const SizedBox(height: 16),
                             ElevatedButton(
-                              onPressed: () => _tribeService.takeCrown(widget.tribeId),
-                              style: ElevatedButton.styleFrom(backgroundColor: widget.tribeColor, foregroundColor: Colors.white),
+                              onPressed: () =>
+                                  _tribeService.takeCrown(widget.tribeId),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: widget.tribeColor,
+                                foregroundColor: Colors.white,
+                              ),
                               child: const Text('Take DJ Crown 👑'),
-                            )
-                          ]
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                  )
+                  ),
                 ] else ...[
                   // Cover Art
                   Hero(
@@ -371,17 +443,23 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(32),
                         boxShadow: [
-                          BoxShadow(color: widget.tribeColor.withAlpha(80), blurRadius: 40, offset: const Offset(0, 20)),
+                          BoxShadow(
+                            color: widget.tribeColor.withAlpha(80),
+                            blurRadius: 40,
+                            offset: const Offset(0, 20),
+                          ),
                         ],
                         image: DecorationImage(
-                          image: NetworkImage(_session!.currentTrack!.coverUrl ?? ''),
+                          image: NetworkImage(
+                            _session!.currentTrack!.coverUrl ?? '',
+                          ),
                           fit: BoxFit.cover,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Song Info
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -389,7 +467,11 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                       children: [
                         Text(
                           _session!.currentTrack!.title,
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -397,7 +479,10 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                         const SizedBox(height: 8),
                         Text(
                           _session!.currentTrack!.artist,
-                          style: const TextStyle(color: Colors.white54, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 16,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -413,7 +498,10 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white10,
                             borderRadius: BorderRadius.circular(12),
@@ -422,33 +510,60 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                             children: [
                               const Text('👑 ', style: TextStyle(fontSize: 12)),
                               Text(
-                                isDJ ? 'You are the DJ' : '${_session!.currentDJName} is controlling the aux',
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                isDJ
+                                    ? 'You are the DJ'
+                                    : '${_session!.currentDJName} is controlling the aux',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        
+
                         // Skip Vote Button
                         GestureDetector(
-                          onTap: hasVotedSkip ? null : () => _tribeService.voteSkip(),
+                          onTap: hasVotedSkip
+                              ? null
+                              : () => _tribeService.voteSkip(),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: hasVotedSkip ? Colors.white10 : Colors.redAccent.withAlpha(50),
+                              color: hasVotedSkip
+                                  ? Colors.white10
+                                  : Colors.redAccent.withAlpha(50),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: hasVotedSkip ? Colors.transparent : Colors.redAccent.withAlpha(100)),
+                              border: Border.all(
+                                color: hasVotedSkip
+                                    ? Colors.transparent
+                                    : Colors.redAccent.withAlpha(100),
+                              ),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.skip_next, color: hasVotedSkip ? Colors.white38 : Colors.redAccent, size: 16),
+                                Icon(
+                                  Icons.skip_next,
+                                  color: hasVotedSkip
+                                      ? Colors.white38
+                                      : Colors.redAccent,
+                                  size: 16,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  hasVotedSkip ? 'Voted' : 'Skip (${_session!.skipVotes.length}/${skipThreshold.ceil()})',
+                                  hasVotedSkip
+                                      ? 'Voted'
+                                      : 'Skip (${_session!.skipVotes.length}/${skipThreshold.ceil()})',
                                   style: TextStyle(
-                                    color: hasVotedSkip ? Colors.white38 : Colors.redAccent, 
-                                    fontSize: 12, 
-                                    fontWeight: FontWeight.bold
+                                    color: hasVotedSkip
+                                        ? Colors.white38
+                                        : Colors.redAccent,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
@@ -458,15 +573,17 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Queue ListView
                   Expanded(
                     child: Container(
                       decoration: const BoxDecoration(
                         color: Colors.black26,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -475,10 +592,20 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Up Next', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'Up Next',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 if (isDJ)
                                   IconButton(
-                                    icon: Icon(Icons.add_circle, color: widget.tribeColor),
+                                    icon: Icon(
+                                      Icons.add_circle,
+                                      color: widget.tribeColor,
+                                    ),
                                     onPressed: _showSearchDialog,
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
@@ -487,31 +614,64 @@ class _TribeSessionScreenState extends State<TribeSessionScreen> {
                             ),
                           ),
                           Expanded(
-                            child: _session!.queue.isEmpty 
+                            child: _session!.queue.isEmpty
                                 ? Center(
                                     child: Text(
-                                      isDJ ? 'Search to queue the next track' : 'The DJ hasn\'t queued anything yet',
-                                      style: const TextStyle(color: Colors.white38),
+                                      isDJ
+                                          ? 'Search to queue the next track'
+                                          : 'The DJ hasn\'t queued anything yet',
+                                      style: const TextStyle(
+                                        color: Colors.white38,
+                                      ),
                                     ),
                                   )
                                 : ListView.builder(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     itemCount: _session!.queue.length,
                                     itemBuilder: (context, index) {
                                       final qSong = _session!.queue[index];
                                       return ListTile(
                                         leading: ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           child: qSong.coverUrl != null
-                                              ? Image.network(qSong.coverUrl!, width: 40, height: 40, fit: BoxFit.cover)
-                                              : Container(width: 40, height: 40, color: Colors.white10),
+                                              ? Image.network(
+                                                  qSong.coverUrl!,
+                                                  width: 40,
+                                                  height: 40,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  color: Colors.white10,
+                                                ),
                                         ),
-                                        title: Text(qSong.title, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                                        subtitle: Text(qSong.artist, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                        title: Text(
+                                          qSong.title,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          qSong.artist,
+                                          style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                         trailing: isDJ
                                             ? IconButton(
-                                                icon: const Icon(Icons.remove_circle_outline, color: Colors.white24),
-                                                onPressed: () => _tribeService.removeFromQueue(qSong),
+                                                icon: const Icon(
+                                                  Icons.remove_circle_outline,
+                                                  color: Colors.white24,
+                                                ),
+                                                onPressed: () => _tribeService
+                                                    .removeFromQueue(qSong),
                                               )
                                             : null,
                                       );

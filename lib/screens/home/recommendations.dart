@@ -36,7 +36,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     try {
       final weather = WeatherService().currentWeather.value?.condition;
       final mood = widget.mood ?? 'Happy'; // Fallback
-      final tracks = await _ytmService.getRecommendationsByMood(mood, weather: weather);
+      final tracks = await _ytmService.getRecommendationsByMood(
+        mood,
+        weather: weather,
+      );
 
       if (mounted) {
         setState(() {

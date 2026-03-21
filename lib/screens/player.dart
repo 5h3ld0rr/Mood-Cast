@@ -161,14 +161,18 @@ class _PlayerScreenState extends State<PlayerScreen>
                                     color: Colors.white,
                                     size: 28,
                                   ),
-                                  color: AppTheme.backgroundDeep.withValues(alpha: 0.98),
+                                  color: AppTheme.backgroundDeep.withValues(
+                                    alpha: 0.98,
+                                  ),
                                   surfaceTintColor: Colors.transparent,
                                   elevation: 20,
                                   shadowColor: Colors.black45,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     side: BorderSide(
-                                      color: Colors.white.withValues(alpha: 0.05),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       width: 0.5,
                                     ),
                                   ),
@@ -193,7 +197,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                           Icon(
                                             Icons.playlist_add,
                                             size: 20,
-                                            color: Theme.of(context).primaryColor,
+                                            color: Theme.of(
+                                              context,
+                                            ).primaryColor,
                                           ),
                                           const SizedBox(width: 12),
                                           const Text(
@@ -207,38 +213,44 @@ class _PlayerScreenState extends State<PlayerScreen>
                                         ],
                                       ),
                                     ),
-                                      PopupMenuItem<String>(
-                                        value: 'sleep',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.timer_outlined,
-                                              size: 20,
-                                              color: Theme.of(context).primaryColor,
-                                            ),
-                                            const SizedBox(width: 12),
-                                            ValueListenableBuilder<Duration?>(
-                                              valueListenable: PlayerService().sleepTimerRemaining,
-                                              builder: (context, remaining, _) {
-                                                String text = 'Sleep Timer';
-                                                if (remaining != null) {
-                                                  final int mins = remaining.inMinutes;
-                                                  final int secs = remaining.inSeconds % 60;
-                                                  text = 'Sleep Timer ($mins:${secs.toString().padLeft(2, '0')})';
-                                                }
-                                                return Text(
-                                                  text,
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        ),
+                                    PopupMenuItem<String>(
+                                      value: 'sleep',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.timer_outlined,
+                                            size: 20,
+                                            color: Theme.of(
+                                              context,
+                                            ).primaryColor,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          ValueListenableBuilder<Duration?>(
+                                            valueListenable: PlayerService()
+                                                .sleepTimerRemaining,
+                                            builder: (context, remaining, _) {
+                                              String text = 'Sleep Timer';
+                                              if (remaining != null) {
+                                                final int mins =
+                                                    remaining.inMinutes;
+                                                final int secs =
+                                                    remaining.inSeconds % 60;
+                                                text =
+                                                    'Sleep Timer ($mins:${secs.toString().padLeft(2, '0')})';
+                                              }
+                                              return Text(
+                                                text,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
+                                    ),
                                     PopupMenuItem<String>(
                                       value: 'share',
                                       child: Row(
@@ -246,7 +258,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                           Icon(
                                             Icons.share_outlined,
                                             size: 20,
-                                            color: Theme.of(context).primaryColor,
+                                            color: Theme.of(
+                                              context,
+                                            ).primaryColor,
                                           ),
                                           const SizedBox(width: 12),
                                           const Text(
@@ -741,13 +755,15 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             size: 32,
                                           ),
                                           onPressed: () {
-                                            if (!_isInteractionLocked) PlayerService().skipToPrevious();
+                                            if (!_isInteractionLocked)
+                                              PlayerService().skipToPrevious();
                                           },
                                         ),
                                         const SizedBox(width: 16),
                                         GestureDetector(
                                           onTap: () {
-                                            if (!_isInteractionLocked) PlayerService().togglePlay();
+                                            if (!_isInteractionLocked)
+                                              PlayerService().togglePlay();
                                           },
                                           child: Container(
                                             width: 64,
@@ -811,7 +827,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             size: 32,
                                           ),
                                           onPressed: () {
-                                            if (!_isInteractionLocked) PlayerService().skipToNext();
+                                            if (!_isInteractionLocked)
+                                              PlayerService().skipToNext();
                                           },
                                         ),
                                       ],
@@ -890,10 +907,10 @@ class _PlayerScreenState extends State<PlayerScreen>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            if (PlayerService().sleepTimerRemaining.value != null) ...[
-              _buildTimerOption('Turn Off', -1),
-              const Divider(color: Colors.white24),
-            ],
+              if (PlayerService().sleepTimerRemaining.value != null) ...[
+                _buildTimerOption('Turn Off', -1),
+                const Divider(color: Colors.white24),
+              ],
               _buildTimerOption('15 Minutes', 15),
               _buildTimerOption('30 Minutes', 30),
               _buildTimerOption('60 Minutes', 60),
@@ -906,7 +923,8 @@ class _PlayerScreenState extends State<PlayerScreen>
               child: Text(
                 'CANCEL',
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                  color:
+                      Theme.of(context).textTheme.bodyMedium?.color ??
                       AppTheme.textMuted,
                 ),
               ),
@@ -981,7 +999,8 @@ class _PlayerScreenState extends State<PlayerScreen>
               child: Text(
                 'CANCEL',
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                  color:
+                      Theme.of(context).textTheme.bodyMedium?.color ??
                       AppTheme.textMuted,
                 ),
               ),

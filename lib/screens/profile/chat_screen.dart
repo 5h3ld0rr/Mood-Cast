@@ -15,7 +15,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   final List<String> _suggestions = [
     'How do I use MoodSync?',
     'Explain Community features',
@@ -23,7 +23,7 @@ class _ChatScreenState extends State<ChatScreen> {
     'Check my Insights',
     'Offline mode help',
     'Payment methods',
-    'About the developers'
+    'About the developers',
   ];
 
   @override
@@ -126,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-          
+
           Column(
             children: [
               Expanded(
@@ -136,9 +136,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    
+
                     final messages = snapshot.data ?? [];
-                    
+
                     if (messages.isEmpty) {
                       return Center(
                         child: Column(
@@ -167,7 +167,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 20,
+                            ),
                             reverse: true, // Show latest at search
                             itemCount: messages.length,
                             itemBuilder: (context, index) {
@@ -181,7 +184,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           builder: (context, typingSnapshot) {
                             if (typingSnapshot.data == true) {
                               return Padding(
-                                padding: const EdgeInsets.only(left: 20, bottom: 12),
+                                padding: const EdgeInsets.only(
+                                  left: 20,
+                                  bottom: 12,
+                                ),
                                 child: Align(
                                   alignment: Alignment.centerLeft,
                                   child: Row(
@@ -191,14 +197,18 @@ class _ChatScreenState extends State<ChatScreen> {
                                         height: 12,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation(primaryColor),
+                                          valueColor: AlwaysStoppedAnimation(
+                                            primaryColor,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
                                         'Support is typing...',
                                         style: TextStyle(
-                                          color: primaryColor.withValues(alpha: 0.7),
+                                          color: primaryColor.withValues(
+                                            alpha: 0.7,
+                                          ),
                                           fontSize: 12,
                                           fontStyle: FontStyle.italic,
                                         ),
@@ -216,10 +226,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
                 ),
               ),
-              
+
               // Quick Suggestions
               _buildSuggestions(primaryColor),
-              
+
               // Input Field
               _buildInputArea(primaryColor),
             ],
@@ -239,7 +249,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: message.isUser 
+          color: message.isUser
               ? primaryColor.withValues(alpha: 0.15)
               : AppTheme.cardBg,
           borderRadius: BorderRadius.only(
@@ -249,7 +259,7 @@ class _ChatScreenState extends State<ChatScreen> {
             bottomRight: Radius.circular(message.isUser ? 4 : 20),
           ),
           border: Border.all(
-            color: message.isUser 
+            color: message.isUser
                 ? primaryColor.withValues(alpha: 0.3)
                 : Colors.white.withValues(alpha: 0.05),
           ),
@@ -306,9 +316,7 @@ class _ChatScreenState extends State<ChatScreen> {
       decoration: BoxDecoration(
         color: AppTheme.backgroundDeep.withValues(alpha: 0.8),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -317,9 +325,7 @@ class _ChatScreenState extends State<ChatScreen> {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.08),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: TextField(
                 controller: _messageController,
@@ -332,7 +338,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
                 onSubmitted: (_) => _sendMessage(),
               ),
@@ -355,7 +364,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 24),
+              child: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
           ),
         ],
@@ -380,9 +393,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
               backgroundColor: AppTheme.cardBg,
-              side: BorderSide(
-                color: primaryColor.withValues(alpha: 0.3),
-              ),
+              side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),

@@ -277,7 +277,7 @@ class YouTubeMusicService {
 
   String _getWeatherModifier(String? weather) {
     if (weather == null || weather.isEmpty) return "";
-    
+
     switch (weather.toLowerCase()) {
       case 'rain':
       case 'drizzle':
@@ -396,10 +396,10 @@ class YouTubeMusicService {
     }
 
     baseQuery += _getTimeOfDayModifier();
-    
+
     // For artists, keep weather influence lighter
     if (weather != null && weather.isNotEmpty) {
-       baseQuery += " $weather";
+      baseQuery += " $weather";
     }
 
     return baseQuery;

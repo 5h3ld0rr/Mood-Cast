@@ -81,8 +81,9 @@ class _SplashScreenState extends State<SplashScreen>
     }
 
     if (mounted) {
-      final Widget nextScreen =
-          user != null ? const MainScreen() : const LoginScreen();
+      final Widget nextScreen = user != null
+          ? const MainScreen()
+          : const LoginScreen();
 
       await _animationController.reverse();
 
@@ -93,24 +94,24 @@ class _SplashScreenState extends State<SplashScreen>
             pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
-              final curve = Curves.easeInOutQuart;
-              final fadeAnimation = CurvedAnimation(
-                parent: animation,
-                curve: curve,
-              );
-              final offsetAnimation = Tween<Offset>(
-                begin: const Offset(0.0, 0.05),
-                end: Offset.zero,
-              ).animate(fadeAnimation);
+                  final curve = Curves.easeInOutQuart;
+                  final fadeAnimation = CurvedAnimation(
+                    parent: animation,
+                    curve: curve,
+                  );
+                  final offsetAnimation = Tween<Offset>(
+                    begin: const Offset(0.0, 0.05),
+                    end: Offset.zero,
+                  ).animate(fadeAnimation);
 
-              return FadeTransition(
-                opacity: fadeAnimation,
-                child: SlideTransition(
-                  position: offsetAnimation,
-                  child: child,
-                ),
-              );
-            },
+                  return FadeTransition(
+                    opacity: fadeAnimation,
+                    child: SlideTransition(
+                      position: offsetAnimation,
+                      child: child,
+                    ),
+                  );
+                },
           ),
         );
       }
@@ -125,7 +126,9 @@ class _SplashScreenState extends State<SplashScreen>
         canPop: false,
         child: AlertDialog(
           backgroundColor: const Color(0xFF151921),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Row(
             children: [
               Icon(Icons.location_off, color: Colors.orangeAccent),
@@ -149,7 +152,9 @@ class _SplashScreenState extends State<SplashScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('Retry'),
             ),

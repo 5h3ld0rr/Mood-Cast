@@ -77,7 +77,11 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
               ),
             ),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                color: Colors.white,
+                size: 20,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             actions: [
@@ -133,17 +137,17 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final notification = notifications[notifications.length - 1 - index];
-                    return _NotificationTile(
-                      notification: notification,
-                      timeAgo: _getTimeAgo(notification['timestamp'] ?? DateTime.now()),
-                      onTap: () => _openDetails(context, notification),
-                    );
-                  },
-                  childCount: notifications.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final notification =
+                      notifications[notifications.length - 1 - index];
+                  return _NotificationTile(
+                    notification: notification,
+                    timeAgo: _getTimeAgo(
+                      notification['timestamp'] ?? DateTime.now(),
+                    ),
+                    onTap: () => _openDetails(context, notification),
+                  );
+                }, childCount: notifications.length),
               ),
             ),
         ],
@@ -165,7 +169,10 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.white38)),
+            child: const Text(
+              'CANCEL',
+              style: TextStyle(color: Colors.white38),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -174,7 +181,9 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text('CLEAR'),
           ),
@@ -222,10 +231,14 @@ class _NotificationTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isRead ? Colors.white.withValues(alpha: 0.03) : Colors.white.withValues(alpha: 0.07),
+          color: isRead
+              ? Colors.white.withValues(alpha: 0.03)
+              : Colors.white.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isRead ? Colors.white.withValues(alpha: 0.05) : AppTheme.primary.withValues(alpha: 0.3),
+            color: isRead
+                ? Colors.white.withValues(alpha: 0.05)
+                : AppTheme.primary.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -234,7 +247,9 @@ class _NotificationTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isRead ? Colors.white.withValues(alpha: 0.05) : AppTheme.primary.withValues(alpha: 0.15),
+                color: isRead
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : AppTheme.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
@@ -256,7 +271,9 @@ class _NotificationTile extends StatelessWidget {
                           notification['title'] ?? '',
                           style: TextStyle(
                             color: isRead ? Colors.white54 : Colors.white,
-                            fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                            fontWeight: isRead
+                                ? FontWeight.w500
+                                : FontWeight.bold,
                             fontSize: 15,
                           ),
                           maxLines: 1,
@@ -265,10 +282,7 @@ class _NotificationTile extends StatelessWidget {
                       ),
                       Text(
                         timeAgo,
-                        style: TextStyle(
-                          color: Colors.white24,
-                          fontSize: 11,
-                        ),
+                        style: TextStyle(color: Colors.white24, fontSize: 11),
                       ),
                     ],
                   ),

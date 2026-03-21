@@ -212,6 +212,7 @@ class MoodboardSong {
     };
   }
 }
+
 class GlobalMoodStats {
   final int vibingNow;
   final Map<String, int> moodPercentages;
