@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
 import '../theme.dart';
 import 'auth/login.dart';
 import 'main_screen.dart';
@@ -47,67 +48,115 @@ class _SplashScreenState extends State<SplashScreen>
 
     _infiniteController.repeat(reverse: true);
 
-    _animationController.forward().then((_) async {
+    _startInitialization();
+  }
+
+  Future<void> _startInitialization() async {
+    await _animationController.forward();
+    if (!mounted) return;
+
+    await _checkLocationRequirements();
+  }
+
+  Future<void> _checkLocationRequirements() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    bool isLocationReady = false;
+    while (!isLocationReady) {
       if (!mounted) return;
-
-      final User? user = FirebaseAuth.instance.currentUser;
-
-      if (user != null) {
-        // If user is logged in, wait for essential data (Weather)
-        // We catch errors to ensure navigation happens even if weather fetch fails
-        try {
-          // Wait at least 500ms for visual smoothness if fetch is too fast
-          await Future.wait([
-            WeatherService().fetchWeather(),
-            Future.delayed(const Duration(milliseconds: 500)),
-          ]);
-        } catch (e) {
-          debugPrint("Splash: Weather fetch failed, proceeding anyway. $e");
+      try {
+        await WeatherService().fetchWeather();
+        isLocationReady = true;
+      } catch (e) {
+        if (e is AppLocationServiceDisabledException ||
+            e is AppLocationPermissionDeniedException ||
+            e is AppLocationPermissionPermanentlyDeniedException) {
+          await _showLocationRequiredDialog(e.toString());
+        } else {
+          // Non-location errors (like network) don't block the app
+          debugPrint("Splash: Potential network error, proceeding anyway. $e");
+          isLocationReady = true;
         }
-      } else {
-        // If not logged in, add a small delay for branding before going to login
-        await Future.delayed(const Duration(milliseconds: 1000));
       }
+    }
+
+    if (mounted) {
+      final Widget nextScreen =
+          user != null ? const MainScreen() : const LoginScreen();
+
+      await _animationController.reverse();
 
       if (mounted) {
-        final Widget nextScreen = user != null
-            ? const MainScreen()
-            : const LoginScreen();
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 800),
+            pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              final curve = Curves.easeInOutQuart;
+              final fadeAnimation = CurvedAnimation(
+                parent: animation,
+                curve: curve,
+              );
+              final offsetAnimation = Tween<Offset>(
+                begin: const Offset(0.0, 0.05),
+                end: Offset.zero,
+              ).animate(fadeAnimation);
 
-        // Fade out splash elements first to create a clear "end" to the splash state
-        await _animationController.reverse();
-
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              transitionDuration: const Duration(milliseconds: 800),
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  nextScreen,
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                    final curve = Curves.easeInOutQuart;
-                    final fadeAnimation = CurvedAnimation(
-                      parent: animation,
-                      curve: curve,
-                    );
-                    final offsetAnimation = Tween<Offset>(
-                      begin: const Offset(0.0, 0.05),
-                      end: Offset.zero,
-                    ).animate(fadeAnimation);
-
-                    return FadeTransition(
-                      opacity: fadeAnimation,
-                      child: SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      ),
-                    );
-                  },
-            ),
-          );
-        }
+              return FadeTransition(
+                opacity: fadeAnimation,
+                child: SlideTransition(
+                  position: offsetAnimation,
+                  child: child,
+                ),
+              );
+            },
+          ),
+        );
       }
-    });
+    }
+  }
+
+  Future<void> _showLocationRequiredDialog(String message) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF151921),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.location_off, color: Colors.orangeAccent),
+              SizedBox(width: 12),
+              Text('Location Required', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+          content: Text(
+            'MoodCast uses your location to tailor your emotional soundscape to your environment. Please enable location services to continue.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await Geolocator.openLocationSettings();
+              },
+              child: const Text('Open Settings'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

@@ -1,9 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:image/image.dart' as img;
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'player_service.dart';
@@ -89,10 +84,10 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   /// Updates the media item (metadata) currently being played.
   Future<void> updateMediaItemFromSong(SongInfo song) async {
+    // Use the maximum resolution available from youtube
     final coverUrl = song.highResCoverUrl ?? song.coverUrl;
 
-    // 1. UPDATE IMMEDIATELY with raw URL. 
-    final initialMediaItem = MediaItem(
+    mediaItem.add(MediaItem(
       id: song.videoId ?? 'temp',
       album: "MoodCast",
       title: song.title,
@@ -103,48 +98,6 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         'androidNotificationTitle': 'MoodCast',
         'playbackSource': 'MoodCast App',
       },
-    );
-    mediaItem.add(initialMediaItem);
-
-    if (coverUrl == null || coverUrl.isEmpty) return;
-
-    // 2. BACKGROUND PROCESSING
-    unawaited(() async {
-      try {
-        final tempDir = await getTemporaryDirectory();
-        final filePath = '${tempDir.path}/notif_wide_${song.videoId ?? 'temp'}_${coverUrl.hashCode}.jpg';
-        final file = File(filePath);
-
-        if (!await file.exists()) {
-          final response = await http.get(Uri.parse(coverUrl)).timeout(const Duration(seconds: 3));
-          if (response.statusCode == 200) {
-            final bytes = response.bodyBytes;
-            final original = img.decodeImage(bytes);
-
-            if (original != null) {
-              final targetHeight = (original.width / 3.7).toInt();
-              final yOffset = (original.height - targetHeight) ~/ 2;
-              
-              final wideCrop = img.copyCrop(
-                original, 
-                x: 0, 
-                y: yOffset > 0 ? yOffset : 0, 
-                width: original.width, 
-                height: targetHeight > original.height ? original.height : targetHeight
-              );
-
-              final finalOutput = img.copyResize(wideCrop, width: 512);
-              await file.writeAsBytes(img.encodeJpg(finalOutput, quality: 85));
-            }
-          }
-        }
-
-        if (await file.exists()) {
-          mediaItem.add(initialMediaItem.copyWith(artUri: Uri.file(filePath)));
-        }
-      } catch (e) {
-        debugPrint('AudioHandler Image Processing Error: $e');
-      }
-    }());
+    ));
   }
 }

@@ -20,8 +20,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
     'Natural': '😐',
   };
 
-
-
   Map<String, dynamic> _calculateStats(
     List<Map<String, dynamic>> history,
     String range,
@@ -85,8 +83,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
     double avg = total > 0 ? sumIntensity / total : 0.0;
 
     int blocksCount = 7;
-    if (range == 'Month') blocksCount = 30;
-    else if (range == 'Day') blocksCount = 24;
+    if (range == 'Month') {
+      blocksCount = 30;
+    } else if (range == 'Day') {
+      blocksCount = 24;
+    }
 
     List<Map<String, dynamic>> bars = List.generate(blocksCount, (index) {
       if (range == 'Day') {
@@ -109,13 +110,19 @@ class _InsightsScreenState extends State<InsightsScreen> {
           for (var m in hourMoods) {
             final mood = m['mood'];
             localCounts[mood] = (localCounts[mood] ?? 0) + 1;
-            if (mood == 'Happy') dSum += 0.9;
-            else if (mood == 'Natural') dSum += 0.6;
-            else if (mood == 'Angry') dSum += 0.8;
-            else if (mood == 'Sad') dSum += 0.3;
+            if (mood == 'Happy') {
+              dSum += 0.9;
+            } else if (mood == 'Natural')
+              dSum += 0.6;
+            else if (mood == 'Angry')
+              dSum += 0.8;
+            else if (mood == 'Sad')
+              dSum += 0.3;
           }
           intensity = (dSum / hourMoods.length).clamp(0.05, 1.0);
-          dominantMood = localCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+          dominantMood = localCounts.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
         }
         return {'intensity': intensity, 'mood': dominantMood};
       } else {
@@ -137,13 +144,19 @@ class _InsightsScreenState extends State<InsightsScreen> {
           for (var m in dayMoods) {
             final mood = m['mood'];
             localCounts[mood] = (localCounts[mood] ?? 0) + 1;
-            if (mood == 'Happy') dSum += 0.9;
-            else if (mood == 'Natural') dSum += 0.6;
-            else if (mood == 'Angry') dSum += 0.8;
-            else if (mood == 'Sad') dSum += 0.3;
+            if (mood == 'Happy') {
+              dSum += 0.9;
+            } else if (mood == 'Natural')
+              dSum += 0.6;
+            else if (mood == 'Angry')
+              dSum += 0.8;
+            else if (mood == 'Sad')
+              dSum += 0.3;
           }
           intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
-          dominantMood = localCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+          dominantMood = localCounts.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
         }
         return {'intensity': intensity, 'mood': dominantMood};
       }
@@ -220,7 +233,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
                         ),
                       ),
                       Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(24),
@@ -230,13 +246,21 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             color: Theme.of(context).primaryColor,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
-                              BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.4), blurRadius: 10)
+                              BoxShadow(
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.4),
+                                blurRadius: 10,
+                              ),
                             ],
                           ),
                           indicatorSize: TabBarIndicatorSize.tab,
                           labelColor: Colors.white,
                           unselectedLabelColor: AppTheme.textMuted,
-                          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          labelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                           dividerColor: Colors.transparent,
                           tabs: const [
                             Tab(text: 'Day', height: 40),
@@ -275,9 +299,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
     String topMood = 'None';
     if (breakdown.isNotEmpty) {
-      topMood = breakdown.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+      topMood = breakdown.entries
+          .reduce((a, b) => a.value > b.value ? a : b)
+          .key;
     }
-    final topMoodColor = AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
+    final topMoodColor =
+        AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -315,9 +342,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           width: 120,
                           height: 120,
                           child: CircularProgressIndicator(
-                            value: double.tryParse(stats['positive'].replaceAll('%', ''))! / 100,
+                            value:
+                                double.tryParse(
+                                  stats['positive'].replaceAll('%', ''),
+                                )! /
+                                100,
                             strokeWidth: 10,
-                            backgroundColor: Colors.white.withValues(alpha: 0.05),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.05,
+                            ),
                             valueColor: AlwaysStoppedAnimation(topMoodColor),
                           ),
                         ),
@@ -346,7 +379,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Dominant Mood', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                        const Text(
+                          'Dominant Mood',
+                          style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           topMood,
@@ -358,11 +397,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: topMoodColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: topMoodColor.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: topMoodColor.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Text(
                             'Highest records: ${breakdown[topMood] ?? 0}',
@@ -381,8 +425,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 Column(
                   children: breakdown.keys.map((mood) {
                     final count = breakdown[mood] ?? 0;
-                    final percentage = totalMoods > 0 ? (count / totalMoods) : 0.0;
-                    final moodColor = AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor;
+                    final percentage = totalMoods > 0
+                        ? (count / totalMoods)
+                        : 0.0;
+                    final moodColor =
+                        AppTheme.moodColors[mood] ??
+                        Theme.of(context).primaryColor;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: Row(
@@ -418,7 +466,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                               borderRadius: BorderRadius.circular(6),
                               child: LinearProgressIndicator(
                                 value: percentage,
-                                backgroundColor: Colors.white.withValues(alpha: 0.05),
+                                backgroundColor: Colors.white.withValues(
+                                  alpha: 0.05,
+                                ),
                                 valueColor: AlwaysStoppedAnimation(moodColor),
                                 minHeight: 8,
                               ),
@@ -482,7 +532,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 8.0,
+              ),
               child: CustomPaint(
                 painter: _SplineChartPainter(
                   stats['bars'] as List<Map<String, dynamic>>,
@@ -544,8 +597,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
       ),
     );
   }
-
-
 
   Widget _buildSessionTile(
     String title,
@@ -612,37 +663,40 @@ class _SplineChartPainter extends CustomPainter {
 
     final path = Path();
     final widthStep = size.width / (data.length - 1 == 0 ? 1 : data.length - 1);
-    
+
     // Normalizing values
     List<Offset> points = [];
     for (int i = 0; i < data.length; i++) {
-        final x = i * widthStep;
-        final intensity = data[i]['intensity'] as double;
-        // Invert Y so 1.0 is at top (0.0 height) and 0.0 is at bottom (size.height)
-        final y = size.height - (intensity * size.height);
-        points.add(Offset(x, y));
+      final x = i * widthStep;
+      final intensity = data[i]['intensity'] as double;
+      // Invert Y so 1.0 is at top (0.0 height) and 0.0 is at bottom (size.height)
+      final y = size.height - (intensity * size.height);
+      points.add(Offset(x, y));
     }
 
     if (points.length == 1) {
-       canvas.drawCircle(points[0], 4, paint..style=PaintingStyle.fill);
-       return;
+      canvas.drawCircle(points[0], 4, paint..style = PaintingStyle.fill);
+      return;
     }
 
     path.moveTo(points[0].dx, points[0].dy);
-    
+
     // Smooth bezier curve calculation
     for (int i = 0; i < points.length - 1; i++) {
-        final p0 = points[i];
-        final p1 = points[i + 1];
-        
-        final controlPoint1 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p0.dy);
-        final controlPoint2 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p1.dy);
-        
-        path.cubicTo(
-           controlPoint1.dx, controlPoint1.dy,
-           controlPoint2.dx, controlPoint2.dy,
-           p1.dx, p1.dy
-        );
+      final p0 = points[i];
+      final p1 = points[i + 1];
+
+      final controlPoint1 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p0.dy);
+      final controlPoint2 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p1.dy);
+
+      path.cubicTo(
+        controlPoint1.dx,
+        controlPoint1.dy,
+        controlPoint2.dx,
+        controlPoint2.dy,
+        p1.dx,
+        p1.dy,
+      );
     }
 
     // Draw the Gradient Area below the curve
@@ -661,17 +715,23 @@ class _SplineChartPainter extends CustomPainter {
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
-      
+
     canvas.drawPath(areaPath, gradientPaint);
 
     // Draw the Line itself
     canvas.drawPath(path, paint);
-    
+
     // Draw tiny glowing dots on nodes
     final dotPaint = Paint()..color = Colors.white;
     for (var point in points) {
-       canvas.drawCircle(point, 6, Paint()..color=baseColor.withValues(alpha:0.3)..style=PaintingStyle.fill);
-       canvas.drawCircle(point, 3, dotPaint);
+      canvas.drawCircle(
+        point,
+        6,
+        Paint()
+          ..color = baseColor.withValues(alpha: 0.3)
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawCircle(point, 3, dotPaint);
     }
   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../theme.dart';
-import '../scan/analysis.dart';
+import '../../../theme.dart';
+import '../../scan/analysis.dart';
 
 class SmartAlarmScreen extends StatefulWidget {
   const SmartAlarmScreen({super.key});
@@ -190,7 +190,7 @@ class _SmartAlarmScreenState extends State<SmartAlarmScreen> {
                                 style: TextStyle(color: Colors.white54, fontSize: 12),
                               ),
                               value: _isAlarmEnabled,
-                              activeColor: Theme.of(context).primaryColor,
+                              activeThumbColor: Theme.of(context).primaryColor,
                               onChanged: (val) {
                                 setState(() {
                                   _isAlarmEnabled = val;

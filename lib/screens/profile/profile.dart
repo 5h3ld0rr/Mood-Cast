@@ -8,7 +8,7 @@ import 'privacy_security.dart';
 import 'subscription.dart';
 import 'help_support.dart';
 import 'insights/insights.dart';
-import '../alarm/smart_alarm.dart';
+import 'alarm/smart_alarm.dart';
 import '../../services/player_service.dart';
 import '../../widgets/cached_image.dart';
 
