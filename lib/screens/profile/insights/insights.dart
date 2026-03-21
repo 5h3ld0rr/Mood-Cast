@@ -606,21 +606,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
           ),
           const SizedBox(height: 16),
           _buildGlassCard(
-            child: SizedBox(
-              height: 180,
-              width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 32.0,
-                ),
-                child: CustomPaint(
-                  painter: _SplineChartPainter(
-                    stats['bars'] as List<Map<String, dynamic>>,
-                    Theme.of(context).primaryColor,
-                  ),
-                ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 24.0,
               ),
+              child: _buildHeatmap(stats['bars'] as List<Map<String, dynamic>>, context),
             ),
           ),
           const SizedBox(height: 32),
@@ -822,6 +813,44 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  Widget _buildHeatmap(List<Map<String, dynamic>> data, BuildContext context) {
+    if (data.isEmpty) return const SizedBox.shrink();
+
+    return Center(
+      child: Wrap(
+        spacing: 5.0,
+        runSpacing: 5.0,
+        alignment: WrapAlignment.center,
+        children: data.map((item) {
+           final intensity = item['intensity'] as double;
+           final mood = item['mood'] as String;
+           final color = AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor;
+           
+           return Tooltip(
+             message: '$mood Intensity: ${(intensity * 10).toStringAsFixed(1)}',
+             child: AnimatedContainer(
+               duration: const Duration(milliseconds: 300),
+               width: 20,
+               height: 20,
+               decoration: BoxDecoration(
+                 color: intensity <= 0.05 
+                     ? Colors.white.withValues(alpha: 0.05) 
+                     : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
+                 borderRadius: BorderRadius.circular(4),
+                 border: Border.all(
+                   color: intensity <= 0.05 
+                       ? Colors.white.withValues(alpha: 0.1) 
+                       : color.withValues(alpha: 0.2),
+                   width: 1,
+                 ),
+               ),
+             ),
+           );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildSessionTile(
     String title,
     String subtitle,
@@ -901,98 +930,4 @@ class _InsightsScreenState extends State<InsightsScreen> {
       ),
     );
   }
-}
-
-class _SplineChartPainter extends CustomPainter {
-  final List<Map<String, dynamic>> data;
-  final Color baseColor;
-
-  _SplineChartPainter(this.data, this.baseColor);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
-
-    final paint = Paint()
-      ..color = baseColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    final widthStep = size.width / (data.length - 1 == 0 ? 1 : data.length - 1);
-
-    // Normalizing values
-    List<Offset> points = [];
-    for (int i = 0; i < data.length; i++) {
-      final x = i * widthStep;
-      final intensity = data[i]['intensity'] as double;
-      // Invert Y so 1.0 is at top (0.0 height) and 0.0 is at bottom (size.height)
-      final y = size.height - (intensity * size.height);
-      points.add(Offset(x, y));
-    }
-
-    if (points.length == 1) {
-      canvas.drawCircle(points[0], 4, paint..style = PaintingStyle.fill);
-      return;
-    }
-
-    path.moveTo(points[0].dx, points[0].dy);
-
-    // Smooth bezier curve calculation
-    for (int i = 0; i < points.length - 1; i++) {
-      final p0 = points[i];
-      final p1 = points[i + 1];
-
-      final controlPoint1 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p0.dy);
-      final controlPoint2 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p1.dy);
-
-      path.cubicTo(
-        controlPoint1.dx,
-        controlPoint1.dy,
-        controlPoint2.dx,
-        controlPoint2.dy,
-        p1.dx,
-        p1.dy,
-      );
-    }
-
-    // Draw the Gradient Area below the curve
-    final areaPath = Path.from(path);
-    areaPath.lineTo(points.last.dx, size.height);
-    areaPath.lineTo(points.first.dx, size.height);
-    areaPath.close();
-
-    final gradientPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          baseColor.withValues(alpha: 0.6),
-          baseColor.withValues(alpha: 0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(areaPath, gradientPaint);
-
-    // Draw the Line itself
-    canvas.drawPath(path, paint);
-
-    // Draw tiny glowing dots on nodes
-    final dotPaint = Paint()..color = Colors.white;
-    for (var point in points) {
-      canvas.drawCircle(
-        point,
-        6,
-        Paint()
-          ..color = baseColor.withValues(alpha: 0.3)
-          ..style = PaintingStyle.fill,
-      );
-      canvas.drawCircle(point, 3, dotPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
