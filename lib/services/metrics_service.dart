@@ -1,6 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+class UserStats {
+  final double hoursListened;
+  final int streak;
+  final int points;
+
+  UserStats({
+    required this.hoursListened,
+    required this.streak,
+    required this.points,
+  });
+}
+
 class MetricsService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -87,23 +99,21 @@ class MetricsService {
     }, SetOptions(merge: true));
   }
 
-  static Stream<double> getHoursListenedStream() {
+  static Stream<UserStats> getUserStatsStream() {
     final docRef = _userDoc;
-    if (docRef == null) return Stream.value(0.0);
+    if (docRef == null) {
+      return Stream.value(UserStats(hoursListened: 0, streak: 0, points: 0));
+    }
+
     return docRef.snapshots().map((doc) {
       final data = doc.data() as Map<String, dynamic>?;
+
+      // 1. Calculate Playtime HOURS
       final seconds = (data?['playtime_seconds'] as num?)?.toDouble() ?? 0.0;
-      return (seconds / 360.0).ceil() / 10.0;
-    });
-  }
+      final hours = (seconds / 360.0).ceil() / 10.0;
 
-  static Stream<int> getStreakStream() {
-    final docRef = _userDoc;
-    if (docRef == null) return Stream.value(0);
-    return docRef.snapshots().map((doc) {
-      final data = doc.data() as Map<String, dynamic>?;
-
-      // Check if streak is still valid (scanned today or yesterday)
+      // 2. Calculate Valid Streak
+      int streak = (data?['current_streak'] as num?)?.toInt() ?? 0;
       final lastStreakTimestamp = data?['last_streak_date'] as Timestamp?;
       if (lastStreakTimestamp != null) {
         final lastDate = lastStreakTimestamp.toDate();
@@ -115,23 +125,15 @@ class MetricsService {
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
         final difference = today.difference(lastStreakDate).inDays;
-
-        if (difference > 1) return 0; // Streak broken
+        if (difference > 1) streak = 0;
       } else {
-        return 0;
+        streak = 0;
       }
 
-      return (data?['current_streak'] as num?)?.toInt() ?? 0;
-    });
-  }
+      // 3. Points
+      final points = (data?['moodPoints'] as num?)?.toInt() ?? 0;
 
-  static Stream<List<String>> getStreakBadgesStream() {
-    return getStreakStream().map((streak) {
-      List<String> badges = [];
-      if (streak >= 3) badges.add('3 Day Streak 🔥');
-      if (streak >= 7) badges.add('7 Day Streak ✨');
-      if (streak >= 30) badges.add('30 Day Legend 🏆');
-      return badges;
+      return UserStats(hoursListened: hours, streak: streak, points: points);
     });
   }
 }

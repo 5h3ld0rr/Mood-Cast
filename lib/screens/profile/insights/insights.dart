@@ -32,6 +32,15 @@ class _InsightsScreenState extends State<InsightsScreen>
   final String _selectedRange = 'Week';
   late final ValueNotifier<int> _yearNotifier;
 
+  // Memoization
+  List<Map<String, dynamic>>? _lastHistory;
+  final Map<String, Map<String, dynamic>> _memoizedStats = {};
+  List<int>? _memoizedYears;
+  List<Map<String, dynamic>>? _lastHistoryForYears;
+  Map<DateTime, String>? _memoizedHeatmapData;
+  int? _lastYearForHeatmapData;
+  List<Map<String, dynamic>>? _lastHistoryForHeatmapData;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +72,66 @@ class _InsightsScreenState extends State<InsightsScreen>
     super.dispose();
   }
 
+  List<int> _getAvailableYears(List<Map<String, dynamic>> history) {
+    if (_lastHistoryForYears == history && _memoizedYears != null) {
+      return _memoizedYears!;
+    }
+    _lastHistoryForYears = history;
+    _memoizedYears =
+        history
+            .map((m) => (m['timestamp'] as Timestamp?)?.toDate().year)
+            .whereType<int>()
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+    if (_memoizedYears!.isEmpty) _memoizedYears!.add(DateTime.now().year);
+    return _memoizedYears!;
+  }
+
+  Map<String, dynamic> _getMemoizedStats(
+    List<Map<String, dynamic>> history,
+    String range,
+  ) {
+    if (_lastHistory != history) {
+      _memoizedStats.clear();
+      _lastHistory = history;
+    }
+    if (!_memoizedStats.containsKey(range)) {
+      _memoizedStats[range] = _calculateStats(history, range);
+    }
+    return _memoizedStats[range]!;
+  }
+
+  Map<DateTime, String> _getHeatmapData(
+    List<Map<String, dynamic>> history,
+    int targetYear,
+  ) {
+    if (_lastHistoryForHeatmapData == history &&
+        _lastYearForHeatmapData == targetYear &&
+        _memoizedHeatmapData != null) {
+      return _memoizedHeatmapData!;
+    }
+
+    _lastHistoryForHeatmapData = history;
+    _lastYearForHeatmapData = targetYear;
+    _memoizedHeatmapData = {};
+
+    for (var m in history) {
+      final ts = m['timestamp'] as Timestamp?;
+      if (ts == null) continue;
+      final d = ts.toDate();
+      if (d.year != targetYear) continue;
+
+      final date = DateTime(d.year, d.month, d.day);
+      final mood = m['mood'] as String;
+
+      // For the heatmap we just need a dominant mood representation or latest.
+      // Simplification: just store the mood.
+      _memoizedHeatmapData![date] = mood;
+    }
+    return _memoizedHeatmapData!;
+  }
+
   Map<String, dynamic> _calculateStats(
     List<Map<String, dynamic>> history,
     String range,
@@ -79,27 +148,43 @@ class _InsightsScreenState extends State<InsightsScreen>
     }
 
     final now = DateTime.now();
-    List<Map<String, dynamic>> filtered = history;
+    List<Map<String, dynamic>> filtered = [];
 
-    if (range == 'Day') {
-      filtered = history.where((m) {
-        final ts = m['timestamp'] as Timestamp?;
-        if (ts == null) return false;
-        return now.difference(ts.toDate()).inHours < 24;
-      }).toList();
-    } else if (range == 'Week') {
-      filtered = history.where((m) {
-        final ts = m['timestamp'] as Timestamp?;
-        if (ts == null) return false;
-        return now.difference(ts.toDate()).inDays < 7;
-      }).toList();
-    }
-
+    // Pre-calculate blocks and grouping keys
     int blocksCount = 7;
     if (range == 'Month') {
       blocksCount = 30;
     } else if (range == 'Day') {
       blocksCount = 24;
+    }
+
+    // Grouping structure
+    Map<String, List<Map<String, dynamic>>> groupedData = {};
+
+    for (var m in history) {
+      final ts = m['timestamp'] as Timestamp?;
+      if (ts == null) continue;
+      final date = ts.toDate();
+      final difference = now.difference(date);
+
+      // Filtering for the summary stats
+      bool includeInFiltered = false;
+      if (range == 'Day' && difference.inHours < 24) includeInFiltered = true;
+      if (range == 'Week' && difference.inDays < 7) includeInFiltered = true;
+      if (range == 'Month' && difference.inDays < 30) includeInFiltered = true;
+
+      if (includeInFiltered) {
+        filtered.add(m);
+      }
+
+      // Grouping for the bars/trends
+      String key;
+      if (range == 'Day') {
+        key = '${date.year}-${date.month}-${date.day}-${date.hour}';
+      } else {
+        key = '${date.year}-${date.month}-${date.day}';
+      }
+      groupedData.putIfAbsent(key, () => []).add(m);
     }
 
     if (filtered.isEmpty) {
@@ -118,23 +203,14 @@ class _InsightsScreenState extends State<InsightsScreen>
         },
       };
     }
+
     // Mood Breakdown
     Map<String, int> counts = {};
+    double sumIntensity = 0;
     for (var m in filtered) {
       final mood = m['mood'] as String;
       counts[mood] = (counts[mood] ?? 0) + 1;
-    }
 
-    int total = filtered.length;
-    int positiveCount = (counts['Happy'] ?? 0);
-    String positivePercent = total > 0
-        ? '${((positiveCount / total) * 100).toInt()}%'
-        : '0%';
-
-    // Intensity calculation
-    double sumIntensity = 0;
-    for (var m in filtered) {
-      final mood = m['mood'];
       if (mood == 'Happy') {
         sumIntensity += 0.9;
       } else if (mood == 'Natural') {
@@ -145,87 +221,54 @@ class _InsightsScreenState extends State<InsightsScreen>
         sumIntensity += 0.3;
       }
     }
+
+    int total = filtered.length;
+    int positiveCount = (counts['Happy'] ?? 0);
+    String positivePercent = total > 0
+        ? '${((positiveCount / total) * 100).toInt()}%'
+        : '0%';
     double avg = total > 0 ? sumIntensity / total : 0.0;
 
+    // Generate Bars using groupedData
     List<Map<String, dynamic>> bars = List.generate(blocksCount, (index) {
+      DateTime blockTime;
+      String key;
+
       if (range == 'Day') {
-        final hour = now.subtract(Duration(hours: 23 - index));
-        final hourMoods = history.where((m) {
-          final ts = m['timestamp'] as Timestamp?;
-          if (ts == null) return false;
-          final date = ts.toDate();
-          return date.year == hour.year &&
-              date.month == hour.month &&
-              date.day == hour.day &&
-              date.hour == hour.hour;
-        }).toList();
-
-        double intensity = 0.05;
-        String dominantMood = 'Natural';
-        if (hourMoods.isNotEmpty) {
-          double dSum = 0;
-          Map<String, int> localCounts = {};
-          for (var m in hourMoods) {
-            final mood = m['mood'];
-            localCounts[mood] = (localCounts[mood] ?? 0) + 1;
-            if (mood == 'Happy') {
-              dSum += 0.9;
-            } else if (mood == 'Natural') {
-              dSum += 0.6;
-            } else if (mood == 'Angry') {
-              dSum += 0.8;
-            } else if (mood == 'Sad') {
-              dSum += 0.3;
-            }
-          }
-          intensity = (dSum / hourMoods.length).clamp(0.05, 1.0);
-          dominantMood = localCounts.entries
-              .reduce(
-                (entry1, entry2) =>
-                    entry1.value > entry2.value ? entry1 : entry2,
-              )
-              .key;
-        }
-        return {'intensity': intensity, 'mood': dominantMood};
+        blockTime = now.subtract(Duration(hours: 23 - index));
+        key =
+            '${blockTime.year}-${blockTime.month}-${blockTime.day}-${blockTime.hour}';
       } else {
-        final day = now.subtract(Duration(days: blocksCount - 1 - index));
-        final dayMoods = history.where((m) {
-          final ts = m['timestamp'] as Timestamp?;
-          if (ts == null) return false;
-          final date = ts.toDate();
-          return date.year == day.year &&
-              date.month == day.month &&
-              date.day == day.day;
-        }).toList();
-
-        double intensity = 0.05;
-        String dominantMood = 'Natural';
-        if (dayMoods.isNotEmpty) {
-          double dSum = 0;
-          Map<String, int> localCounts = {};
-          for (var m in dayMoods) {
-            final mood = m['mood'];
-            localCounts[mood] = (localCounts[mood] ?? 0) + 1;
-            if (mood == 'Happy') {
-              dSum += 0.9;
-            } else if (mood == 'Natural') {
-              dSum += 0.6;
-            } else if (mood == 'Angry') {
-              dSum += 0.8;
-            } else if (mood == 'Sad') {
-              dSum += 0.3;
-            }
-          }
-          intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
-          dominantMood = localCounts.entries
-              .reduce(
-                (entry1, entry2) =>
-                    entry1.value > entry2.value ? entry1 : entry2,
-              )
-              .key;
-        }
-        return {'intensity': intensity, 'mood': dominantMood};
+        blockTime = now.subtract(Duration(days: blocksCount - 1 - index));
+        key = '${blockTime.year}-${blockTime.month}-${blockTime.day}';
       }
+
+      final blockMoods = groupedData[key] ?? [];
+      double intensity = 0.05;
+      String dominantMood = 'Natural';
+
+      if (blockMoods.isNotEmpty) {
+        double dSum = 0;
+        Map<String, int> localCounts = {};
+        for (var m in blockMoods) {
+          final mood = m['mood'];
+          localCounts[mood] = (localCounts[mood] ?? 0) + 1;
+          if (mood == 'Happy') {
+            dSum += 0.9;
+          } else if (mood == 'Natural') {
+            dSum += 0.6;
+          } else if (mood == 'Angry') {
+            dSum += 0.8;
+          } else if (mood == 'Sad') {
+            dSum += 0.3;
+          }
+        }
+        intensity = (dSum / blockMoods.length).clamp(0.05, 1.0);
+        dominantMood = localCounts.entries
+            .reduce((a, b) => a.value > b.value ? a : b)
+            .key;
+      }
+      return {'intensity': intensity, 'mood': dominantMood};
     });
 
     // Time of day pattern
@@ -256,38 +299,35 @@ class _InsightsScreenState extends State<InsightsScreen>
     }
 
     Map<String, String> actionableInsights = {};
-    if (filtered.isNotEmpty) {
-      int maxHappy = -1;
-      String happyTod = '';
-      int maxSad = -1;
-      String sadTod = '';
+    int maxHappy = -1;
+    String happyTod = '';
+    int maxSad = -1;
+    String sadTod = '';
 
-      timeOfDayCounts.forEach((tod, moods) {
-        int h = moods['Happy'] ?? 0;
-        if (h > maxHappy) {
-          maxHappy = h;
-          happyTod = tod;
-        }
-        int s = moods['Sad'] ?? 0;
-        if (s > maxSad) {
-          maxSad = s;
-          sadTod = tod;
-        }
-      });
+    timeOfDayCounts.forEach((tod, moods) {
+      int h = moods['Happy'] ?? 0;
+      if (h > maxHappy) {
+        maxHappy = h;
+        happyTod = tod;
+      }
+      int s = moods['Sad'] ?? 0;
+      if (s > maxSad) {
+        maxSad = s;
+        sadTod = tod;
+      }
+    });
 
-      if (maxHappy > 0) {
-        actionableInsights['Peak Positivity'] =
-            'You usually feel great in the $happyTod.';
-      }
-      if (maxSad > 0) {
-        actionableInsights['Needs a Boost'] =
-            'You tend to feel down in the $sadTod. Try listening to upbeat music then!';
-      }
-      if (actionableInsights.isEmpty && counts.isNotEmpty) {
-        // Fallback
-        actionableInsights['Mood Pattern'] =
-            'Your mood remains relatively stable throughout the day.';
-      }
+    if (maxHappy > 0) {
+      actionableInsights['Peak Positivity'] =
+          'You usually feel great in the $happyTod.';
+    }
+    if (maxSad > 0) {
+      actionableInsights['Needs a Boost'] =
+          'You tend to feel down in the $sadTod. Try listening to upbeat music then!';
+    }
+    if (actionableInsights.isEmpty && counts.isNotEmpty) {
+      actionableInsights['Mood Pattern'] =
+          'Your mood remains relatively stable throughout the day.';
     }
 
     return {
@@ -306,7 +346,6 @@ class _InsightsScreenState extends State<InsightsScreen>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            backgroundColor: Color(0xFF0F172A),
             body: Center(child: CircularProgressIndicator()),
           );
         }
@@ -376,17 +415,7 @@ class _InsightsScreenState extends State<InsightsScreen>
   }
 
   Widget _buildInsightsContent(List<Map<String, dynamic>> history) {
-    final availableYears =
-        history
-            .map((m) => (m['timestamp'] as Timestamp?)?.toDate().year)
-            .whereType<int>()
-            .toSet()
-            .toList()
-          ..sort((a, b) => b.compareTo(a));
-
-    if (availableYears.isEmpty) {
-      availableYears.add(DateTime.now().year);
-    }
+    final availableYears = _getAvailableYears(history);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -442,9 +471,21 @@ class _InsightsScreenState extends State<InsightsScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildMoodBreakdownCard(history, 'Day'),
-                _buildMoodBreakdownCard(history, 'Week'),
-                _buildMoodBreakdownCard(history, 'Month'),
+                _MoodStatCard(
+                  history: history,
+                  range: 'Day',
+                  stats: _getMemoizedStats(history, 'Day'),
+                ),
+                _MoodStatCard(
+                  history: history,
+                  range: 'Week',
+                  stats: _getMemoizedStats(history, 'Week'),
+                ),
+                _MoodStatCard(
+                  history: history,
+                  range: 'Month',
+                  stats: _getMemoizedStats(history, 'Month'),
+                ),
               ],
             ),
           ),
@@ -452,7 +493,7 @@ class _InsightsScreenState extends State<InsightsScreen>
           ValueListenableBuilder<String>(
             valueListenable: _rangeNotifier,
             builder: (context, currentRange, _) {
-              final stats = _calculateStats(history, currentRange);
+              final stats = _getMemoizedStats(history, currentRange);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -704,21 +745,11 @@ class _InsightsScreenState extends State<InsightsScreen>
     final totalDays = endDate.difference(startDate).inDays + 1;
     final totalWeeks = totalDays ~/ 7;
 
-    Map<DateTime, List<Map<String, dynamic>>> group = {};
-    for (var m in history) {
-      final ts = m['timestamp'] as Timestamp?;
-      if (ts == null) continue;
-      final d = ts.toDate();
-      if (d.year != targetYear) continue;
-      final date = DateTime(d.year, d.month, d.day);
-      group.putIfAbsent(date, () => []).add(m);
-    }
-
+    final heatmapData = _getHeatmapData(history, targetYear);
     List<Widget> columns = [];
 
     for (int w = 0; w < totalWeeks; w++) {
       List<Widget> dayWidgets = [];
-
       bool isFirstOfMonth = false;
       String monthName = '';
 
@@ -735,57 +766,43 @@ class _InsightsScreenState extends State<InsightsScreen>
           continue;
         }
 
-        final dayMoods = group[currentDay] ?? [];
-        double intensity = 0.05;
-        String dominantMood = 'Natural';
-
-        if (dayMoods.isNotEmpty) {
-          double dSum = 0;
-          Map<String, int> localCounts = {};
-          for (var m in dayMoods) {
-            final mood = m['mood'] as String;
-            localCounts[mood] = (localCounts[mood] ?? 0) + 1;
-            if (mood == 'Happy') {
-              dSum += 0.9;
-            } else if (mood == 'Natural') {
-              dSum += 0.6;
-            } else if (mood == 'Angry') {
-              dSum += 0.8;
-            } else if (mood == 'Sad') {
-              dSum += 0.3;
-            }
-          }
-          intensity = (dSum / dayMoods.length).clamp(0.05, 1.0);
-          dominantMood = localCounts.entries
-              .reduce((a, b) => a.value > b.value ? a : b)
-              .key;
-        }
+        final dominantMood = heatmapData[currentDay];
+        final bool hasData = dominantMood != null;
 
         final color =
-            AppTheme.moodColors[dominantMood] ?? Theme.of(context).primaryColor;
+            AppTheme.moodColors[dominantMood ?? 'Natural'] ??
+            Theme.of(context).primaryColor;
 
         dayWidgets.add(
           GestureDetector(
             onTap: () {
-              if (dayMoods.isNotEmpty) {
+              if (hasData) {
+                // Filter the history for this specific day for the report
+                final dayMoods = history.where((m) {
+                  final ts = m['timestamp'] as Timestamp?;
+                  if (ts == null) return false;
+                  final d = ts.toDate();
+                  return d.year == currentDay.year &&
+                      d.month == currentDay.month &&
+                      d.day == currentDay.day;
+                }).toList();
                 _showDayDetailReport(context, currentDay, dayMoods);
               }
             },
             child: Tooltip(
               message:
-                  '${DateFormat('MMM dd, yyyy').format(currentDay)}\n${dayMoods.isEmpty ? "No data" : "$dominantMood: ${(intensity * 10).toStringAsFixed(1)}/10"}\nTap for details',
+                  '${DateFormat('MMM dd, yyyy').format(currentDay)}\n${!hasData ? "No data" : dominantMood}\nTap for details',
               triggerMode: TooltipTriggerMode.longPress,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+              child: Container(
                 width: 14,
                 height: 14,
                 decoration: BoxDecoration(
-                  color: intensity <= 0.05
+                  color: !hasData
                       ? Colors.white.withValues(alpha: 0.05)
-                      : color.withValues(alpha: intensity.clamp(0.3, 1.0)),
+                      : color.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: intensity <= 0.05
+                    color: !hasData
                         ? Colors.white.withValues(alpha: 0.1)
                         : color.withValues(alpha: 0.2),
                     width: 1,
@@ -1061,220 +1078,6 @@ class _InsightsScreenState extends State<InsightsScreen>
     );
   }
 
-  Widget _buildMoodBreakdownCard(
-    List<Map<String, dynamic>> history,
-    String range,
-  ) {
-    final stats = _calculateStats(history, range);
-    final breakdown = stats['breakdown'] as Map<String, int>;
-    int totalMoodsCount = breakdown.values.fold(
-      0,
-      (previousValue, element) => previousValue + element,
-    );
-
-    String topMood = 'None';
-    if (breakdown.isNotEmpty) {
-      topMood = breakdown.entries
-          .reduce((a, b) => a.value > b.value ? a : b)
-          .key;
-    }
-    final topMoodColor =
-        AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
-
-    return _buildGlassCard(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(
-                      begin: 0.0,
-                      end:
-                          (double.tryParse(
-                                stats['positive'].replaceAll('%', ''),
-                              ) ??
-                              0.0) /
-                          100,
-                    ),
-                    duration: const Duration(milliseconds: 1500),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, _) {
-                      return SizedBox(
-                        width: 130,
-                        height: 130,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CircularProgressIndicator(
-                              value: 1.0,
-                              strokeWidth: 10,
-                              valueColor: AlwaysStoppedAnimation(
-                                Colors.white.withValues(alpha: 0.02),
-                              ),
-                            ),
-                            CircularProgressIndicator(
-                              value: value,
-                              strokeWidth: 10,
-                              strokeCap: StrokeCap.round,
-                              backgroundColor: Colors.transparent,
-                              valueColor: AlwaysStoppedAnimation(topMoodColor),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        stats['positive'],
-                        style: TextStyle(
-                          color: topMoodColor,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              color: topMoodColor.withValues(alpha: 0.5),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'POSITIVE',
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 10,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Dominant Mood',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    topMood,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: topMoodColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: topMoodColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      'Highest records: ${breakdown[topMood] ?? 0}',
-                      style: TextStyle(
-                        color: topMoodColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Column(
-            children: breakdown.keys.map((mood) {
-              final count = breakdown[mood] ?? 0;
-              final percentage = totalMoodsCount > 0
-                  ? (count / totalMoodsCount)
-                  : 0.0;
-              final moodColor =
-                  AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: moodColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: moodColor.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 70,
-                      child: Text(
-                        mood,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: percentage,
-                          backgroundColor: Colors.white.withValues(alpha: 0.05),
-                          valueColor: AlwaysStoppedAnimation(moodColor),
-                          minHeight: 8,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 30,
-                      child: Text(
-                        count.toString(),
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildGlassCard({
     required Widget child,
     EdgeInsetsGeometry? padding,
@@ -1298,7 +1101,7 @@ class _InsightsScreenState extends State<InsightsScreen>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
@@ -1306,6 +1109,274 @@ class _InsightsScreenState extends State<InsightsScreen>
                   color?.withValues(alpha: 0.05) ??
                   Colors.white.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color:
+                    color?.withValues(alpha: 0.1) ??
+                    Colors.white.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MoodStatCard extends StatefulWidget {
+  final List<Map<String, dynamic>> history;
+  final String range;
+  final Map<String, dynamic> stats;
+
+  const _MoodStatCard({
+    required this.history,
+    required this.range,
+    required this.stats,
+  });
+
+  @override
+  _MoodStatCardState createState() => _MoodStatCardState();
+}
+
+class _MoodStatCardState extends State<_MoodStatCard>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final breakdown = widget.stats['breakdown'] as Map<String, int>;
+    int totalMoodsCount = breakdown.values.fold(
+      0,
+      (prev, element) => prev + element,
+    );
+
+    String topMood = 'None';
+    if (breakdown.isNotEmpty) {
+      topMood = breakdown.entries
+          .reduce((a, b) => a.value > b.value ? a : b)
+          .key;
+    }
+    final topMoodColor =
+        AppTheme.moodColors[topMood] ?? Theme.of(context).primaryColor;
+
+    return Container(
+      child: _buildGlassCard(
+        context: context,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(
+                        begin: 0.0,
+                        end:
+                            (double.tryParse(
+                                  widget.stats['positive'].replaceAll('%', ''),
+                                ) ??
+                                0.0) /
+                            100,
+                      ),
+                      duration: const Duration(milliseconds: 1500),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) {
+                        return SizedBox(
+                          width: 130,
+                          height: 130,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CircularProgressIndicator(
+                                value: 1.0,
+                                strokeWidth: 10,
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white.withValues(alpha: 0.02),
+                                ),
+                              ),
+                              CircularProgressIndicator(
+                                value: value,
+                                strokeWidth: 10,
+                                strokeCap: StrokeCap.round,
+                                backgroundColor: Colors.transparent,
+                                valueColor: AlwaysStoppedAnimation(
+                                  topMoodColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          widget.stats['positive'],
+                          style: TextStyle(
+                            color: topMoodColor,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: topMoodColor.withValues(alpha: 0.5),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'POSITIVE',
+                          style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 10,
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dominant Mood',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      topMood,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: topMoodColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: topMoodColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        'Highest records: ${breakdown[topMood] ?? 0}',
+                        style: TextStyle(
+                          color: topMoodColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Column(
+              children: breakdown.keys.map((mood) {
+                final count = breakdown[mood] ?? 0;
+                final percentage = totalMoodsCount > 0
+                    ? (count / totalMoodsCount)
+                    : 0;
+                final color =
+                    AppTheme.moodColors[mood] ?? Theme.of(context).primaryColor;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 70,
+                        child: Text(
+                          mood,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: percentage.toDouble(),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.05,
+                            ),
+                            valueColor: AlwaysStoppedAnimation(color),
+                            minHeight: 6,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 40,
+                        child: Text(
+                          '${(percentage * 100).toInt()}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Simplified GlassCard for the isolated widget
+  Widget _buildGlassCard({
+    required BuildContext context,
+    required Widget child,
+    EdgeInsetsGeometry? padding,
+    Color? color,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color:
+                color?.withValues(alpha: 0.1) ??
+                Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            spreadRadius: -5,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              color:
+                  color?.withValues(alpha: 0.05) ??
+                  Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color:
                     color?.withValues(alpha: 0.1) ??

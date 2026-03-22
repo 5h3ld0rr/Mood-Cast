@@ -295,14 +295,15 @@ class CommunityService {
         // Consider someone 'online' if seen in last 10 minutes
         if (lastSeen != null &&
             (now.difference(lastSeen).inMinutes.abs() < 10)) {
-          if (mood == 'Happy')
+          if (mood == 'Happy') {
             happyCount++;
-          else if (mood == 'Natural')
+          } else if (mood == 'Natural') {
             naturalCount++;
-          else if (mood == 'Sad')
+          } else if (mood == 'Sad') {
             sadCount++;
-          else if (mood == 'Angry')
+          } else if (mood == 'Angry') {
             angryCount++;
+          }
         }
       }
 
@@ -340,14 +341,15 @@ class CommunityService {
 
         if (lastSeen != null && now.difference(lastSeen).inMinutes < 5) {
           onlineCount++;
-          if (mood == 'Happy')
+          if (mood == 'Happy') {
             happyCount++;
-          else if (mood == 'Natural')
+          } else if (mood == 'Natural') {
             naturalCount++;
-          else if (mood == 'Sad')
+          } else if (mood == 'Sad') {
             sadCount++;
-          else if (mood == 'Angry')
+          } else if (mood == 'Angry') {
             angryCount++;
+          }
 
           if (mood != null && regionalMoodCounts.containsKey(region)) {
             regionalMoodCounts[region]![mood] =

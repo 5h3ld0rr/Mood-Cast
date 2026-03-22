@@ -120,8 +120,9 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
 
     // Prefer WebM (Opus) first as it is more stable for streaming on Android
     final allAudio = manifest.audioOnly.sortByBitrate().toList();
-    if (allAudio.isEmpty)
+    if (allAudio.isEmpty) {
       throw Exception("No audio-only streams found for $videoId");
+    }
 
     final webmStreams = allAudio
         .where((s) => s.container.name == 'webm')

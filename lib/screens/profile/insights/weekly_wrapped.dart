@@ -215,8 +215,9 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen>
                                   final count = counts[mood] ?? 0;
                                   final percentage =
                                       count / weeklyHistory.length;
-                                  if (percentage == 0)
+                                  if (percentage == 0) {
                                     return const SizedBox.shrink();
+                                  }
 
                                   return Expanded(
                                     flex: (percentage * 100).toInt(),

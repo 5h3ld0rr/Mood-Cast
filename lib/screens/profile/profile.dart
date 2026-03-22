@@ -5,14 +5,12 @@ import '../../services/auth_service.dart';
 import '../auth/login.dart';
 import 'edit_profile.dart';
 import 'privacy_security.dart';
-import 'subscription.dart';
+import 'subscription/subscription.dart';
 import 'help_support.dart';
 import 'insights/insights.dart';
 import '../../services/player_service.dart';
 import '../../widgets/cached_image.dart';
-
 import '../../services/metrics_service.dart';
-import '../../services/community_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,7 +21,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
-  final CommunityService _communityService = CommunityService();
 
   void _refreshProfile() {
     setState(() {});
@@ -125,85 +122,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Stats Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        StreamBuilder<double>(
-                          stream: MetricsService.getHoursListenedStream(),
-                          builder: (context, snapshot) {
-                            final hours = snapshot.data ?? 0.0;
-                            return _buildStatItem(
-                              hours.toStringAsFixed(1),
-                              'Hours Listened',
-                            );
-                          },
-                        ),
-                        _buildVerticalDivider(),
-                        StreamBuilder<int>(
-                          stream: MetricsService.getStreakStream(),
-                          builder: (context, snapshot) {
-                            return _buildStatItem(
-                              '${snapshot.data ?? 0}🔥',
-                              'Streak',
-                            );
-                          },
-                        ),
-                        _buildVerticalDivider(),
-                        StreamBuilder<int>(
-                          stream: _communityService.getPoints(),
-                          builder: (context, snapshot) {
-                            return _buildStatItem(
-                              '${snapshot.data ?? 0}',
-                              'Points',
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Streak Badges
-                    StreamBuilder<List<String>>(
-                      stream: MetricsService.getStreakBadgesStream(),
+                    // Consolidated Stats & Badges
+                    StreamBuilder<UserStats>(
+                      stream: MetricsService.getUserStatsStream(),
                       builder: (context, snapshot) {
-                        final badges = snapshot.data ?? [];
-                        if (badges.isEmpty) return const SizedBox.shrink();
+                        final stats = snapshot.data;
+                        if (stats == null) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
                         return Column(
                           children: [
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              alignment: WrapAlignment.center,
-                              children: badges.map((badge) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).primaryColor.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Theme.of(
-                                        context,
-                                      ).primaryColor.withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    badge,
-                                    style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                            // Stats Row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildStatItem(
+                                  stats.hoursListened.toStringAsFixed(1),
+                                  'Hours Listened',
+                                ),
+                                _buildVerticalDivider(),
+                                _buildStatItem('${stats.streak}🔥', 'Streak'),
+                                _buildVerticalDivider(),
+                                _buildStatItem('${stats.points}', 'Points'),
+                              ],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 24),
                           ],
                         );
                       },

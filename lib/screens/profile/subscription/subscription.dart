@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme.dart';
+import '../../../theme.dart';
 import 'payment_method.dart';
 
 class SubscriptionScreen extends StatelessWidget {

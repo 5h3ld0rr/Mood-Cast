@@ -755,15 +755,17 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             size: 32,
                                           ),
                                           onPressed: () {
-                                            if (!_isInteractionLocked)
+                                            if (!_isInteractionLocked) {
                                               PlayerService().skipToPrevious();
+                                            }
                                           },
                                         ),
                                         const SizedBox(width: 16),
                                         GestureDetector(
                                           onTap: () {
-                                            if (!_isInteractionLocked)
+                                            if (!_isInteractionLocked) {
                                               PlayerService().togglePlay();
+                                            }
                                           },
                                           child: Container(
                                             width: 64,
@@ -827,8 +829,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                                             size: 32,
                                           ),
                                           onPressed: () {
-                                            if (!_isInteractionLocked)
+                                            if (!_isInteractionLocked) {
                                               PlayerService().skipToNext();
+                                            }
                                           },
                                         ),
                                       ],

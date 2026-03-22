@@ -249,8 +249,9 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      if (!_isInteractionLocked)
+                                      if (!_isInteractionLocked) {
                                         PlayerService().togglePlay();
+                                      }
                                     },
                                   );
                                 },
