@@ -228,7 +228,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                               ),
                               Switch(
                                 value: _redeemPoints,
-                                activeColor: Theme.of(context).primaryColor,
+                                activeThumbColor: Theme.of(context).primaryColor,
                                 onChanged: (val) {
                                   setState(() {
                                     _redeemPoints = val;

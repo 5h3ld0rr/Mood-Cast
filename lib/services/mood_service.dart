@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'community_service.dart';
 
 class MoodService {
@@ -6,11 +7,22 @@ class MoodService {
   factory MoodService() => _instance;
   MoodService._internal();
 
+  static const _moodKey = 'current_mood';
   final ValueNotifier<String> currentMood = ValueNotifier<String>('Happy');
   final CommunityService _communityService = CommunityService();
 
-  void updateMood(String mood) {
+  Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedMood = prefs.getString(_moodKey);
+    if (savedMood != null) {
+      currentMood.value = savedMood;
+    }
+  }
+
+  Future<void> updateMood(String mood) async {
     currentMood.value = mood;
     _communityService.updateUserMood(mood);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_moodKey, mood);
   }
 }

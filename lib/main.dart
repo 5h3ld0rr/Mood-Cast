@@ -23,6 +23,9 @@ void main() async {
   // Initialize Audio & Player
   await PlayerService().init();
 
+  // Initialize Mood Service
+  await MoodService().init();
+
   // Initialize Google Sign In (Required for 7.0.0+)
   try {
     await GoogleSignIn.instance.initialize();
