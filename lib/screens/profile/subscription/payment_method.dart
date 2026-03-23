@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../theme.dart';
+import '../../../services/metrics_service.dart';
+import '../../../services/community_service.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final String planTitle;
@@ -23,6 +25,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   final _cvvController = TextEditingController();
   final _nameController = TextEditingController();
   String _selectedCardType = 'Visa'; // Default selection
+  bool _redeemPoints = false;
 
   @override
   void dispose() {
@@ -33,7 +36,33 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     super.dispose();
   }
 
-  void _processPayment() {
+  double get _basePrice {
+    final match = RegExp(r'\$?([\d\.]+)').firstMatch(widget.planPrice);
+    if (match != null) {
+      return double.tryParse(match.group(1) ?? '0') ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  double get _maxDiscount => _basePrice * 0.5;
+  double _pointsValue(int points) => points * 0.001;
+
+  double _actualDiscount(int points) {
+    if (!_redeemPoints) return 0.0;
+    final value = _pointsValue(points);
+    return value > _maxDiscount ? _maxDiscount : value;
+  }
+
+  int _pointsUsed(int totalPoints) {
+    if (!_redeemPoints) return 0;
+    final value = _pointsValue(totalPoints);
+    if (value > _maxDiscount) {
+      return (_maxDiscount / 0.001).ceil();
+    }
+    return totalPoints;
+  }
+
+  void _processPayment(int pointsUsed) {
     if (_formKey.currentState!.validate()) {
       showDialog(
         context: context,
@@ -47,6 +76,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
       // Mock processing delay
       Future.delayed(const Duration(seconds: 2), () {
+        if (pointsUsed > 0) {
+          CommunityService().awardPoints(-pointsUsed);
+        }
         Navigator.pop(context); // Close loading
         _showSuccessDialog();
       });
@@ -125,6 +157,133 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             children: [
               // Dynamic Card Preview
               _buildCreditCardPreview(),
+              const SizedBox(height: 32),
+
+              StreamBuilder<UserStats>(
+                stream: MetricsService.getUserStatsStream(),
+                builder: (context, snapshot) {
+                  final stats = snapshot.data;
+                  final points = stats?.points ?? 0;
+                  final discount = _actualDiscount(points);
+                  final finalPrice = _basePrice - discount;
+
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Order Summary',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Plan Subscription',
+                              style: TextStyle(color: AppTheme.textMuted),
+                            ),
+                            Text(
+                              '\$${_basePrice.toStringAsFixed(2)}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        if (points > 0) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Redeem Points',
+                                      style: TextStyle(color: AppTheme.textMuted),
+                                    ),
+                                    Text(
+                                      'Available: \$${_pointsValue(points).toStringAsFixed(2)} ($points pts)',
+                                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                    ),
+                                    if (points > 0)
+                                      Text(
+                                        'Max 50% discount allowed',
+                                        style: TextStyle(color: Theme.of(context).primaryColor.withValues(alpha: 0.8), fontSize: 10),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _redeemPoints,
+                                activeColor: Theme.of(context).primaryColor,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _redeemPoints = val;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (_redeemPoints && discount > 0) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Points Discount (${_pointsUsed(points)} pts)',
+                                style: TextStyle(color: Theme.of(context).primaryColor),
+                              ),
+                              Text(
+                                '-\$${discount.toStringAsFixed(2)}',
+                                style: TextStyle(color: Theme.of(context).primaryColor),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(color: Colors.white10),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total to Pay',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              '\$${finalPrice.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 32),
 
               const Text(
@@ -229,19 +388,26 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               SizedBox(
                 width: double.infinity,
                 height: 56,
-                child: ElevatedButton(
-                  onPressed: _processPayment,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Confirm Payment',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                child: StreamBuilder<UserStats>(
+                  stream: MetricsService.getUserStatsStream(),
+                  builder: (context, snapshot) {
+                    final points = snapshot.data?.points ?? 0;
+                    final finalPrice = _basePrice - _actualDiscount(points);
+                    return ElevatedButton(
+                      onPressed: () => _processPayment(_pointsUsed(points)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Pay \$${finalPrice.toStringAsFixed(2)} & Subscribe',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }
                 ),
               ),
             ],

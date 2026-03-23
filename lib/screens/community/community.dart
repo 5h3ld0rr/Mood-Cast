@@ -408,7 +408,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                                 );
                                 Navigator.pop(context);
                                 _showFeedback(
-                                  'Vibe Dropped! +50 Points 💖',
+                                  'Vibe Dropped! +10 Points 💖',
                                   icon: Icons.volunteer_activism,
                                 );
                               },

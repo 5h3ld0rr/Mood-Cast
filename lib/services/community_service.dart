@@ -127,7 +127,7 @@ class CommunityService {
       'supportResponses': FieldValue.arrayUnion([response.toMap()]),
     });
 
-    await awardPoints(50);
+    await awardPoints(10);
   }
 
   // --- Moodboards ---
