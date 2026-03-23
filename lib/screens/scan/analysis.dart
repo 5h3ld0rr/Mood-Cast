@@ -26,7 +26,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
   Face? _detectedFace;
   bool _isScanning = false;
   double _progress = 0.0;
-  double _zoomScale = 1.3;
+  double _zoomScale = 1.0;
   String? _detectedMood;
   Map<String, double> _confidenceScores = {};
   int _simulatedHeartRate = 0;
@@ -194,7 +194,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     setState(() {
       _isScanning = true;
       _progress = 0.0;
-      _zoomScale = 1.5;
+      _zoomScale = 1.0;
       _detectedFace = null;
       _detectedMood = null;
       _confidenceScores = {};
@@ -264,7 +264,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
 
       setState(() {
         _isScanning = false;
-        _zoomScale = 1.3;
+        _zoomScale = 1.0;
         _detectedMood = resultMood;
         _confidenceScores = scores;
       });
@@ -278,7 +278,7 @@ class _AnalysisScreenState extends State<AnalysisScreen>
       _hrTimer?.cancel();
       setState(() {
         _isScanning = false;
-        _zoomScale = 1.3;
+        _zoomScale = 1.0;
         _detectedMood = 'Natural';
       });
     }
@@ -496,17 +496,23 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                     bottom: false,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 16,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withValues(alpha: 0.3),
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
@@ -516,9 +522,9 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                             'LIVE AI ANALYSIS',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2.0,
                             ),
                           ),
                         ],
@@ -534,15 +540,21 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                     bottom: false,
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 18),
+                        padding: const EdgeInsets.only(top: 25),
                         child: Text(
                           'SCANNING',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                fontSize: 14,
-                                letterSpacing: 4,
-                                color: Colors.white38,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 8,
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                            shadows: [
+                              Shadow(
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
+                                blurRadius: 10,
                               ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -578,19 +590,28 @@ class _AnalysisScreenState extends State<AnalysisScreen>
                         left: 40,
                         right: 40,
                         child: Container(
-                          height: 2,
+                          height: 3,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
                                 Theme.of(context).primaryColor,
+                                Colors.white,
+                                Theme.of(context).primaryColor,
                                 Colors.transparent,
                               ],
+                              stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Theme.of(context).primaryColor,
-                                blurRadius: 10,
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                                blurRadius: 15,
+                                spreadRadius: 3,
+                              ),
+                              BoxShadow(
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                                blurRadius: 30,
+                                spreadRadius: 10,
                               ),
                             ],
                           ),
@@ -1041,36 +1062,12 @@ class _AnalysisScreenState extends State<AnalysisScreen>
     required bool isTop,
     required bool isLeft,
   }) {
-    return Container(
-      width: 35,
-      height: 35,
-      decoration: BoxDecoration(
-        border: Border(
-          top: isTop
-              ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3,
-                )
-              : BorderSide.none,
-          bottom: !isTop
-              ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3,
-                )
-              : BorderSide.none,
-          left: isLeft
-              ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3,
-                )
-              : BorderSide.none,
-          right: !isLeft
-              ? BorderSide(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
-                  width: 3,
-                )
-              : BorderSide.none,
-        ),
+    return CustomPaint(
+      size: const Size(45, 45),
+      painter: _CornerPainter(
+        color: Theme.of(context).primaryColor,
+        isTop: isTop,
+        isLeft: isLeft,
       ),
     );
   }
@@ -1112,7 +1109,7 @@ class _LensHUDState extends State<_LensHUD>
     super.initState();
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 12),
     )..repeat();
   }
 
@@ -1139,7 +1136,15 @@ class _LensHUDState extends State<_LensHUD>
             turns: _rotationController,
             child: CustomPaint(
               size: Size(radius * 2.4, radius * 2.4),
-              painter: _HUDPainter(color: color.withValues(alpha: 0.3)),
+              painter: _HUDPainter(color: color.withValues(alpha: 0.5)),
+            ),
+          ),
+          // Reverse Rotating HUD
+          RotationTransition(
+            turns: Tween(begin: 1.0, end: 0.0).animate(_rotationController),
+            child: CustomPaint(
+              size: Size(radius * 2.15, radius * 2.15),
+              painter: _InnerHUDPainter(color: color.withValues(alpha: 0.3)),
             ),
           ),
           // Inner Glowing Border
@@ -1151,13 +1156,13 @@ class _LensHUDState extends State<_LensHUD>
               shape: BoxShape.circle,
               border: Border.all(
                 color: widget.isScanning ? color : color.withValues(alpha: 0.4),
-                width: widget.isScanning ? 4 : 2,
+                width: widget.isScanning ? 3 : 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: color.withValues(alpha: widget.isScanning ? 0.6 : 0.2),
-                  blurRadius: widget.isScanning ? 25 : 15,
-                  spreadRadius: widget.isScanning ? 5 : 2,
+                  color: color.withValues(alpha: widget.isScanning ? 0.3 : 0.0),
+                  blurRadius: widget.isScanning ? 30 : 0,
+                  spreadRadius: widget.isScanning ? 10 : 0,
                 ),
               ],
             ),
@@ -1168,12 +1173,12 @@ class _LensHUDState extends State<_LensHUD>
               duration: const Duration(seconds: 2),
               builder: (context, value, child) {
                 return SizedBox(
-                  width: radius * 2.1,
-                  height: radius * 2.1,
+                  width: radius * 2.05,
+                  height: radius * 2.05,
                   child: CircularProgressIndicator(
                     value: widget.progress,
-                    strokeWidth: 2,
-                    color: color,
+                    strokeWidth: 4,
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
                 );
               },
@@ -1195,6 +1200,12 @@ class _HUDPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
@@ -1202,28 +1213,115 @@ class _HUDPainter extends CustomPainter {
     for (int i = 0; i < 4; i++) {
       final startAngle = (i * 90 + 10) * (math.pi / 180);
       const sweepAngle = 70 * (math.pi / 180);
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
-        paint,
-      );
+      final rect = Rect.fromCircle(center: center, radius: radius);
+      canvas.drawArc(rect, startAngle, sweepAngle, false, glowPaint);
+      canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
     }
 
     // Draw small ticks
-    for (int i = 0; i < 24; i++) {
-      final angle = (i * 15) * (math.pi / 180);
+    for (int i = 0; i < 36; i++) {
+      final angle = (i * 10) * (math.pi / 180);
+      final isMajor = i % 3 == 0;
+      final tickLength = isMajor ? 8.0 : 4.0;
+      
       final p1 = Offset(
-        center.dx + (radius - 5) * math.cos(angle),
-        center.dy + (radius - 5) * math.sin(angle),
+        center.dx + (radius - tickLength) * math.cos(angle),
+        center.dy + (radius - tickLength) * math.sin(angle),
       );
       final p2 = Offset(
-        center.dx + (radius + 5) * math.cos(angle),
-        center.dy + (radius + 5) * math.sin(angle),
+        center.dx + (radius + tickLength) * math.cos(angle),
+        center.dy + (radius + tickLength) * math.sin(angle),
       );
-      canvas.drawLine(p1, p2, paint);
+      canvas.drawLine(p1, p2, paint..strokeWidth = isMajor ? 2.0 : 1.0);
     }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _InnerHUDPainter extends CustomPainter {
+  final Color color;
+  _InnerHUDPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    for (int i = 0; i < 3; i++) {
+        final startAngle = (i * 120 + 20) * (math.pi / 180);
+        const sweepAngle = 40 * (math.pi / 180);
+        canvas.drawArc(
+            Rect.fromCircle(center: center, radius: radius),
+            startAngle,
+            sweepAngle,
+            false,
+            paint,
+        );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _CornerPainter extends CustomPainter {
+  final Color color;
+  final bool isTop;
+  final bool isLeft;
+
+  _CornerPainter({required this.color, required this.isTop, required this.isLeft});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    final double w = size.width;
+    final double h = size.height;
+    final double r = 12.0;
+
+    if (isTop && isLeft) {
+      path.moveTo(w, 0);
+      path.lineTo(r, 0);
+      path.quadraticBezierTo(0, 0, 0, r);
+      path.lineTo(0, h);
+    } else if (isTop && !isLeft) {
+      path.moveTo(0, 0);
+      path.lineTo(w - r, 0);
+      path.quadraticBezierTo(w, 0, w, r);
+      path.lineTo(w, h);
+    } else if (!isTop && isLeft) {
+      path.moveTo(0, 0);
+      path.lineTo(0, h - r);
+      path.quadraticBezierTo(0, h, r, h);
+      path.lineTo(w, h);
+    } else {
+      path.moveTo(w, 0);
+      path.lineTo(w, h - r);
+      path.quadraticBezierTo(w, h, w - r, h);
+      path.lineTo(0, h);
+    }
+
+    canvas.drawPath(
+      path, 
+      Paint()
+        ..color = color.withValues(alpha: 0.5)
+        ..strokeWidth = 10.0
+        ..style = PaintingStyle.stroke
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8.0)
+    );
+    canvas.drawPath(path, paint);
   }
 
   @override
