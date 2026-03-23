@@ -151,8 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         'MoodCast',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 20,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
                         ),
                       ),
                     ],

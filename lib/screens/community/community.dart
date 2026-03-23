@@ -799,30 +799,31 @@ class _CommunityScreenState extends State<CommunityScreen>
               );
             },
           ),
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
+          SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
             slivers: [
-              SliverAppBar(
-                expandedHeight: 120.0,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: const Text(
-                    'Community',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
-                    ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
                   ),
-                  titlePadding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
+                  child: Row(
+                    children: [
+                      const SizedBox(height: 48),
+                      const Text(
+                        'Community',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                actions: const [],
               ),
 
               SliverToBoxAdapter(
@@ -1450,6 +1451,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
               const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
             ],
+          ),
           ),
         ],
       ),

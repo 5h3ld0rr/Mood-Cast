@@ -188,15 +188,19 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             // ── Header ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
               child: Row(
                 children: [
+                  const SizedBox(height: 48),
                   Expanded(
                     child: Text(
                       _isFocused ? '' : 'Search',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
