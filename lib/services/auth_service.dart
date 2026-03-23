@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -12,8 +13,7 @@ class AuthService {
     try {
       // Step 1: Trigger the authentication flow
       await _googleSignIn.initialize(
-        serverClientId:
-            '138700460734-e2ondshg6he0dj8r0hdsvb5rqurptus0.apps.googleusercontent.com',
+        serverClientId: dotenv.get('GOOGLE_SERVER_CLIENT_ID'),
       );
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 

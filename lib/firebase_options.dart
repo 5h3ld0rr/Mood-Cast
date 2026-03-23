@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -27,21 +28,6 @@ class DefaultFirebaseOptions {
         return android;
       case TargetPlatform.iOS:
         return ios;
-      case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -49,24 +35,22 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBcJxo2ed0eJJtMM9ojFlCoSX9O5iPrjJY',
-    appId: '1:138700460734:android:c2223161584882315244ef',
-    messagingSenderId: '138700460734',
-    projectId: 'mood-cast-23dff',
-    storageBucket: 'mood-cast-23dff.firebasestorage.app',
-  );
+  static FirebaseOptions get android => FirebaseOptions(
+        apiKey: dotenv.get('FIREBASE_ANDROID_API_KEY'),
+        appId: dotenv.get('FIREBASE_ANDROID_APP_ID'),
+        messagingSenderId: dotenv.get('FIREBASE_ANDROID_MESSAGING_SENDER_ID'),
+        projectId: dotenv.get('FIREBASE_ANDROID_PROJECT_ID'),
+        storageBucket: dotenv.get('FIREBASE_ANDROID_STORAGE_BUCKET'),
+      );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyB13F60CTriJ9l3Fv-tQLi8SP658zJ1gQw',
-    appId: '1:138700460734:ios:d5d100840ee43d305244ef',
-    messagingSenderId: '138700460734',
-    projectId: 'mood-cast-23dff',
-    storageBucket: 'mood-cast-23dff.firebasestorage.app',
-    androidClientId:
-        '138700460734-d1seea5ph5dt6758j69nlnlpc7ler8of.apps.googleusercontent.com',
-    iosClientId:
-        '138700460734-r5i2i1pv61me0atkucsj598qcori9gda.apps.googleusercontent.com',
-    iosBundleId: 'com.example.moodcast',
-  );
+  static FirebaseOptions get ios => FirebaseOptions(
+        apiKey: dotenv.get('FIREBASE_IOS_API_KEY'),
+        appId: dotenv.get('FIREBASE_IOS_APP_ID'),
+        messagingSenderId: dotenv.get('FIREBASE_IOS_MESSAGING_SENDER_ID'),
+        projectId: dotenv.get('FIREBASE_IOS_PROJECT_ID'),
+        storageBucket: dotenv.get('FIREBASE_IOS_STORAGE_BUCKET'),
+        androidClientId: dotenv.get('FIREBASE_IOS_ANDROID_CLIENT_ID'),
+        iosClientId: dotenv.get('FIREBASE_IOS_CLIENT_ID'),
+        iosBundleId: dotenv.get('FIREBASE_IOS_BUNDLE_ID'),
+      );
 }
