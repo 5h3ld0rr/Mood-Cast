@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../main.dart';
 import '../theme.dart';
 import '../screens/notifications/notification_details.dart';
+import 'mood_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -173,7 +174,8 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
           showWhen: true,
-          color: AppTheme.primary, // App brand color
+          color: AppTheme.moodColors[MoodService().currentMood.value] ??
+              AppTheme.primary, // Dynamic mood color
           icon: '@mipmap/ic_launcher',
           styleInformation: BigTextStyleInformation(
             body,

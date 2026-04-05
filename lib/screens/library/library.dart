@@ -203,7 +203,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
 
         if (localSongs.isNotEmpty) {
-          if (context.mounted) {
+          if (mounted) {
             UIUtils.showSnackBar(
               context,
               'Added ${localSongs.length} local files to queue',
@@ -214,7 +214,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       }
     } catch (e) {
       debugPrint('Error picking files: $e');
-      if (context.mounted) {
+      if (mounted) {
         UIUtils.showSnackBar(context, 'Error picking files: $e');
       }
     }

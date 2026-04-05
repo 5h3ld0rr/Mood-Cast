@@ -267,7 +267,9 @@ class PlaylistOptionsBottomSheet extends StatelessWidget {
                   );
                 }
               }
-              Navigator.pop(context);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
             child: Text(
               'SAVE',

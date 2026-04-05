@@ -460,25 +460,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontSize: 20,
             ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildQualityOption(
-                AudioQuality.low,
-                'Data Saver',
-                'Lowest bitrate',
-              ),
-              _buildQualityOption(
-                AudioQuality.medium,
-                'Normal',
-                'Standard bitrate',
-              ),
-              _buildQualityOption(
-                AudioQuality.high,
-                'High Quality',
-                'Highest bitrate, uses more data',
-              ),
-            ],
+          content: ValueListenableBuilder<AudioQuality>(
+            valueListenable: PlayerService().audioQuality,
+            builder: (context, currentQuality, _) {
+              return RadioGroup<AudioQuality>(
+                groupValue: currentQuality,
+                onChanged: (val) {
+                  if (val != null) {
+                    PlayerService().setAudioQuality(val);
+                    Navigator.pop(context);
+                  }
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildQualityOption(
+                      AudioQuality.low,
+                      'Data Saver',
+                      'Lowest bitrate',
+                    ),
+                    _buildQualityOption(
+                      AudioQuality.medium,
+                      'Normal',
+                      'Standard bitrate',
+                    ),
+                    _buildQualityOption(
+                      AudioQuality.high,
+                      'High Quality',
+                      'Highest bitrate, uses more data',
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },
@@ -490,38 +504,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String title,
     String subtitle,
   ) {
-    return ValueListenableBuilder<AudioQuality>(
-      valueListenable: PlayerService().audioQuality,
-      builder: (context, currentQuality, _) {
-        return RadioListTile<AudioQuality>(
-          value: value,
-          groupValue: currentQuality,
-          activeColor: Theme.of(context).primaryColor,
-          title: Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          subtitle: Text(
-            subtitle,
-            style: TextStyle(
-              color:
-                  Theme.of(context).textTheme.bodyMedium?.color ??
-                  AppTheme.textMuted,
-              fontSize: 12,
-            ),
-          ),
-          onChanged: (val) {
-            if (val != null) {
-              PlayerService().setAudioQuality(val);
-              Navigator.pop(context);
-            }
-          },
-        );
-      },
+    return RadioListTile<AudioQuality>(
+      value: value,
+      activeColor: Theme.of(context).primaryColor,
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color:
+              Theme.of(context).textTheme.bodyMedium?.color ??
+              AppTheme.textMuted,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../theme.dart';
 import '../../services/notification_service.dart';
 import 'notification_details.dart';
 
@@ -31,7 +30,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     final notifications = NotificationService().history;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -40,7 +39,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             expandedHeight: 140,
             floating: false,
             pinned: true,
-            backgroundColor: const Color(0xFF080C14).withValues(alpha: 0.8),
+            backgroundColor: Theme.of(context).canvasColor.withValues(alpha: 0.8),
             elevation: 0,
             flexibleSpace: ClipRRect(
               child: BackdropFilter(
@@ -67,7 +66,10 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                           height: 200,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppTheme.primary.withValues(alpha: 0.08),
+                            color:
+                                Theme.of(context).primaryColor.withValues(
+                                  alpha: 0.08,
+                                ),
                           ),
                         ),
                       ),
@@ -103,7 +105,10 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                     Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.05),
+                        color:
+                            Theme.of(context).primaryColor.withValues(
+                              alpha: 0.05,
+                            ),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -238,7 +243,7 @@ class _NotificationTile extends StatelessWidget {
           border: Border.all(
             color: isRead
                 ? Colors.white.withValues(alpha: 0.05)
-                : AppTheme.primary.withValues(alpha: 0.3),
+                : Theme.of(context).primaryColor.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -249,12 +254,12 @@ class _NotificationTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isRead
                     ? Colors.white.withValues(alpha: 0.05)
-                    : AppTheme.primary.withValues(alpha: 0.15),
+                    : Theme.of(context).primaryColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 _getIconForTitle(notification['title'] ?? ''),
-                color: isRead ? Colors.white24 : AppTheme.primary,
+                color: isRead ? Colors.white24 : Theme.of(context).primaryColor,
                 size: 24,
               ),
             ),
@@ -305,8 +310,8 @@ class _NotificationTile extends StatelessWidget {
                 width: 8,
                 height: 8,
                 margin: const EdgeInsets.only(left: 12),
-                decoration: const BoxDecoration(
-                  color: AppTheme.primary,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
                   shape: BoxShape.circle,
                 ),
               ),

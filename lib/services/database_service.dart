@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'player_service.dart';
 import 'youtube_music_service.dart';
 
@@ -200,7 +201,7 @@ class DatabaseService {
         return name.contains(lowerQuery);
       }).toList();
     } catch (e) {
-      print('Error searching public playlists: $e');
+      debugPrint('Error searching public playlists: $e');
       return [];
     }
   }

@@ -26,12 +26,11 @@ void main() async {
   // Initialize Mood Service
   await MoodService().init();
 
-  // Initialize Google Sign In (Required for 7.0.0+)
+  // GoogleSignIn is configured via singleton instance.
   try {
     await GoogleSignIn.instance.initialize();
   } catch (e) {
-    debugPrint("Google Sign In initialization failed: $e");
-    // We continue so the app can still boot for other features
+    debugPrint("Google Sign In check failed: $e");
   }
 
   // Initialize Notifications

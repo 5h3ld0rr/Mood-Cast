@@ -1,9 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/player_service.dart';
 import '../services/tribe_service.dart';
 
 import '../screens/player.dart';
+import '../../main.dart';
 import 'cached_image.dart';
 
 class MiniPlayer extends StatelessWidget {
@@ -60,16 +62,20 @@ class _MiniPlayerContentState extends State<_MiniPlayerContent> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: () {
-        Navigator.of(context).push(
+        HapticFeedback.mediumImpact();
+
+        navigatorKey.currentState?.push(
           PageRouteBuilder(
             opaque: false,
-            barrierColor: Colors.black.withValues(alpha: 0.5),
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const PlayerScreen(),
+            barrierColor: Colors.black.withValues(alpha: 0.7),
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return const PlayerScreen();
+            },
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
                   return FadeTransition(

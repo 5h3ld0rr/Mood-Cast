@@ -105,9 +105,9 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen>
           String topMood = counts.keys.first;
           int maxCount = counts.values.first;
 
-          counts.forEach((mood, count) {
-            if (count > maxCount) {
-              maxCount = count;
+          counts.forEach((mood, moodCount) {
+            if (moodCount > maxCount) {
+              maxCount = moodCount;
               topMood = mood;
             }
           });
@@ -212,9 +212,9 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen>
                               const SizedBox(height: 16),
                               Row(
                                 children: _moodEmojis.keys.map((mood) {
-                                  final count = counts[mood] ?? 0;
+                                  final moodCount = counts[mood] ?? 0;
                                   final percentage =
-                                      count / weeklyHistory.length;
+                                      moodCount / weeklyHistory.length;
                                   if (percentage == 0) {
                                     return const SizedBox.shrink();
                                   }

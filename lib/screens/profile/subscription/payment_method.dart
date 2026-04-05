@@ -76,6 +76,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
       // Mock processing delay
       Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
         if (pointsUsed > 0) {
           CommunityService().awardPoints(-pointsUsed);
         }

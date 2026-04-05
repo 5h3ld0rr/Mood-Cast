@@ -51,13 +51,26 @@ class _CachedImageState extends State<CachedImage> {
       finalUrl = _getHighResUrl(finalUrl);
     }
 
+    int? cacheWidth;
+    int? cacheHeight;
+    if (widget.width != null && widget.width! > 0) {
+      cacheWidth = (widget.width! * MediaQuery.of(context).devicePixelRatio).toInt();
+    }
+    if (widget.height != null && widget.height! > 0) {
+      cacheHeight = (widget.height! * MediaQuery.of(context).devicePixelRatio).toInt();
+    }
+
     Widget image = CachedNetworkImage(
       imageUrl: finalUrl,
       width: widget.width,
       height: widget.height,
       fit: widget.fit,
-      fadeOutDuration: Duration.zero,
-      fadeInDuration: Duration.zero,
+      maxWidthDiskCache: cacheWidth,
+      maxHeightDiskCache: cacheHeight,
+      memCacheWidth: cacheWidth,
+      memCacheHeight: cacheHeight,
+      fadeOutDuration: const Duration(milliseconds: 300),
+      fadeInDuration: const Duration(milliseconds: 300),
       placeholder: (context, url) {
         if (_lastSuccessfulUrl != null && _lastSuccessfulUrl != url) {
           // Show the last successful image as a placeholder while loading the new one
@@ -69,8 +82,6 @@ class _CachedImageState extends State<CachedImage> {
           widget.errorWidget ?? _buildErrorWidget(),
       imageBuilder: (context, imageProvider) {
         // When the image successfully loads, we store the URL.
-        // Note: Logic inside build is usually risky for side-effects,
-        // but since we're just updating a string for the NEXT build, it's okay here.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _lastSuccessfulUrl != finalUrl) {
             setState(() {
@@ -81,7 +92,11 @@ class _CachedImageState extends State<CachedImage> {
 
         return Container(
           decoration: BoxDecoration(
-            image: DecorationImage(image: imageProvider, fit: widget.fit),
+            image: DecorationImage(
+              image: imageProvider,
+              fit: widget.fit,
+              filterQuality: FilterQuality.low, // Optimization for lists
+            ),
           ),
         );
       },

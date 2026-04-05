@@ -1,4 +1,6 @@
+// ignore_for_file: experimental_member_use, experimental_member_api
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
@@ -13,6 +15,7 @@ import 'metrics_service.dart';
 import 'mood_service.dart';
 import 'community_service.dart';
 import '../main.dart';
+import '../theme.dart';
 
 enum AudioQuality { low, medium, high }
 
@@ -84,9 +87,6 @@ class SongInfo {
 /// Avoids re-fetching the manifest on every play — cuts startup lag from ~2s → ~0.1s.
 final Map<String, yt.AudioOnlyStreamInfo> _streamInfoCache = {};
 
-/// Streams YouTube audio directly without downloading to a file.
-/// Uses [StreamAudioSource] to pipe YouTube bytes to just_audio,
-/// with range-request support for seeking.
 class _YouTubeStreamAudioSource extends StreamAudioSource {
   final http.Client httpClient;
   final String videoId;
@@ -111,12 +111,29 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
       return;
     }
 
-    // Strictly use androidVr client — it bypasses many YouTube signature restrictions
-    // and is highly compatible with the manual HTTP requests we use below.
-    final manifest = await _yt.videos.streamsClient.getManifest(
-      videoId,
-      ytClients: [yt.YoutubeApiClient.androidVr],
-    );
+    // Fallback through multiple clients — it bypasses many YouTube signature restrictions
+    yt.StreamManifest? manifest;
+    for (final client in [
+      yt.YoutubeApiClient.androidVr,
+      yt.YoutubeApiClient.androidMusic,
+      yt.YoutubeApiClient.ios,
+      yt.YoutubeApiClient.mweb,
+      yt.YoutubeApiClient.safari,
+    ]) {
+      try {
+        manifest = await _yt.videos.streamsClient.getManifest(
+          videoId,
+          ytClients: [client],
+        );
+        if (manifest.audioOnly.isNotEmpty) break;
+      } catch (e) {
+        debugPrint('PlayerService: Manifest fetch failed for client $client: $e');
+      }
+    }
+
+    if (manifest == null) {
+      throw Exception("All YouTube clients failed to fetch manifest for $videoId");
+    }
 
     // Prefer WebM (Opus) first as it is more stable for streaming on Android
     final allAudio = manifest.audioOnly.sortByBitrate().toList();
@@ -177,7 +194,7 @@ class _YouTubeStreamAudioSource extends StreamAudioSource {
 
     final response = await httpClient
         .send(request)
-        .timeout(const Duration(seconds: 5));
+        .timeout(const Duration(seconds: 15));
 
     return StreamAudioResponse(
       sourceLength: totalBytes,
@@ -304,12 +321,13 @@ class PlayerService {
 
     _audioHandler = await AudioService.init(
       builder: () => MyAudioHandler(_audioPlayer),
-      config: const AudioServiceConfig(
+      config: AudioServiceConfig(
         androidNotificationChannelId: 'com.moodcast.audio.v3',
         androidNotificationChannelName: 'MoodCast',
         androidNotificationOngoing: false,
         androidStopForegroundOnPause: true,
-        notificationColor: Color(0xFF00C2FF),
+        notificationColor: AppTheme.moodColors[MoodService().currentMood.value] ??
+            const Color(0xFF00C2FF),
       ),
     );
   }
@@ -424,7 +442,9 @@ class PlayerService {
       // Calling stop() is slow; setAudioSource handles switching automatically.
 
       // 0. Check if it's a direct local file (not from YouTube)
-      if (song.localPath != null && song.localPath!.isNotEmpty) {
+      if (song.localPath != null && 
+          song.localPath!.isNotEmpty && 
+          File(song.localPath!).existsSync()) {
         debugPrint(
           "PlayerService: Playing direct local file: ${song.localPath}",
         );
@@ -517,15 +537,12 @@ class PlayerService {
     } catch (e, stack) {
       debugPrint("PlayerService ERROR: $e");
       debugPrint("Stack: $stack");
-    } finally {
-      // isBuffering reset removed here.
-      // The processingStateStream listener in Constructor handles it correctly
-      // based on the REAL player state (ProcessingState.buffering).
+      isBuffering.value = false;
     }
   }
 
   /// Silently pre-warms the next song in the queue after current song starts.
-  /// Runs fully in background \u2014 no await, no UI impact.
+  /// Runs fully in background — no await, no UI impact.
   void _prewarmNextInQueue() {
     final nextIndex = currentIndex + 1;
     if (nextIndex < currentQueue.length) {

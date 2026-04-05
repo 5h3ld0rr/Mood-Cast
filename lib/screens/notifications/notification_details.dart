@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../theme.dart';
 
 class NotificationDetailsScreen extends StatelessWidget {
   final String? id;
@@ -41,7 +40,7 @@ class NotificationDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080C14),
+      backgroundColor: Theme.of(context).canvasColor,
       body: Stack(
         children: [
           // Dynamic Background Glow
@@ -55,7 +54,7 @@ class NotificationDetailsScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppTheme.primary.withValues(alpha: 0.15),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -93,14 +92,14 @@ class NotificationDetailsScreen extends StatelessWidget {
                             height: 120,
                             width: 120,
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(40),
                               border: Border.all(
-                                color: AppTheme.primary.withValues(alpha: 0.2),
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withValues(
+                                  color: Theme.of(context).primaryColor.withValues(
                                     alpha: 0.2,
                                   ),
                                   blurRadius: 50,
@@ -110,7 +109,7 @@ class NotificationDetailsScreen extends StatelessWidget {
                             ),
                             child: Icon(
                               _getIconForTitle(title),
-                              color: AppTheme.primary,
+                              color: Theme.of(context).primaryColor,
                               size: 56,
                             ),
                           ),
@@ -127,13 +126,13 @@ class NotificationDetailsScreen extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.2),
+                              color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            child: const Text(
+                            child: Text(
                               'ACTIVITY REPORT',
                               style: TextStyle(
-                                color: AppTheme.primary,
+                                color: Theme.of(context).primaryColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.5,
@@ -171,11 +170,11 @@ class NotificationDetailsScreen extends StatelessWidget {
                         width: 60,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: AppTheme.primary,
+                          color: Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primary.withValues(alpha: 0.5),
+                              color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
                               blurRadius: 10,
                             ),
                           ],
@@ -199,7 +198,7 @@ class NotificationDetailsScreen extends StatelessWidget {
                           payload!.isNotEmpty &&
                           payload != '{}') ...[
                         const SizedBox(height: 60),
-                        _buildPayloadSection(),
+                        _buildPayloadSection(context),
                       ],
                     ],
                   ),
@@ -213,7 +212,7 @@ class NotificationDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPayloadSection() {
+  Widget _buildPayloadSection(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -227,16 +226,16 @@ class NotificationDetailsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.info_outline_rounded,
-                color: AppTheme.primary,
+                color: Theme.of(context).primaryColor,
                 size: 20,
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'SYSTEM METADATA',
                 style: TextStyle(
-                  color: AppTheme.primary,
+                  color: Theme.of(context).primaryColor,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -269,7 +268,7 @@ class NotificationDetailsScreen extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () => Navigator.pop(context),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
+            backgroundColor: Theme.of(context).primaryColor,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
